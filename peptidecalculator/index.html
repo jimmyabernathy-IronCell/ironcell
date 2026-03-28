@@ -437,8 +437,9 @@ const peptides = [
     name: "Melanotan 2",
     vials: [10],
     waterOptions: [1, 2],
-    doses: [250, 500, 1000],
-    defaultVial: 10, defaultWater: 1, defaultDose: 500,
+    doses: [1000, 2000, 3000, 4000, 5000],
+    defaultVial: 10, defaultWater: 1, defaultDose: 1000,
+    doseUnit: "mg",
     guide: "../Peptide Guides/Melanotan_II_Peptide_Brief.docx"
   },
   {
@@ -565,11 +566,24 @@ function buildDosePills(containerId, doses, defaultDose) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
   document.getElementById('doseCustomRow').style.display = 'none';
+  const p = peptides[state.peptideIdx];
+  const useMg = p && p.doseUnit === 'mg';
+
+  // Update custom input placeholder and label
+  const customInput = document.getElementById('doseCustom');
+  const customLabel = customInput.nextElementSibling;
+  if (useMg) {
+    customInput.placeholder = 'mg';
+    customLabel.textContent = 'mg';
+  } else {
+    customInput.placeholder = 'mcg';
+    customLabel.textContent = 'mcg';
+  }
 
   doses.forEach(d => {
     const btn = document.createElement('button');
     btn.className = 'pill' + (d === defaultDose ? ' active' : '');
-    btn.textContent = formatDose(d);
+    btn.textContent = useMg ? (d / 1000) + ' mg' : formatDose(d);
     btn.onclick = () => selectDose(d, btn);
     container.appendChild(btn);
   });
@@ -640,7 +654,11 @@ function onWaterCustom() {
 }
 function onDoseCustom() {
   const v = parseFloat(document.getElementById('doseCustom').value);
-  if (v > 0) { state.doseMcg = v; calculate(); }
+  if (v > 0) {
+    const p = peptides[state.peptideIdx];
+    state.doseMcg = (p && p.doseUnit === 'mg') ? v * 1000 : v;
+    calculate();
+  }
 }
 
 // ── Calculate ──
