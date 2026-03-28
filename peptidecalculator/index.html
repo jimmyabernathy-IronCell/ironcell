@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peptide Reconstitution Calculator — IronCell Research</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: #000;
+    border-bottom: 1px solid #222;
+    padding: 14px 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo-link { display: flex; align-items: center; text-decoration: none; }
+  .logo-link img { height: 50px; width: auto; }
+  .header-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #999; letter-spacing: 1px; }
+  .header-nav img { width: 20px; height: 14px; margin-right: 4px; }
+  .header-shipping { color: #888; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* ── Page ── */
+  .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  h1 {
+    text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 40%, #e63232);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 36px; }
+
+  /* ── Cards ── */
+  .calc-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;
+  }
+  @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #151515; border: 1px solid #252525; border-radius: 14px; padding: 24px;
+  }
+  .card-label {
+    font-size: 14px; font-weight: 600; color: #e63232; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .card-label svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ── Pill Buttons ── */
+  .pill-group { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill {
+    padding: 10px 20px; border-radius: 50px; border: 2px solid #333;
+    background: transparent; color: #ccc; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .2s; font-family: inherit;
+  }
+  .pill:hover { border-color: #e63232; color: #fff; }
+  .pill.active { background: #e63232; border-color: #e63232; color: #fff; font-weight: 600; }
+
+  /* ── Syringe selector ── */
+  .syringe-options { display: flex; flex-direction: column; gap: 12px; }
+  .syringe-opt {
+    display: flex; align-items: center; gap: 16px; padding: 14px 18px;
+    border-radius: 12px; border: 2px solid #252525; cursor: pointer; transition: all .2s;
+    background: #111;
+  }
+  .syringe-opt:hover { border-color: #e63232; }
+  .syringe-opt.active { border-color: #e63232; background: rgba(230,50,50,.08); }
+  .syringe-opt .syringe-bar {
+    width: 120px; height: 14px; border-radius: 7px; position: relative; overflow: hidden;
+    background: linear-gradient(90deg, #333, #444);
+  }
+  .syringe-opt .syringe-fill {
+    position: absolute; left: 0; top: 0; height: 100%; border-radius: 7px;
+    background: linear-gradient(90deg, #e63232, #ff5555);
+  }
+  .syringe-opt .syringe-label { font-size: 14px; font-weight: 500; color: #ddd; }
+
+  /* ── Custom input ── */
+  .custom-input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .custom-input-row input {
+    width: 120px; padding: 10px 14px; border-radius: 50px; border: 2px solid #333;
+    background: #111; color: #fff; font-size: 14px; font-family: inherit; text-align: center;
+  }
+  .custom-input-row input:focus { outline: none; border-color: #e63232; }
+  .custom-input-row span { color: #888; font-size: 13px; }
+
+  /* ── Results Strip ── */
+  .results-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;
+  }
+  @media (max-width: 600px) {
+    .results-strip { grid-template-columns: 1fr; }
+    h1 { font-size: 22px; }
+    .subtitle { font-size: 12px; margin-bottom: 24px; }
+    .page-wrapper { padding: 20px 14px 40px; }
+    .card { padding: 16px; }
+    .card-label { font-size: 12px; margin-bottom: 12px; }
+    .pill { padding: 8px 14px; font-size: 12px; }
+    .pill-group { gap: 8px; }
+    .syringe-opt { padding: 10px 14px; gap: 10px; }
+    .syringe-opt .syringe-bar { width: 80px; }
+    .syringe-opt .syringe-label { font-size: 13px; }
+    .result-value { font-size: 24px; }
+    .result-card { padding: 14px; }
+    .syringe-visual-card { padding: 16px; }
+    .syringe-visual-card .instruction { font-size: 12px; }
+    .syringe-ruler { margin: 0 10px; }
+    .header-shipping { font-size: 9px; letter-spacing: 1px; }
+    .logo-link img { height: 36px; }
+    .header-inner { padding: 0 14px; }
+    .peptide-selector select { font-size: 13px; padding: 8px 36px 8px 14px; }
+    .peptide-selector label { font-size: 12px; }
+    .guide-link-card { padding: 14px 16px; flex-wrap: wrap; justify-content: center; }
+    .guide-link-card a { font-size: 13px; }
+    .guide-link-card .guide-sub { display: none; }
+    .custom-input-row input { width: 100px; }
+  }
+  .result-card {
+    background: #151515; border: 1px solid #252525; border-radius: 14px; padding: 20px; text-align: center;
+  }
+  .result-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .result-value { font-size: 30px; font-weight: 800; color: #fff; word-break: break-word; }
+  .result-value.red { color: #e63232; }
+  .result-sub { font-size: 12px; color: #666; margin-top: 4px; }
+
+  /* ── Syringe Visual ── */
+  .syringe-visual-card {
+    background: #151515; border: 1px solid #252525; border-radius: 14px; padding: 24px; margin-bottom: 24px;
+  }
+  .syringe-visual-card .instruction { font-size: 14px; color: #ccc; margin-bottom: 18px; text-align: center; }
+  .syringe-visual-card .instruction strong { color: #e63232; }
+  .syringe-ruler { position: relative; height: 60px; margin: 0 20px; }
+  .syringe-track {
+    position: absolute; top: 20px; left: 0; right: 0; height: 8px;
+    background: #333; border-radius: 4px;
+  }
+  .syringe-fill-bar {
+    position: absolute; top: 20px; left: 0; height: 8px;
+    background: linear-gradient(90deg, #e63232, #ff5555); border-radius: 4px;
+    transition: width .3s;
+  }
+  .syringe-marker {
+    position: absolute; top: 2px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; transition: left .3s;
+  }
+  .syringe-marker .arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #e63232; }
+  .syringe-marker .mark-label { font-size: 12px; font-weight: 700; color: #e63232; margin-bottom: 2px; }
+  .tick-row { position: absolute; top: 32px; left: 0; right: 0; display: flex; justify-content: space-between; }
+  .tick-row span { font-size: 10px; color: #666; width: 0; text-align: center; }
+
+  /* ── Peptide Selector ── */
+  .peptide-selector {
+    display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .peptide-selector label { font-size: 14px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+  .peptide-selector select {
+    padding: 10px 20px; border-radius: 50px; border: 2px solid #333; background: #151515;
+    color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23e63232' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center; padding-right: 44px;
+  }
+  .peptide-selector select:focus { outline: none; border-color: #e63232; }
+
+  /* ── Guide Link ── */
+  .guide-link-card {
+    background: linear-gradient(135deg, #1a1010, #151515); border: 1px solid #3a1a1a;
+    border-radius: 14px; padding: 18px 24px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    transition: border-color .2s;
+  }
+  .guide-link-card:hover { border-color: #e63232; }
+  .guide-link-card svg { width: 20px; height: 20px; color: #e63232; flex-shrink: 0; }
+  .guide-link-card a {
+    color: #e63232; text-decoration: none; font-size: 15px; font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .guide-link-card a:hover { text-decoration: underline; }
+  .guide-link-card .guide-sub { color: #666; font-size: 12px; margin-left: 4px; }
+
+  /* ── Disclaimer ── */
+  .disclaimer {
+    text-align: center; font-size: 12px; color: #555; max-width: 700px; margin: 32px auto 0;
+    line-height: 1.6; border-top: 1px solid #222; padding-top: 24px;
+  }
+  .disclaimer strong { color: #e63232; }
+
+  /* ── Footer ── */
+  .site-footer {
+    background: #111; border-top: 1px solid #222; padding: 28px 24px; text-align: center;
+    font-size: 12px; color: #555;
+  }
+  .site-footer a { color: #e63232; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="https://ironcellresearch.com" class="logo-link">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAyCAIAAACoFmz4AAArU0lEQVR42u18eZReVZXv3ufc6ZtqnlJzUpUJkgoEAgYkKA2EBBnshaKgLuRpt4+FrbRKI0tedyt266Mbu/uBj140wUZbooDMaAjIEAKBJGQeKkkNqbnqq+Eb73jO2e+PU/ksEnBo31vab7FX1spX95577r1nT789nAvwexMics717yVLliBiVVVVV1eXPlI69T79f0tnnnnmY4899tBDDwFAa2vrzp0777jjjsrKyvdX5o+W2H/+SsYQkTHW0tLy3e9+96GHHlq+fHmhUACAIAg8z7v55ps3b9780Y9+1HEcPEHvr/h/bd5rliultLW/++67P/nJTw4NDU1MTCilACCKIsdxgiBoamp69NFHr7nmGiICACJ63wX8F+Y955yIlFKdnZ22bUdR9MYbb+RyuWQyWVVVZZqm5nFNTU1jY2MsFlNKjY+PA0B1dXVFRaWUUovO+0v/X4/3Usp58xq+d/fd9957bxiGABCGYVtbW0tLS0tLS2mYUkpruWEYWtfb2tqef37TRz96tRad9+3/fyXeM8Ysy7r2E5/80cM//cjVf+p6PikFAEuXLtVKn0wm0+m0HjwzMzM8PJxOpwuFgmZzGIZlZZX/+I///OP/2Lhs2TIiep/9f1gyfntYJ6X8sz/7s49d+4mJqRk/7HE9DxkDKZPJpGattvZ6fC6X1Uf0tbMCMZ2ZmZlZtrzrySefuvHGz7766quGYSilNEp4n/64eK8xXYk3M9PThw4ejBTW1FS7xaI+mMvlMplMOp12HKehoUFf5bpeoVDknMfjce3dETGKwmLR7e3t7ehoC4KAiIQQGkNoH/E+P/4obP6vwDywj13ziauv+lMACKNIRCJ0PTdXcIsuAQHA1FSm59jx4eGxkZERzWaGZhSqXLZYyHueGwKgNgkSSSIBQ9/3gyAAgDvuuOPss8+WUr4fAvyx6L3mOhEtXbr02o9fv3Llyjff2vbEkz9TSolIRGEYhaHve6QIAEZHxg4ePCRlRCQymQwASKmmp2cQUUkSkdT6TETJZCoU0uAsFo+HYVhZWXnxxRevW7fuqaee+v73v5/L5bTovKsLmOs7SqgTflPeEBGJSI88aTbG2HtZmrlG6NSo5CQTddKDaSQ7ey0AQwRArSTveDA9GEARIcCvhz4IQABEQECIiLMHZv9T7/EW7B1zIgGd9L7GKYvF9NNXV1dfffXVZ565MorU6OgozQbuoSIVBEEQBMWiq+fK5bLT01NSCss2pqenASAIg7GxsZqaGimlH/j6QQGxvLyMMYYAyURCShmPx/P5fCqV+tjHPvbhD3/4nnvuefrppzU7T+XWe2GCU0e+qwSUsIj+/RtBhpb+WXP13rdAxPeahyFTBJIUwG/wZXTi2X4bIiKC32IwniQT9Cshei/eEynOzYv/5JJLL13rOHYYhkKGL728ddOmTQAghGSIRBQEgee5pdUnIqUoilSh4AMAKQrDMIoiRAyCQJuHKAzjjuWY5XrJEHF4ePimm276yle+8pGPfCSRSNx1113XXHPNXXfdtX///pOtk2HcfPPNLS0tQRDouFEpddddd6XT6VtvvbW2tjaKIiJijM01A0KIqamp7du3v/LKK3PNAAB84AMfOO+882pra03TnJtzDMOwt7f3qaeeGh0d1SK4atWqz3zmM77vl9JTd9999/j4eElTb7zxxmXLlmlgG4vF9uzZs2HDBsaYUpRkxpp5jafX1ldbFgcCBEQkzhBAKmIG8xX8446djQb//LIzQlIm50opheqELWEACKACVBXMeaL32Oah45/uXLKqocFTEhElyEDR/Xv2DLnFElsRgAAruPWF5SvqEw4pEEqazNg3Pf1g9z56V71HRABavPi0az/+yXnz5rmuG4biyJGjzz735MDAwAnlk5pvSinX9ebyXkopwkhEQh/xPV/zKQgCNWsecr7nNTY2CiGmp6dzuRwADAwMfOlLX3r++ee/8Y1vNDc3r1mzZvXq1T/4wQ/uvfdePUCHgkKIs88++9xzz83n84hYUVGxY8eOqampxsbG66+/XgNGPbJkgTWAsCzry1/+8tNPP33LLbcEQYCIiUTi29/+9tq1a4UQQogSC9kJisVif/EXf/GFL3xhy5YtAOA4zvr163O5nGmaRNTe3t7d3b1hwwaNT5VSF1988apVqzzPI6L6+vo33ngDABTRmRWpb3d1nUWmEbhG5CPN3kghEAJKMuPWSxLc0D+zquELDHzXN9AkIGICEICQiJ8wIcJIxl7wfQJYxsybBMv6RQQwDfGWFb8njE5RemYodSWxM70glCRFZKWcb0YuETDEkj0w3mm+6JxV59bX16fT6Wwu88LmF3bv2Tk3xtOM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6BlnnDl//vxUshwlRa4/OTbRW95fX1PvhsFUIZuenslOZ90wIAZMKQxFEOTkTC4cnwpGhvKjo+7MZBponBtZA2IAjYLN51Bn2oXQT0hAxnMGO+AVKmurbrn5S2EgHce6//4HcrlcSahPfcrfUmsB4NOf/vS11157yy23eJ534YUXfuc735menr7//vt1Q2ZnZ+fNN9+8cePGJ5980rZty7J0rVbfWu8Ou//++5944gnO+erVq8vKykoz19XVff3rX3/xxRd/+MMfmqbJOdfFm1KzuZTy1ltv/eu//msA2Ldv39/+7d9qtunuj5UrV37mM5+577779uzZU11dfeedd86fP/+KK67QFyaTyaeeeurCCy+85557uru7y8vL29vbdcqZiCzLuu2229544w3tvM4666xPfOITuolm7haw//x+PM3+ycnJF17YHI/HW1ra21rbOzs7uc3qamtramqr66tqxpIzDKa9XJSednPT7uRkcWzKn5nKZTLF0JsEchFDbjhozOPYLuQ8I2ajBIrKkKOimGEG6GzzZ4Ly5Fdu/gsDbYb8iSee3Ldvj+4J1i3CmpwTZNu24zi6n9pxHN1wF4/HY7GY/rOuru6BBx54/fXXEbGysnL37t3PPPPMzMyMZVmXXnrp4cOHS++4YMEC/YWApUuX2rY9Pj6+b9++Ev+klENDQ9XV1eecc04ul/v5z3/+3HPPlSSyra1tcnKyUCh0dnZyzsMw/OEPf1iqF0spzznnnFtuueWzn/3sDTfccPHFF995551zN3MtWLBgZmbm8ccf371799KlS4vF4s6ds3sfhBBr165ds2bNlVde+eyzz56KPZubmycnJ8vKyjZu3KiUamhoGB4e1qFHe3v7HXfcUShmCkXXLRZd1/U8z/OCYsEtFou+74dhqD9/pE+FYRiGoRAiiiLjJLOgZdx13e7ug93dBze/YCSSscqqymQikbBMKnhRtuAVCwXPJaCQlAIIAExE02Q2skbGY0rWgKxHw+VUZYGtpBAQU5KDGEdjqzdj1TTcdOMNZVYqkGrLK7989rknGONKyRJ60iSl1B1UGqxFUaT7x23bNueQ4zjDw8Ojo6O6x/L48eNjY2M333xzW1tbGIZXX331a6+9VqrtxuPxX/7yl7rF1jAM7Qv0lgHO+dtvv33JJZe0t7cnk8lly5bdfvvtU1NTW7Zs0WMSicSWLVsefvhh3/dN09TNPNoq6DbwL37xi2+99RYAHDt2rKGhoaOj48iRI6Udn5Zlvfjii+vWrbvxxhtramq++tWvbtiwofRglmVt2bJF1xH0s1mW5c724EJVVdXBgwd/9rOfDQ8PSykvvfTS/v5+XdOSUu3bt7dQzIVBGIRBEIRRFEWhCIJQb4ubS/pNS3sRjXd1EnqzChESiUI+X8jnASAeizU2Nno2r2ruyIyNpkfHgRsVYNSroBbAkmgzSgHzlaxivIqbtqJyjJACTxpkwnHGt/r+go5FN1z3aeBMKLln187HHvspIuptHro7am7/xe9K1dXVNTU1jzzyyCOPPHLVVVddf/31pdSb9rttbW1CiI6ODp04OnDggN5Po5sAvv71r/u+r9fXtu2XXnrp0KFDpd2W7e3t2mtEUaSrwK7ranmNx+Nf+9rXJiYm7rvvvmQy+dJLL3384x+/8MILtUPRk7e3t7/55pv/8A//sGDBgm9/+9ul/Yp68tdff33NmjW33nprX1+fUqqpqemBBx7YsWOHfraFCxciot6rBACXX3758PCwvvvx4/133/293wvr/Xo/Wtq41NnZuXDhwmKh0Nzc0tvbs/X11y2AVm40EdhMxQkruOOLsJzzGtOcDr0Kw2DIB5F2h+FeIT5w3gUfWXd5GEWWaW7fvv2ppx/XQdCpTv29IN57HdFur7KycuXKlYcOHRodHbUsa/Xq1ZlMZvfu3ZpDjLEVK1bE43EN1gzDGBwc1GhLn21ubl6wYEFFRQUiptPpXbt2FYvFks1funRpRUWFaZq6dWV6enrnzp36bHV19YoVK/bv3z8xMZvzX7lypeu6ug9Al4jOOeecoaEhnfbv6uqqqanZunWrbgnXk1RVVa1YsaK2tlYpNTw8vGvXLr3nhIiWLVtWW1u7detWDTlXr149Pj6u5RJOZI1+Dcp7LwiFv2sIdOYZZ6w655x8Lt/a1loM/B//8IfTU9OLDGMxYEKJJJpZFSWYUWtxNwpSVmI/0kvFIquovPqqqxZ2dhY83zLNV3/50qtbXkZkAPTH/LmN3zWm+jXfD/j1c/7fDd5+S+K/61qMjo0Vi8VVq1ZFUVSWTK677DJJtP3o0QmlHNNOcRNEaDEWN+xuUr/w/bejaOX559/wqevra2uDICjms48/9uiu3bv+X7ztSd9JOFUhdHLmvT70WMoLlc6e+o2FuXTq9xlK2R49+KTLT5rqpNc/6e4nJbjmfiniXS//f2Lz3zXrWV1dfe211zY3N+fz+QULlqRnJn784x/t372nGmClYcUZ7IrCAYKFC5es+9AljW2NnvBBwf4D+3/xi18Ui8U/bA7nffpP8n5u0vvDF334srWXCYm2aS5Y0Np9pPtHD288sHcvANQ3NV19+ZUd8ztyXl4pMTM59fIrr2j/9wexb+/T/x3ez/2KSU1NzXXXXdfV1ZXJZOLx+KJFi17dsuXYsWPnnH12EESZbCGfy729a8eOHW/p+vfvlK55n/4YeX+SAVi5cuWnPvWpmpqa4eFhvSs2k824BW/37n3btr2RyU79/iWy9+mPi/elCFAz9fzzz7/44ovLy8unpqaOHj26Zctro6Mj73P9/3OaW9xcuXLl4sWL50rG++vzx0n/B+GwmppOnisrAAAAAElFTkSuQmCC" alt="IronCell Research">
+    </a>
+    <div class="header-shipping">US DOMESTIC SHIPPING 2-4 DAYS</div>
+  </div>
+</header>
+
+<div class="page-wrapper">
+  <h1>Peptide Reconstitution Calculator</h1>
+  <p class="subtitle">Convert vial strength and dilution into precise, research-aligned doses.</p>
+
+  <!-- Peptide Selector -->
+  <div class="peptide-selector">
+    <label for="peptideSelect">Compound:</label>
+    <select id="peptideSelect" onchange="onPeptideChange()"></select>
+  </div>
+
+  <!-- Calculator Grid -->
+  <div class="calc-grid">
+
+    <!-- Syringe Size -->
+    <div class="card">
+      <div class="card-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v2M15 2v2M9 22v-2M15 22v-2M4 7h16M4 7v13a2 2 0 002 2h12a2 2 0 002-2V7M12 11v6M9 14h6"/></svg>
+        What is your syringe size?
+      </div>
+      <div class="syringe-options">
+        <div class="syringe-opt active" onclick="selectSyringe(this, 0.3, 30)">
+          <div class="syringe-bar"><div class="syringe-fill" style="width:30%"></div></div>
+          <span class="syringe-label">0.3 mL (30 units)</span>
+        </div>
+        <div class="syringe-opt" onclick="selectSyringe(this, 0.5, 50)">
+          <div class="syringe-bar"><div class="syringe-fill" style="width:50%"></div></div>
+          <span class="syringe-label">0.5 mL (50 units)</span>
+        </div>
+        <div class="syringe-opt" onclick="selectSyringe(this, 1.0, 100)">
+          <div class="syringe-bar"><div class="syringe-fill" style="width:100%"></div></div>
+          <span class="syringe-label">1.0 mL (100 units)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Vial Quantity -->
+      <div class="card">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M3 9h18"/></svg>
+          Select vial quantity
+        </div>
+        <div class="pill-group" id="vialGroup"></div>
+        <div class="custom-input-row" id="vialCustomRow" style="display:none;">
+          <input type="number" id="vialCustom" placeholder="mg" min="1" max="500" oninput="onVialCustom()">
+          <span>mg</span>
+        </div>
+      </div>
+
+      <!-- BAC Water -->
+      <div class="card">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6l-3 4v6a3 3 0 006 0v-6l-3-4V2"/></svg>
+          Bacteriostatic water volume
+        </div>
+        <div class="pill-group" id="waterGroup"></div>
+        <div class="custom-input-row" id="waterCustomRow" style="display:none;">
+          <input type="number" id="waterCustom" placeholder="mL" min="0.1" max="50" step="0.1" oninput="onWaterCustom()">
+          <span>mL</span>
+        </div>
+      </div>
+
+      <!-- Dose -->
+      <div class="card">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Desired dose per injection
+        </div>
+        <div class="pill-group" id="doseGroup"></div>
+        <div class="custom-input-row" id="doseCustomRow" style="display:none;">
+          <input type="number" id="doseCustom" placeholder="mcg" min="1" max="100000" oninput="onDoseCustom()">
+          <span>mcg</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-strip">
+    <div class="result-card">
+      <div class="result-label">Concentration</div>
+      <div class="result-value red" id="resConc">—</div>
+      <div class="result-sub" id="resConcSub"></div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">Volume per dose</div>
+      <div class="result-value" id="resVol">—</div>
+      <div class="result-sub" id="resVolSub"></div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">Approx. doses per vial</div>
+      <div class="result-value" id="resDoses">—</div>
+      <div class="result-sub">(floor of total mcg / dose)</div>
+    </div>
+  </div>
+
+  <!-- Syringe Visual -->
+  <div class="syringe-visual-card" id="syringeVisual" style="display:none;">
+    <div class="instruction" id="syringeInstruction"></div>
+    <div class="syringe-ruler">
+      <div class="syringe-track"></div>
+      <div class="syringe-fill-bar" id="syringeFill"></div>
+      <div class="syringe-marker" id="syringeMarker">
+        <span class="mark-label" id="markerLabel"></span>
+        <span class="arrow"></span>
+      </div>
+      <div class="tick-row" id="tickRow"></div>
+    </div>
+  </div>
+
+  <!-- Guide Link -->
+  <div class="guide-link-card" id="guideLink" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <a id="guideLinkAnchor" href="#" target="_blank"></a>
+    <span class="guide-sub">— Full research brief (DOCX)</span>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This calculator is for research and educational purposes only. It does not recommend dosing for humans or animals. Products sold by IronCell Research are not for human consumption. Always double-check values against your vial's COA and labelling. Dosing decisions are your responsibility.
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  &copy; 2026 IronCell Research. All Rights Reserved. &nbsp;|&nbsp;
+  <a href="https://ironcellresearch.com">ironcellresearch.com</a> &nbsp;|&nbsp;
+  <a href="mailto:jimmy@ironcellresearch.com">jimmy@ironcellresearch.com</a>
+</footer>
+
+<script>
+// ── Peptide Data ──
+const peptides = [
+  {
+    name: "Retatrutide",
+    vials: [10, 20, 30],
+    waterOptions: [0.5, 1, 1.5, 2, 3],
+    doses: [500, 1000, 1500, 2000, 4000, 8000, 12000],
+    defaultVial: 10, defaultWater: 1, defaultDose: 2000,
+    guide: "../Peptide Guides/Retatrutide_Peptide_Brief.docx"
+  },
+  {
+    name: "Tirzepatide",
+    vials: [10, 15, 20],
+    waterOptions: [0.5, 1, 1.5, 2, 3],
+    doses: [2500, 5000, 7500, 10000, 12500, 15000],
+    defaultVial: 10, defaultWater: 1, defaultDose: 5000,
+    guide: "../Peptide Guides/Tirzepatide_Peptide_Brief.docx"
+  },
+  {
+    name: "BPC-157",
+    vials: [5, 10],
+    waterOptions: [1, 2, 3, 5],
+    doses: [250, 500, 750, 1000],
+    defaultVial: 5, defaultWater: 1, defaultDose: 500,
+    guide: "../Peptide Guides/BPC157_TB500_Peptide_Brief.docx"
+  },
+  {
+    name: "BPC-157 & TB-500 Blend",
+    vials: [10, 20],
+    waterOptions: [1, 2, 3, 5],
+    doses: [500, 1000, 1500, 2000],
+    defaultVial: 10, defaultWater: 2, defaultDose: 1000,
+    guide: "../Peptide Guides/BPC157_TB500_Peptide_Brief.docx"
+  },
+  {
+    name: "MOTS-c",
+    vials: [10],
+    waterOptions: [1, 2, 3],
+    doses: [5000, 10000],
+    defaultVial: 10, defaultWater: 1, defaultDose: 5000,
+    guide: "../Peptide Guides/MOTS-c_Peptide_Brief.docx"
+  },
+  {
+    name: "NAD+",
+    vials: [500, 1000],
+    waterOptions: [2, 5, 10],
+    doses: [50000, 100000, 200000, 250000],
+    defaultVial: 1000, defaultWater: 10, defaultDose: 100000,
+    guide: "../Peptide Guides/NAD_Plus_Peptide_Brief.docx"
+  },
+  {
+    name: "Glutathione",
+    vials: [1500],
+    waterOptions: [3, 5],
+    doses: [200000, 300000, 500000],
+    defaultVial: 1500, defaultWater: 5, defaultDose: 300000,
+    guide: "../Peptide Guides/Glutathione_Peptide_Brief.docx"
+  },
+  {
+    name: "Vitamin B12",
+    vials: [1000],
+    waterOptions: [1, 2],
+    doses: [500000, 1000000],
+    defaultVial: 1000, defaultWater: 1, defaultDose: 1000000,
+    guide: "../Peptide Guides/Vitamin_B12_Peptide_Brief.docx"
+  },
+  {
+    name: "L-Carnitine",
+    vials: [5000],
+    waterOptions: [5, 10],
+    doses: [500000, 1000000],
+    defaultVial: 5000, defaultWater: 5, defaultDose: 500000,
+    guide: null
+  },
+  {
+    name: "SS-31 (Elamipretide)",
+    vials: [50],
+    waterOptions: [1, 2, 5],
+    doses: [5000, 10000, 20000, 40000],
+    defaultVial: 50, defaultWater: 2, defaultDose: 10000,
+    guide: "../Peptide Guides/SS-31_Peptide_Brief.docx"
+  },
+  {
+    name: "Melanotan 2",
+    vials: [10],
+    waterOptions: [1, 2],
+    doses: [250, 500, 1000],
+    defaultVial: 10, defaultWater: 1, defaultDose: 500,
+    guide: "../Peptide Guides/Melanotan_II_Peptide_Brief.docx"
+  },
+  {
+    name: "GHK-Cu",
+    vials: [50],
+    waterOptions: [2, 5],
+    doses: [1000, 2000, 5000],
+    defaultVial: 50, defaultWater: 2, defaultDose: 2000,
+    guide: "../Peptide Guides/GHK-Cu_Peptide_Brief.docx"
+  },
+  {
+    name: "Ipamorelin",
+    vials: [10],
+    waterOptions: [1, 2, 3],
+    doses: [100, 200, 300],
+    defaultVial: 10, defaultWater: 2, defaultDose: 200,
+    guide: "../Peptide Guides/Ipamorelin_Peptide_Brief.docx"
+  },
+  {
+    name: "Tesamorelin",
+    vials: [10],
+    waterOptions: [1, 2, 3],
+    doses: [1000, 2000],
+    defaultVial: 10, defaultWater: 2, defaultDose: 2000,
+    guide: "../Peptide Guides/Tesamorelin_Peptide_Brief.docx"
+  },
+  {
+    name: "CJC-1295 w/o DAC",
+    vials: [5],
+    waterOptions: [1, 2, 2.5],
+    doses: [100, 200, 300, 500],
+    defaultVial: 5, defaultWater: 2.5, defaultDose: 200,
+    guide: "../Peptide Guides/CJC-1295_No_DAC_Peptide_Brief.docx"
+  },
+  {
+    name: "CJC-1295 w/o DAC + Ipamorelin",
+    vials: [10],
+    waterOptions: [1, 2, 3, 5],
+    doses: [200, 300, 500, 1000],
+    defaultVial: 10, defaultWater: 2, defaultDose: 300,
+    guide: "../Peptide Guides/CJC-1295_Ipamorelin_Peptide_Brief.docx"
+  },
+  {
+    name: "KPV",
+    vials: [10],
+    waterOptions: [1, 2],
+    doses: [500, 1000, 1500],
+    defaultVial: 10, defaultWater: 2, defaultDose: 500,
+    guide: "../Peptide Guides/KPV_Peptide_Brief.docx"
+  }
+];
+
+// ── State ──
+let state = {
+  peptideIdx: 0,
+  syringeML: 0.3,
+  syringeUnits: 30,
+  vialMg: 10,
+  waterML: 1,
+  doseMcg: 2000,
+  vialCustom: false,
+  waterCustom: false,
+  doseCustom: false
+};
+
+// ── Init ──
+function init() {
+  const sel = document.getElementById('peptideSelect');
+  peptides.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  loadPeptide(0);
+}
+
+function onPeptideChange() {
+  loadPeptide(parseInt(document.getElementById('peptideSelect').value));
+}
+
+function loadPeptide(idx) {
+  const p = peptides[idx];
+  state.peptideIdx = idx;
+  state.vialMg = p.defaultVial;
+  state.waterML = p.defaultWater;
+  state.doseMcg = p.defaultDose;
+  state.vialCustom = false;
+  state.waterCustom = false;
+  state.doseCustom = false;
+
+  buildPills('vialGroup', p.vials, 'mg', p.defaultVial, selectVial, 'vialCustomRow');
+  buildPills('waterGroup', p.waterOptions, 'mL', p.defaultWater, selectWater, 'waterCustomRow');
+  buildDosePills('doseGroup', p.doses, p.defaultDose);
+
+  calculate();
+}
+
+function buildPills(containerId, values, unit, defaultVal, clickFn, customRowId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  document.getElementById(customRowId).style.display = 'none';
+
+  values.forEach(v => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (v === defaultVal ? ' active' : '');
+    btn.textContent = v + ' ' + unit;
+    btn.onclick = () => clickFn(v, btn);
+    container.appendChild(btn);
+  });
+
+  // Other button
+  const other = document.createElement('button');
+  other.className = 'pill';
+  other.textContent = 'Other';
+  other.onclick = () => {
+    clearActive(container);
+    other.classList.add('active');
+    document.getElementById(customRowId).style.display = 'flex';
+  };
+  container.appendChild(other);
+}
+
+function buildDosePills(containerId, doses, defaultDose) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  document.getElementById('doseCustomRow').style.display = 'none';
+
+  doses.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (d === defaultDose ? ' active' : '');
+    btn.textContent = formatDose(d);
+    btn.onclick = () => selectDose(d, btn);
+    container.appendChild(btn);
+  });
+
+  const other = document.createElement('button');
+  other.className = 'pill';
+  other.textContent = 'Other';
+  other.onclick = () => {
+    clearActive(container);
+    other.classList.add('active');
+    document.getElementById('doseCustomRow').style.display = 'flex';
+  };
+  container.appendChild(other);
+}
+
+function formatDose(mcg) {
+  if (mcg >= 1000000) return (mcg / 1000000) + ' mg';
+  if (mcg >= 1000) return mcg.toLocaleString() + ' mcg (' + (mcg / 1000) + ' mg)';
+  return mcg + ' mcg';
+}
+
+function clearActive(container) {
+  container.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+}
+
+function selectSyringe(el, ml, units) {
+  document.querySelectorAll('.syringe-opt').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  state.syringeML = ml;
+  state.syringeUnits = units;
+  calculate();
+}
+
+function selectVial(mg, btn) {
+  clearActive(document.getElementById('vialGroup'));
+  btn.classList.add('active');
+  document.getElementById('vialCustomRow').style.display = 'none';
+  state.vialMg = mg;
+  state.vialCustom = false;
+  calculate();
+}
+
+function selectWater(ml, btn) {
+  clearActive(document.getElementById('waterGroup'));
+  btn.classList.add('active');
+  document.getElementById('waterCustomRow').style.display = 'none';
+  state.waterML = ml;
+  state.waterCustom = false;
+  calculate();
+}
+
+function selectDose(mcg, btn) {
+  clearActive(document.getElementById('doseGroup'));
+  btn.classList.add('active');
+  document.getElementById('doseCustomRow').style.display = 'none';
+  state.doseMcg = mcg;
+  state.doseCustom = false;
+  calculate();
+}
+
+function onVialCustom() {
+  const v = parseFloat(document.getElementById('vialCustom').value);
+  if (v > 0) { state.vialMg = v; calculate(); }
+}
+function onWaterCustom() {
+  const v = parseFloat(document.getElementById('waterCustom').value);
+  if (v > 0) { state.waterML = v; calculate(); }
+}
+function onDoseCustom() {
+  const v = parseFloat(document.getElementById('doseCustom').value);
+  if (v > 0) { state.doseMcg = v; calculate(); }
+}
+
+// ── Calculate ──
+function calculate() {
+  const totalMcg = state.vialMg * 1000;
+  const concMcgPerML = totalMcg / state.waterML;
+  const volPerDoseML = state.doseMcg / concMcgPerML;
+  const dosesPerVial = Math.floor(totalMcg / state.doseMcg);
+  const unitsOnSyringe = volPerDoseML * (state.syringeUnits / state.syringeML);
+
+  // Display
+  document.getElementById('resConc').textContent = concMcgPerML.toLocaleString() + ' mcg/mL';
+  document.getElementById('resConcSub').textContent = 'From ' + state.vialMg + ' mg reconstituted with ' + state.waterML + ' mL';
+
+  if (volPerDoseML > state.syringeML) {
+    document.getElementById('resVol').textContent = volPerDoseML.toFixed(2) + ' mL';
+    document.getElementById('resVolSub').innerHTML = '<span style="color:#e63232;">Exceeds syringe capacity!</span>';
+  } else {
+    document.getElementById('resVol').textContent = volPerDoseML.toFixed(2) + ' mL';
+    document.getElementById('resVolSub').textContent = '= ' + Math.round(unitsOnSyringe) + ' units on a U-' + state.syringeUnits + ' syringe';
+  }
+
+  document.getElementById('resDoses').textContent = dosesPerVial;
+
+  // Guide link
+  const guideCard = document.getElementById('guideLink');
+  const p = peptides[state.peptideIdx];
+  if (p.guide) {
+    guideCard.style.display = 'flex';
+    document.getElementById('guideLinkAnchor').href = p.guide;
+    document.getElementById('guideLinkAnchor').textContent = 'Download ' + p.name + ' Research Brief';
+  } else {
+    guideCard.style.display = 'none';
+  }
+
+  // Syringe visual
+  const visual = document.getElementById('syringeVisual');
+  if (volPerDoseML > 0 && volPerDoseML <= state.syringeML) {
+    visual.style.display = 'block';
+    const pct = (volPerDoseML / state.syringeML) * 100;
+
+    document.getElementById('syringeInstruction').innerHTML =
+      'Pull the syringe to <strong>' + Math.round(unitsOnSyringe) + ' units</strong> (' +
+      volPerDoseML.toFixed(2) + ' mL) on a <strong>' + state.syringeML + ' mL syringe</strong> for ' +
+      formatDose(state.doseMcg) + ' of ' + peptides[state.peptideIdx].name;
+
+    document.getElementById('syringeFill').style.width = pct + '%';
+    document.getElementById('syringeMarker').style.left = pct + '%';
+    document.getElementById('markerLabel').textContent = Math.round(unitsOnSyringe);
+
+    // Ticks
+    const tickRow = document.getElementById('tickRow');
+    tickRow.innerHTML = '';
+    const maxU = state.syringeUnits;
+    const step = maxU <= 30 ? 5 : 10;
+    for (let i = 0; i <= maxU; i += step) {
+      const s = document.createElement('span');
+      s.textContent = i;
+      s.style.position = 'absolute';
+      s.style.left = ((i / maxU) * 100) + '%';
+      tickRow.appendChild(s);
+    }
+  } else {
+    visual.style.display = 'none';
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
