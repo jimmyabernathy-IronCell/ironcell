@@ -825,7 +825,6 @@
   .pay-bar.bar-paypal { background: #FFC439 !important; color: #003087 !important; -webkit-appearance: none; }
   .pay-bar.bar-venmo { background: #008CFF !important; color: #fff !important; }
   .pay-bar.bar-zelle { background: #6D1ED4 !important; color: #fff !important; }
-  .pay-bar.bar-cashapp { background: #00D632 !important; color: #fff !important; }
   .checkout-warning {
     background: rgba(196,30,42,0.08);
     border: 1px solid var(--border-red);
@@ -2656,14 +2655,6 @@
           <text x="175" y="145" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="140" fill="#fff" letter-spacing="2">zelle</text>
         </svg>
       </div>
-      <!-- Cash App -->
-      <a class="pay-bar bar-cashapp" href="https://cash.app/$IronCellResearch" target="_blank" onclick="return handlePayment('cashapp')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 512 512" fill="none">
-          <rect width="512" height="512" rx="110" fill="#00D632"/>
-          <path d="M309.47 175.18a122.62 122.62 0 00-55.71-16.56l7.44-37.49a8.59 8.59 0 00-8.44-10.2h-34.3a8.59 8.59 0 00-8.42 6.96l-7.7 38.82c-42.51 5.27-74.3 30.72-74.3 70.48 0 38.89 27.89 56.38 62.14 69.72 28.97 11.52 43.33 18.72 43.33 33.89 0 16.25-14.76 26.32-37.67 26.32a112.6 112.6 0 01-65.51-23.71 8.59 8.59 0 00-12.42 2.1l-17.8 27.09a8.59 8.59 0 001.7 11.26 148.18 148.18 0 0073.04 30.32l-7.3 36.74a8.59 8.59 0 008.44 10.2h34.3a8.59 8.59 0 008.42-6.96l7.55-38.07c48.17-6.73 80.28-34.54 80.28-76.01 0-39.36-27.1-57.24-63.33-71.2-28.06-10.72-43.22-17.82-43.22-32.46 0-12.88 10.96-22.71 33.1-22.71a131.48 131.48 0 0151.42 12.24 8.59 8.59 0 0011.82-3.43l15.25-26.39a8.59 8.59 0 00-2.78-11.24z" fill="#fff"/>
-        </svg>
-        <span style="font-family:'Inter',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:0.5px; color:#fff;">$CashApp</span>
-      </a>
     </div>
 
     <!-- Order Confirmation Screen (hidden by default) -->
@@ -3415,9 +3406,9 @@
       return false;
     }
 
-    // For PayPal, Venmo, Cash App - show redirect popup first
-    var payUrls = { paypal: 'https://paypal.me/IronCellResearch', venmo: 'https://www.venmo.com/u/ironcellresearch', cashapp: 'https://cash.app/$IronCellResearch' };
-    var payNames = { zelle: 'Zelle', venmo: 'Venmo', paypal: 'PayPal', cashapp: 'Cash App' };
+    // For PayPal, Venmo - show redirect popup first
+    var payUrls = { paypal: 'https://paypal.me/IronCellResearch', venmo: 'https://www.venmo.com/u/ironcellresearch' };
+    var payNames = { zelle: 'Zelle', venmo: 'Venmo', paypal: 'PayPal' };
     if (method !== 'zelle' && payUrls[method]) {
       event.preventDefault();
       var redirectOverlay = document.getElementById('paymentRedirectOverlay');
@@ -3440,8 +3431,8 @@
 
   function proceedWithOrder(method, nameVal, emailVal, addressVal, stateVal, zipVal) {
     // Show confirmation screen
-    var payHandles = { zelle: 'jimmy@ironcellresearch.com', venmo: '@IronCellResearch', paypal: 'paypal.me/IronCellResearch', cashapp: '$IronCellResearch' };
-    var payNames = { zelle: 'Zelle', venmo: 'Venmo', paypal: 'PayPal', cashapp: 'Cash App' };
+    var payHandles = { zelle: 'jimmy@ironcellresearch.com', venmo: '@IronCellResearch', paypal: 'paypal.me/IronCellResearch' };
+    var payNames = { zelle: 'Zelle', venmo: 'Venmo', paypal: 'PayPal' };
     document.getElementById('confirmOrderNum').textContent = document.getElementById('orderNumber').textContent;
     document.getElementById('confirmPayMethod').textContent = payNames[method] || method;
     document.getElementById('confirmPayHandle').textContent = payHandles[method] || '';
