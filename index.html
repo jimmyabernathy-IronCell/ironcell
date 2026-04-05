@@ -3514,12 +3514,12 @@
       '&customerName=' + encodeURIComponent(name) +
       '&email=' + encodeURIComponent(email) +
       '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) +
-      '&productPrice=' + encodeURIComponent(subtotalPrice.toFixed(2)) +
+      '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) +
       '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) +
       '&shipping=' + encodeURIComponent(shipping.toFixed(2)) +
       '&status=Pending' +
       '&address=' + encodeURIComponent(address + ', ' + state + ' ' + zip) +
-      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | '));
+      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + (appliedCoupon ? ' | Coupon: ' + appliedCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
     var sheetImg = new Image();
     sheetImg.onload = function() { console.log('Order sent to Google Sheet'); };
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
