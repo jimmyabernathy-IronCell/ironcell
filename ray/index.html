@@ -1741,6 +1741,7 @@
           <option value="79.99">10mg — $79.99</option>
           <option value="89.99">15mg — $89.99</option>
           <option value="99.99">20mg — $99.99</option>
+          <option value="119.99">30mg — $119.99</option>
         </select>
         <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
@@ -2186,6 +2187,34 @@
         </div>
       </div>
     </div>
+    <!-- Hospira Bacteriostatic Water 30ml -->
+    <div class="product-card" data-no-bulk-discount="true" onclick="openModal(22)">
+      <div class="product-img">
+        <span class="product-badge">Supply</span>
+        <img src="bacwater30ml.jpg" alt="Hospira Bacteriostatic Water 30ml" class="product-real-img" loading="lazy">
+      </div>
+      <div class="product-info">
+        <div class="product-name">Hospira Bacteriostatic Water</div>
+        <div class="product-subtitle">Sterile Diluent · Research Supply</div>
+        <div class="product-subtitle" style="font-size:0.85rem; color:#b0b0b0;">30ml</div>
+        <select class="vial-qty-select" onchange="updateVialPriceFlat(this)" onclick="event.stopPropagation()">
+          <option value="1">1 Vial</option>
+          <option value="2">2 Vials</option>
+          <option value="3">3 Vials</option>
+          <option value="4">4 Vials</option>
+          <option value="5">5 Vials</option>
+          <option value="6">6 Vials</option>
+          <option value="7">7 Vials</option>
+          <option value="8">8 Vials</option>
+          <option value="9">9 Vials</option>
+          <option value="10">10 Vials</option>
+        </select>
+        <div class="product-bottom">
+          <span class="product-price">$24.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
 <!-- Bacteriostatic Water -->
     <div class="product-card" onclick="openModal(17)">
       <div class="product-img">
@@ -2489,10 +2518,10 @@
     <div class="cart-suggestions-title">You May Also Need</div>
     <div class="cart-suggestion-item">
       <div class="cart-suggestion-info">
-        <span class="cart-suggestion-name">Bacteriostatic Water</span>
-        <span class="cart-suggestion-price">$9.99</span>
+        <span class="cart-suggestion-name">Hospira Bacteriostatic Water</span>
+        <span class="cart-suggestion-price">$24.99</span>
       </div>
-      <button class="btn-suggestion-add" onclick="addSuggestion('Bacteriostatic Water', 'Bacteriostatic Water \u2014 10ml \u2014 $9.99', '10ml \u2014 $9.99', 9.99)">+ Add</button>
+      <button class="btn-suggestion-add" onclick="addSuggestion('Hospira Bacteriostatic Water', 'Hospira Bacteriostatic Water \u2014 30ml \u2014 $24.99', '30ml \u2014 $24.99', 24.99)">+ Add</button>
     </div>
     <div class="cart-suggestion-item">
       <div class="cart-suggestion-info">
@@ -2804,7 +2833,7 @@
       name: "Tirzepatide",
       subtitle: "Dual GIP/GLP-1 Agonist Injectable",
       desc: "Tirzepatide is a once-weekly injectable medication that combines dual GIP and GLP-1 receptor agonism to support powerful improvements in weight management and metabolic health. By enhancing insulin response, reducing appetite, and slowing gastric emptying, it delivers significant reductions in body weight and blood glucose levels. Approved for type 2 diabetes and chronic weight management, tirzepatide represents a next-generation incretin therapy with strong clinical outcomes across metabolic conditions.",
-      strengths: ["10mg — $79.99", "15mg — $89.99", "20mg — $99.99"],
+      strengths: ["10mg — $79.99", "15mg — $89.99", "20mg — $99.99", "30mg — $119.99"],
       price: "$79.99"
     },
     {
@@ -2947,11 +2976,17 @@
       desc: "Everything you need to get started. Includes 31 Gauge 5/16\" insulin syringes, 10ml Bacteriostatic Water, and alcohol prep pads. A convenient all-in-one bundle for research use.",
       strengths: null,
       price: "$15.99"
+    },
+    {
+      name: "Hospira Bacteriostatic Water",
+      subtitle: "Sterile Diluent · Research Supply · 30ml",
+      desc: "Hospira Bacteriostatic Water for Injection is a sterile, non-pyrogenic preparation of water for injection preserved with 0.9% benzyl alcohol. Commonly used in research settings as a diluent for reconstituting lyophilized (freeze-dried) peptides and compounds prior to use. Supplied in a 30ml multi-dose vial manufactured by Hospira (a Pfizer company).",
+      strengths: null,
+      price: "$24.99"
     }
   ];
 
   let currentModalIndex = null;
-
   function openModal(index) {
     currentModalIndex = index;
     const p = products[index];
@@ -3105,9 +3140,12 @@
         addQty = parseInt(vialSelect.value);
         // Use base price (not the displayed total)
         const basePrice = card.dataset.basePrice ? parseFloat(card.dataset.basePrice) : price;
+        const noBulk = card.dataset.noBulkDiscount === 'true';
         let discount = 0;
-        if (addQty >= 10) discount = 0.25;
-        else if (addQty >= 5) discount = 0.15;
+        if (!noBulk) {
+          if (addQty >= 10) discount = 0.25;
+          else if (addQty >= 5) discount = 0.15;
+        }
 
         // If coupon is applied and user tries bulk vial discount, remove coupon
         if (discount > 0 && appliedCoupon) {
@@ -3124,12 +3162,13 @@
 
       const key = name + (strength ? ' — ' + strength : '');
 
+      const noBulkForKey = card && card.dataset.noBulkDiscount === 'true';
       const existing = cart.find(item => item.key === key);
       if (existing) {
         existing.qty += addQty;
-        existing.price = discountedPrice; existing.vialDiscount = (addQty >= 5);
+        existing.price = discountedPrice; existing.vialDiscount = !noBulkForKey && (addQty >= 5);
       } else {
-        cart.push({ key, name, strength, price: discountedPrice, qty: addQty, vialDiscount: (addQty >= 5) });
+        cart.push({ key, name, strength, price: discountedPrice, qty: addQty, vialDiscount: !noBulkForKey && (addQty >= 5) });
       }
 
       updateCartUI();
@@ -3271,6 +3310,18 @@
     } else {
       discountTag.style.display = 'none';
     }
+  }
+
+  // Flat qty × price, no bulk discount (used for items excluded from bulk pricing).
+  function updateVialPriceFlat(select) {
+    const card = select.closest('.product-card');
+    const priceEl = card.querySelector('.product-price');
+    const qty = parseInt(select.value);
+    if (!card.dataset.basePrice) {
+      card.dataset.basePrice = parseFloat(priceEl.textContent.replace('$', ''));
+    }
+    const basePrice = parseFloat(card.dataset.basePrice);
+    priceEl.textContent = '$' + (basePrice * qty).toFixed(2);
   }
 
   // ─── COUPON SYSTEM ───
