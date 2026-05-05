@@ -1791,6 +1791,10 @@
                 <div class="product-info">
                     <div class="product-name">BPC-157</div>
                     <div class="product-subtitle">Synthetic Pentadecapeptide &bull; 5mg</div>
+        <select class="strength-select" onchange="updatePrice(this)" onclick="event.stopPropagation()">
+          <option value="39.99">5mg — $39.99</option>
+          <option value="49.99">10mg — $49.99</option>
+        </select>
         <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
           <option value="2">2 Vials</option>
@@ -2990,7 +2994,7 @@
             name: "BPC-157",
             subtitle: "Synthetic Pentadecapeptide \u2022 5mg",
             desc: "BPC-157 is a synthetic pentadecapeptide (15-amino acid chain) derived from a protective compound found in human gastric juice. It is supplied as a high-purity lyophilized powder for research purposes only. In preclinical and in vitro studies, researchers investigate its potential mechanisms related to tissue repair, angiogenesis, cytoprotection, anti-inflammatory pathways, and modulation of growth factors across various model systems.",
-            strengths: null,
+            strengths: ["5mg — $39.99", "10mg — $49.99"],
             price: "$39.99"
         },
     {
