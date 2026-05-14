@@ -3832,7 +3832,7 @@
         </div>
       `).join('');
       html += `<div class="checkout-summary-line"><span>Subtotal</span><span>$${subtotalPrice.toFixed(2)}</span></div>`;
-      if (couponDiscount > 0) {
+      if (couponDiscount > 0 && discountAmount > 0) {
         html += `<div class="checkout-summary-line discount"><span>Discount (${appliedCoupon} ${(couponDiscount * 100)}% off)</span><span>-$${discountAmount.toFixed(2)}</span></div>`;
       }
       html += `<div class="checkout-summary-line"><span>Shipping</span><span>$${shipping.toFixed(2)}</span></div>`;
@@ -3945,12 +3945,13 @@
     const address = addressVal;
     const state = stateVal;
     const subtotalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const discountableSubtotal = cart.reduce((sum, item) => item.noCoupon ? sum : sum + (item.price * item.qty), 0);
     const shipping = SHIPPING_FEE;
     const zip = zipVal;
     const taxState = getStateFromZip(zip);
     const taxRate = getTaxRate(zip);
-    const taxAmount = (subtotalPrice - (subtotalPrice * couponDiscount)) * taxRate;
-    const discountAmt = subtotalPrice * couponDiscount;
+    const discountAmt = discountableSubtotal * couponDiscount;
+    const taxAmount = (subtotalPrice - discountAmt) * taxRate;
     const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
 
     const itemsList = cart.map(item =>
@@ -3969,7 +3970,7 @@
         from_name: 'IronCell Research Orders (Ray)',
         name: name,
         email: email,
-        message: `NEW ORDER RECEIVED${appliedCoupon ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + (subtotalPrice * couponDiscount).toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
+        message: `NEW ORDER RECEIVED${(appliedCoupon && discountAmt > 0) ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
       })
     }).then(res => res.json()).then(data => {
       if (data.success) {
@@ -3992,7 +3993,7 @@
       '&shipping=' + encodeURIComponent(shipping.toFixed(2)) +
       '&status=Pending' +
       '&address=' + encodeURIComponent(address + ', ' + state + ' ' + zip) +
-      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + (appliedCoupon ? ' | Coupon: ' + appliedCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
+      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + ((appliedCoupon && discountAmt > 0) ? ' | Coupon: ' + appliedCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
     var sheetImg = new Image();
     sheetImg.onload = function() { console.log('Order sent to Google Sheet'); };
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
