@@ -2583,7 +2583,7 @@
           <option value="10">10 Vials</option>
         </select>
         <div class="product-bottom">
-          <span class="product-price">$24.99</span>
+          <span class="product-price">$27.99</span>
           <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
         </div>
       </div>
@@ -2877,16 +2877,16 @@
     <div class="cart-suggestion-item">
       <div class="cart-suggestion-info">
         <span class="cart-suggestion-name">Hospira Bacteriostatic Water</span>
-        <span class="cart-suggestion-price">$24.99</span>
+        <span class="cart-suggestion-price">$27.99</span>
       </div>
-      <button class="btn-suggestion-add" onclick="addSuggestion('Hospira Bacteriostatic Water', 'Hospira Bacteriostatic Water \u2014 30ml \u2014 $24.99', '30ml \u2014 $24.99', 24.99)">+ Add</button>
+      <button class="btn-suggestion-add" onclick="addSuggestion('Hospira Bacteriostatic Water', 'Hospira Bacteriostatic Water \u2014 30ml \u2014 $27.99', '30ml \u2014 $27.99', 27.99)">+ Add</button>
     </div>
     <div class="cart-suggestion-item">
       <div class="cart-suggestion-info">
-        <span class="cart-suggestion-name">Starter Kit</span>
-        <span class="cart-suggestion-price">$15.99</span>
+        <span class="cart-suggestion-name">Hospira Starter Kit</span>
+        <span class="cart-suggestion-price">$29.99</span>
       </div>
-      <button class="btn-suggestion-add" onclick="addSuggestion('Starter Kit', 'Starter Kit', null, 15.99)">+ Add</button>
+      <button class="btn-suggestion-add" onclick="addSuggestion('Hospira Starter Kit', 'Hospira Starter Kit', null, 29.99)">+ Add</button>
     </div>
   </div>
   <div class="cart-footer">
@@ -3340,7 +3340,7 @@
       subtitle: "Sterile Diluent · Research Supply · 30ml",
       desc: "Hospira Bacteriostatic Water for Injection is a sterile, non-pyrogenic preparation of water for injection preserved with 0.9% benzyl alcohol. Commonly used in research settings as a diluent for reconstituting lyophilized (freeze-dried) peptides and compounds prior to use. Supplied in a 30ml multi-dose vial manufactured by Hospira (a Pfizer company).",
       strengths: null,
-      price: "$24.99"
+      price: "$27.99"
     },
     {
       name: "SLU-PP-332 5mg",
@@ -4058,6 +4058,11 @@
       emailInput.placeholder = 'Please enter a valid email';
       return;
     }
+    // Log subscriber to the Newsletter Subscribers tracker tab (fire-and-forget GET, no CORS)
+    try {
+      const trackImg = new Image();
+      trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);
+    } catch (e) {}
     fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
