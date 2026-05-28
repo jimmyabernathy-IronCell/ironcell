@@ -3529,7 +3529,7 @@
   }
 
   function generateOrderNumber() {
-    return 'TT' + Math.floor(100000 + Math.random() * 900000).toString();
+    return 'MV' + Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   function getSelectedStrength(card) {
@@ -4026,8 +4026,7 @@
       body: JSON.stringify({
         access_key: '603b0822-9385-4831-ba22-13f82778ebab',
         to: 'orders@ironcellresearch.com',
-        cc: 'ballersnutrition@gmail.com',
-        ccemail: 'josiahdnovak@gmail.com',
+        ccemail: 'ballersnutrition@gmail.com',
         subject: `New Order #${orderNum} - MVP`,
         from_name: 'MVP Orders',
         name: name,
