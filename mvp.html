@@ -1861,6 +1861,10 @@
       <div class="product-info">
         <div class="product-name">MOTS-c</div>
         <div class="product-subtitle">Mitochondrial Peptide · 10mg</div>
+        <select class="strength-select" onchange="updatePrice(this)" onclick="event.stopPropagation()">
+          <option value="44.99">10mg — $44.99</option>
+          <option value="69.99">20mg — $69.99</option>
+        </select>
         <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
           <option value="2">2 Vials</option>
@@ -2103,15 +2107,15 @@
       </div>
     </div>
         <!-- SLU-PP-332 5mg -->
-    <div class="product-card" onclick="openModal(23)">
+    <div class="product-card">
       <div class="product-img">
-        <span class="product-badge">New</span>
-        <img src="p-slu-pp-332-5mg.jpg" alt="SLU-PP-332 5mg" class="product-real-img">
+        <span class="product-badge" style="background:#666;color:#fff;">Sold Out</span>
+        <img src="p-slu-pp-332-5mg.jpg" alt="SLU-PP-332 5mg" class="product-real-img" style="opacity:0.5;">
       </div>
       <div class="product-info">
         <div class="product-name">SLU-PP-332 5mg</div>
         <div class="product-subtitle">Exercise Mimetic · Injectable · 5mg</div>
-        <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
+        <select class="vial-qty-select" disabled style="display:none;" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
           <option value="2">2 Vials</option>
           <option value="3">3 Vials</option>
@@ -2126,7 +2130,7 @@
         <div class="vial-discount-tag" style="display:none;"></div>
         <div class="product-bottom">
           <span class="product-price">$59.99</span>
-          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+          <span class="btn-sold-out">Sold Out</span>
         </div>
       </div>
     </div>
@@ -3203,7 +3207,7 @@
       name: "MOTS-c",
       subtitle: "Mitochondrial Peptide · 10mg",
       desc: "MOTS-c is a mitochondria-derived peptide studied for its potential role in supporting metabolic balance, cellular energy production, and overall physiological resilience. By influencing pathways related to glucose utilization and mitochondrial function, MOTS-c is explored in research settings for its ability to enhance exercise performance, promote metabolic flexibility, and support healthy aging processes. Its unique origin and broad metabolic activity have made it a notable peptide of interest in longevity and performance science.",
-      strengths: null,
+      strengths: ["10mg — $44.99", "20mg — $69.99"],
       price: "$44.99"
     },
     {
