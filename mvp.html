@@ -3837,6 +3837,13 @@
   }
 
   function applyRetaCode(code, input, msg) {
+    // Gate 0: must be Friday (local time, 0=Sun ... 5=Fri ... 6=Sat)
+    if (new Date().getDay() !== 5) {
+      appliedCoupon = null; couponDiscount = 0; retaFlatPerVial = 0;
+      msg.textContent = 'RETA10 is only valid on Friday.';
+      msg.className = 'coupon-msg error';
+      return;
+    }
     // Gate 1: Retatrutide 10mg must be in cart
     const retaQty = cart.reduce((s, item) =>
       (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
