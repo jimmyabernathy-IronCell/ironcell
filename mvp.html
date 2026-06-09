@@ -3788,6 +3788,7 @@
 
   // ─── COUPON SYSTEM ───
   const COUPONS = {
+    'RETA10': 0,
     'MERV20': 0.20,
     'JIMMY20': 0.20,
     'BROCK20': 0.20,
@@ -3802,6 +3803,7 @@
   };
   let appliedCoupon = null;
   let couponDiscount = 0;
+  let retaFlatPerVial = 0;
 
   function applyWelcomeCode(code, input, msg) {
     var emailEl = document.getElementById('custEmail');
@@ -3834,6 +3836,48 @@
     document.body.appendChild(s);
   }
 
+  function applyRetaCode(code, input, msg) {
+    // Gate 1: Retatrutide 10mg must be in cart
+    const retaQty = cart.reduce((s, item) =>
+      (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+    if (retaQty === 0) {
+      appliedCoupon = null; couponDiscount = 0; retaFlatPerVial = 0;
+      msg.textContent = 'RETA10 requires Retatrutide 10mg in your cart.';
+      msg.className = 'coupon-msg error';
+      return;
+    }
+    // Gate 2: email entered
+    var emailEl = document.getElementById('custEmail');
+    var custEmail = emailEl ? emailEl.value.trim() : '';
+    if (!custEmail || custEmail.indexOf('@') < 0) {
+      msg.textContent = 'Enter your email above first to claim this one-time code.';
+      msg.className = 'coupon-msg error';
+      return;
+    }
+    msg.textContent = 'Checking your code…';
+    msg.className = 'coupon-msg';
+    function applyIt() {
+      appliedCoupon = code;
+      couponDiscount = 0;
+      retaFlatPerVial = 30;
+      msg.textContent = '✓ Code "RETA10" applied — $30 off each Retatrutide 10mg vial!';
+      msg.className = 'coupon-msg success';
+      input.disabled = true;
+      if (typeof buildCheckoutSummary === 'function') buildCheckoutSummary();
+    }
+    window.__retaCb = function(resp) {
+      if (resp && resp.used) {
+        appliedCoupon = null; couponDiscount = 0; retaFlatPerVial = 0;
+        msg.textContent = 'RETA10 has already been used on ' + custEmail + '.';
+        msg.className = 'coupon-msg error';
+      } else { applyIt(); }
+    };
+    var s = document.createElement('script');
+    s.onerror = function(){ applyIt(); };
+    s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();
+    document.body.appendChild(s);
+  }
+
   function applyCoupon() {
     const input = document.getElementById('couponCode');
     const msg = document.getElementById('couponMsg');
@@ -3857,6 +3901,7 @@
 
     if (COUPONS[code] !== undefined) {
       if (code === 'WELCOME20') { applyWelcomeCode(code, input, msg); return; }
+      if (code === 'RETA10') { applyRetaCode(code, input, msg); return; }
       appliedCoupon = code;
       couponDiscount = COUPONS[code];
       msg.textContent = '✓ Code "' + code + '" applied — ' + (couponDiscount * 100) + '% off!';
@@ -3877,6 +3922,7 @@
     // Reset coupon state
     appliedCoupon = null;
     couponDiscount = 0;
+    retaFlatPerVial = 0;
     const couponInput = document.getElementById('couponCode');
     const couponMsg = document.getElementById('couponMsg');
     if (couponInput) { couponInput.value = ''; couponInput.disabled = false; }
@@ -3898,7 +3944,12 @@
       const zip = (document.getElementById('custZip').value || '').trim();
       const taxState = getStateFromZip(zip);
       const taxRate = getTaxRate(zip);
-      const discountAmount = discountableSubtotal * couponDiscount;
+      let discountAmount = discountableSubtotal * couponDiscount;
+      if (appliedCoupon === 'RETA10' && retaFlatPerVial > 0) {
+        const retaQty = cart.reduce((s, item) =>
+          (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+        discountAmount = retaFlatPerVial * retaQty;
+      }
       const taxAmount = (subtotalPrice - discountAmount) * taxRate;
       const discountedSubtotal = subtotalPrice - discountAmount;
       const grandTotal = discountedSubtotal + shipping + taxAmount;
@@ -3910,8 +3961,11 @@
         </div>
       `).join('');
       html += `<div class="checkout-summary-line"><span>Subtotal</span><span>$${subtotalPrice.toFixed(2)}</span></div>`;
-      if (couponDiscount > 0 && discountAmount > 0) {
-        html += `<div class="checkout-summary-line discount"><span>Discount (${appliedCoupon} ${(couponDiscount * 100)}% off)</span><span>-$${discountAmount.toFixed(2)}</span></div>`;
+      if (discountAmount > 0) {
+        const discLabel = (appliedCoupon === 'RETA10')
+          ? `Discount (RETA10 — $30 off per Retatrutide 10mg)`
+          : `Discount (${appliedCoupon} ${(couponDiscount * 100)}% off)`;
+        html += `<div class="checkout-summary-line discount"><span>${discLabel}</span><span>-$${discountAmount.toFixed(2)}</span></div>`;
       }
       html += `<div class="checkout-summary-line"><span>Shipping</span><span>$${shipping.toFixed(2)}</span></div>`;
       html += `<div class="checkout-summary-line"><span>Tax${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ' (enter zip for estimate)'}</span><span>$${taxAmount.toFixed(2)}</span></div>`;
@@ -4027,7 +4081,12 @@
     const zip = zipVal;
     const taxState = getStateFromZip(zip);
     const taxRate = getTaxRate(zip);
-    const discountAmt = discountableSubtotal * couponDiscount;
+    let discountAmt = discountableSubtotal * couponDiscount;
+    if (appliedCoupon === 'RETA10' && retaFlatPerVial > 0) {
+      const retaQty = cart.reduce((s, item) =>
+        (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+      discountAmt = retaFlatPerVial * retaQty;
+    }
     const taxAmount = (subtotalPrice - discountAmt) * taxRate;
     const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
 
