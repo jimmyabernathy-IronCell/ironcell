@@ -3176,8 +3176,18 @@
   // Update price when strength is changed
   function updatePrice(select) {
     const price = select.value;
-    const priceEl = select.closest('.product-info').querySelector('.product-price');
+    const card = select.closest('.product-card');
+    const priceEl = card.querySelector('.product-price');
     priceEl.textContent = '$' + price;
+    // Strength changed — invalidate the cached basePrice so vial-qty discount
+    // and Add-to-Cart use the NEW strength's price, not the stale one.
+    card.dataset.basePrice = price;
+    // Also reset the vial quantity dropdown back to 1 so the displayed total
+    // matches the new strength (otherwise old qty × old basePrice was shown).
+    const vialSelect = card.querySelector('.vial-qty-select');
+    if (vialSelect) vialSelect.value = '1';
+    const discountTag = card.querySelector('.vial-discount-tag');
+    if (discountTag) discountTag.style.display = 'none';
   }
 
   // Product Data
