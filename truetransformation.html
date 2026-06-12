@@ -3808,7 +3808,7 @@
     var emailEl = document.getElementById('custEmail');
     var custEmail = emailEl ? emailEl.value.trim() : '';
     if (!custEmail || custEmail.indexOf('@') < 0) {
-      msg.textContent = 'Enter your email above first to claim your one-time code.';
+      msg.textContent = 'Enter your email below first to claim your one-time code.';
       msg.className = 'coupon-msg error';
       return;
     }
@@ -3856,7 +3856,7 @@
     var emailEl = document.getElementById('custEmail');
     var custEmail = emailEl ? emailEl.value.trim() : '';
     if (!custEmail || custEmail.indexOf('@') < 0) {
-      msg.textContent = 'Enter your email above first to claim this one-time code.';
+      msg.textContent = 'Enter your email below first to claim this one-time code.';
       msg.className = 'coupon-msg error';
       return;
     }
