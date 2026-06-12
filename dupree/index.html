@@ -3862,7 +3862,7 @@
     }
     // Gate 1: Retatrutide 10mg must be in cart
     const retaQty = cart.reduce((s, item) =>
-      (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+      (item.name === 'Retatrutide' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
     if (retaQty === 0) {
       appliedCoupon = null; couponDiscount = 0; retaFlatPerVial = 0;
       msg.textContent = 'RETA10 requires Retatrutide 10mg in your cart.';
@@ -3971,7 +3971,7 @@
       let discountAmount = discountableSubtotal * couponDiscount;
       if (appliedCoupon === 'RETA10' && retaFlatPerVial > 0) {
         const retaQty = cart.reduce((s, item) =>
-          (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+          (item.name === 'Retatrutide' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
         discountAmount = retaFlatPerVial * retaQty;
       }
       const taxAmount = (subtotalPrice - discountAmount) * taxRate;
@@ -4114,7 +4114,7 @@
     let discountAmt = discountableSubtotal * couponDiscount;
     if (appliedCoupon === 'RETA10' && retaFlatPerVial > 0) {
       const retaQty = cart.reduce((s, item) =>
-        (item.name === 'Retatrutide' && item.strength === '10mg') ? s + item.qty : s, 0);
+        (item.name === 'Retatrutide' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
       discountAmt = retaFlatPerVial * retaQty;
     }
     const taxAmount = (subtotalPrice - discountAmt) * taxRate;
