@@ -3967,6 +3967,7 @@
     'CHEL20': 0.20,
     'MVP20': 0.20,
     'WELCOME20': 0.20,
+    'FATHERSDAY25': 0.25,
     'TTSHRED20': 0.20,
     'RAY20': 0.20,
     'DUPREE20': 0.20,
@@ -4077,9 +4078,31 @@
       return;
     }
 
+    // Block coupon if any cart item is a pill product
+    const PILL_PRODUCTS = ['MK677','Tesofensine','Dihexa'];
+    const hasPill = cart.some(item => PILL_PRODUCTS.indexOf(item.name) >= 0);
+    if (hasPill) {
+      appliedCoupon = null;
+      couponDiscount = 0;
+      msg.textContent = 'Coupon codes cannot be applied to pill products (MK677, Tesofensine, Dihexa).';
+      msg.className = 'coupon-msg error';
+      return;
+    }
+
     if (COUPONS[code] !== undefined) {
       if (code === 'WELCOME20') { applyWelcomeCode(code, input, msg); return; }
       if (code === 'RETA10') { applyRetaCode(code, input, msg); return; }
+      if (code === 'FATHERSDAY25') {
+        var now = new Date();
+        var start = new Date(2026, 5, 20);  // Sat Jun 20 2026 00:00
+        var end   = new Date(2026, 5, 23);  // active through Mon Jun 22 (exclusive Tue Jun 23)
+        if (now < start || now >= end) {
+          appliedCoupon = null; couponDiscount = 0;
+          msg.textContent = 'FATHERSDAY25 promotion has ended.';
+          msg.className = 'coupon-msg error';
+          return;
+        }
+      }
       appliedCoupon = code;
       couponDiscount = COUPONS[code];
       msg.textContent = '✓ Code "' + code + '" applied — ' + (couponDiscount * 100) + '% off!';
