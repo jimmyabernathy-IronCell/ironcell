@@ -2596,16 +2596,15 @@
     <!-- SLU-PP332 -->
     <div class="product-card">
       <div class="product-img">
-        <span class="product-badge" style="background:#666;color:#fff;">Sold Out</span>
-        <img src="p-slu-pp-332.jpg" alt="SLU-PP332" class="product-real-img" style="opacity:0.5;">
+        <img src="p-slu-pp-332.jpg" alt="SLU-PP332" class="product-real-img">
       </div>
       <div class="product-info">
         <div class="product-name">SLU-PP332</div>
-        <div class="product-subtitle">Exercise Mimetic · 250mcg · 100 Pills</div>
+        <div class="product-subtitle">Exercise Mimetic · 500mcg · 100 Pills</div>
         <div class="no-coupon-tag">Excluded from Discounts</div>
         <div class="product-bottom">
-          <span class="product-price">$99.99</span>
-          <span class="btn-sold-out">Sold Out</span>
+          <span class="product-price">$129.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
         </div>
       </div>
     </div>
@@ -4063,12 +4062,12 @@
     }
 
     // Block coupon if any cart item is a pill product
-    const PILL_PRODUCTS = ['MK677','Tesofensine','Dihexa'];
+    const PILL_PRODUCTS = ['MK677','Tesofensine','Dihexa','SLU-PP332'];
     const hasPill = cart.some(item => PILL_PRODUCTS.indexOf(item.name) >= 0);
     if (hasPill) {
       appliedCoupon = null;
       couponDiscount = 0;
-      msg.textContent = 'Coupon codes cannot be applied to pill products (MK677, Tesofensine, Dihexa).';
+      msg.textContent = 'Coupon codes cannot be applied to pill products (MK677, Tesofensine, Dihexa, SLU-PP332).';
       msg.className = 'coupon-msg error';
       return;
     }
