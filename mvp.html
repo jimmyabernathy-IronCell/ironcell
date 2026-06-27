@@ -3191,7 +3191,6 @@
       <div style="background:rgba(196,30,42,0.08); border:1px solid rgba(196,30,42,0.2); border-radius:10px; padding:16px; margin-bottom:24px; font-size:0.85rem; color:var(--text-secondary); text-align:left;">
         You will receive a confirmation email within <strong style="color:var(--text-primary);">4-6 hours</strong> once payment is verified. Your order will not be processed until funds have cleared.
       </div>
-      <button onclick="closeCheckout(); cart=[]; renderCart();" style="background:var(--red-primary); color:#fff; border:none; border-radius:8px; padding:14px 36px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.9rem; letter-spacing:1px; cursor:pointer; text-transform:uppercase; transition:var(--transition);">Done</button>
     </div>
   </div>
 </div>
@@ -4255,6 +4254,9 @@
       formElements[i].style.display = 'none';
     }
     document.getElementById('orderConfirmation').style.display = 'block';
+    var _cc = document.querySelector('.checkout-content'); if (_cc) _cc.scrollTop = 0;
+    var _cm = document.querySelector('.checkout-modal') || document.getElementById('checkoutModal'); if (_cm) _cm.scrollTop = 0;
+    document.getElementById('orderConfirmation').scrollIntoView({block:'start', behavior:'smooth'});
 
     const orderNum = document.getElementById('orderNumber').textContent;
 
