@@ -4310,7 +4310,7 @@
     ).join('\n');
 
     // Send order notification via Web3Forms API
-    navigator.sendBeacon('https://api.web3forms.com/submit', new Blob([JSON.stringify({
+    fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
         access_key: '603b0822-9385-4831-ba22-13f82778ebab',
         to: 'orders@ironcellresearch.com',
         ccemail: 'dupreecalfee@yahoo.com',
@@ -4319,7 +4319,7 @@
         name: name,
         email: email,
         message: `NEW ORDER RECEIVED${(appliedCoupon && discountAmt > 0) ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
-      })], {type:'application/json'}));
+      }), keepalive:true}).catch(function(){});
 
     // Send order to Google Sheets tracker (GET request via Image pixel to avoid CORS)
     var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' +
@@ -4355,13 +4355,13 @@
       const trackImg = new Image();
       trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);
     } catch (e) {}
-    navigator.sendBeacon('https://api.web3forms.com/submit', new Blob([JSON.stringify({
+    fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
         access_key: '603b0822-9385-4831-ba22-13f82778ebab',
         subject: 'New Newsletter Subscriber - IronCell Research',
         from_name: 'IronCell Research Newsletter',
         subscriber_email: email,
         message: `New newsletter subscriber:\n\nEmail: ${email}`
-      })], {type:'application/json'}));
+      }), keepalive:true}).catch(function(){});
   }
 
   // Age Gate
