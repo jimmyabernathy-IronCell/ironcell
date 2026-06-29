@@ -3978,6 +3978,7 @@
     'MVP20': 0.20,
     'WELCOME20': 0.20,
     'FATHERSDAY25': 0.25,
+    'FREEDOM25': 0.25,
     'TTSHRED20': 0.20,
     'RAY20': 0.20,
     'DUPREE20': 0.20,
@@ -4109,6 +4110,17 @@
         if (now < start || now >= end) {
           appliedCoupon = null; couponDiscount = 0;
           msg.textContent = 'FATHERSDAY25 promotion has ended.';
+          msg.className = 'coupon-msg error';
+          return;
+        }
+      }
+      if (code === 'FREEDOM25') {
+        var now = new Date();
+        var start = new Date(2026, 6, 1);  // Wed Jul 1 2026 00:00 (month index 6 = July)
+        var end   = new Date(2026, 6, 6);  // active through Sun Jul 5 (exclusive Mon Jul 6)
+        if (now < start || now >= end) {
+          appliedCoupon = null; couponDiscount = 0;
+          msg.textContent = 'FREEDOM25 promotion has ended.';
           msg.className = 'coupon-msg error';
           return;
         }
