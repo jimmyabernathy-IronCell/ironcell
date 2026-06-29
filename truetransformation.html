@@ -2625,10 +2625,10 @@
       </div>
     </div>
     <!-- MK677 -->
-    <div class="product-card" onclick="openModal(30)">
+    <div class="product-card">
       <div class="product-img">
-        <span class="product-badge">New</span>
-        <img src="p-mk677.jpg" alt="MK677" class="product-real-img">
+        <span class="product-badge" style="background:#666;color:#fff;">Sold Out</span>
+        <img src="p-mk677.jpg" alt="MK677" class="product-real-img" style="opacity:0.5;">
       </div>
       <div class="product-info">
         <div class="product-name">MK677</div>
@@ -2636,7 +2636,7 @@
         <div class="no-coupon-tag">Excluded from Discounts</div>
         <div class="product-bottom">
           <span class="product-price">$99.99</span>
-          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+          <span class="btn-sold-out">Sold Out</span>
         </div>
       </div>
     </div>
@@ -4346,6 +4346,17 @@
         subscriber_email: email,
         message: `New newsletter subscriber:\n\nEmail: ${email}`
       }), keepalive:true}).catch(function(){});
+
+    // Immediate optimistic UI feedback so customers see confirmation
+    emailInput.value = '';
+    emailInput.placeholder = 'Subscribed! Check your inbox.';
+    emailInput.style.borderColor = '#1a7a2e';
+    emailInput.disabled = true;
+    setTimeout(function() {
+      emailInput.placeholder = 'Enter your email address';
+      emailInput.style.borderColor = '';
+      emailInput.disabled = false;
+    }, 4000);
   }
 
   // Age Gate
