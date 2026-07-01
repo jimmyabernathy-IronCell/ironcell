@@ -3069,7 +3069,9 @@
       <label>Phone Number <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">(optional)</span></label>
       <input type="tel" id="custPhone" placeholder="(555) 123-4567">
       <label>Shipping Address</label>
-      <textarea id="custAddress" placeholder="Street address, city"></textarea>
+      <textarea id="custAddress" placeholder="Street address"></textarea>
+      <label>City</label>
+      <input type="text" id="custCity" placeholder="City">
 <div style="display:flex;gap:10px;">
       <div style="flex:1;">
         <label>State</label>
@@ -4236,15 +4238,18 @@
     const emailVal = document.getElementById('custEmail').value.trim();
     const phoneVal = document.getElementById('custPhone').value.trim();
     const addressVal = document.getElementById('custAddress').value.trim();
+    const _cityEl = document.getElementById('custCity');
+    const cityVal = (_cityEl && _cityEl.value || '').trim();
     const stateVal = document.getElementById('custState').value;
     const zipVal = document.getElementById('custZip').value.trim();
 
-    if (!nameVal || !emailVal || !addressVal || !stateVal || !zipVal) {
+    if (!nameVal || !emailVal || !addressVal || !cityVal || !stateVal || !zipVal) {
       event.preventDefault();
       var missing = [];
       if (!nameVal) missing.push('Full Name');
       if (!emailVal) missing.push('Email');
       if (!addressVal) missing.push('Address');
+      if (!cityVal) missing.push('City');
       if (!stateVal) missing.push('State');
       if (!zipVal) missing.push('Zip Code');
       alert('Please fill out the following before selecting a payment method:\n\n' + missing.join('\n'));
@@ -4262,7 +4267,7 @@
       document.getElementById('redirectConfirmBtn').onclick = function() {
         redirectOverlay.style.display = 'none';
         window.open(payUrls[method], '_blank');
-        proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, stateVal, zipVal);
+        proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, cityVal, stateVal, zipVal);
       };
       document.getElementById('redirectCancelBtn').onclick = function() {
         redirectOverlay.style.display = 'none';
@@ -4270,11 +4275,11 @@
       return false;
     }
 
-    proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, stateVal, zipVal);
+    proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, cityVal, stateVal, zipVal);
     return (method !== 'zelle');
   }
 
-  function proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, stateVal, zipVal) {
+  function proceedWithOrder(method, nameVal, emailVal, phoneVal, addressVal, cityVal, stateVal, zipVal) {
     // Show confirmation screen
     var payHandles = { zelle: 'jimmy@ironcellresearch.com', venmo: '@IronCellResearch', paypal: 'paypal.me/IronCellResearch' };
     var payNames = { zelle: 'Zelle', venmo: 'Venmo', paypal: 'PayPal' };
@@ -4308,6 +4313,7 @@
     const email = emailVal;
     const phone = phoneVal || '';
     const address = addressVal;
+    const city = cityVal;
     const state = stateVal;
     const subtotalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     const discountableSubtotal = cart.reduce((sum, item) => item.noCoupon ? sum : sum + (item.price * item.qty), 0);
@@ -4339,7 +4345,7 @@
         from_name: 'IronCell Research Orders (Dupree)',
         name: name,
         email: email,
-        message: `NEW ORDER RECEIVED${(appliedCoupon && discountAmt > 0) ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
+        message: `NEW ORDER RECEIVED${(appliedCoupon && discountAmt > 0) ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${city}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
       }), keepalive:true}).catch(function(){});
 
     // Send order to Google Sheets tracker (GET request via Image pixel to avoid CORS)
@@ -4354,7 +4360,7 @@
       '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) +
       '&shipping=' + encodeURIComponent(shipping.toFixed(2)) +
       '&coupon=' + encodeURIComponent(appliedCoupon || '') +
-      '&address=' + encodeURIComponent(address + ', ' + state + ' ' + zip) +
+      '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) +
       '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + ((appliedCoupon && discountAmt > 0) ? ' | Coupon: ' + appliedCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
     var sheetImg = new Image();
     sheetImg.onload = function() { console.log('Order sent to Google Sheet'); };
