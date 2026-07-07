@@ -1660,7 +1660,7 @@
   <canvas id="sparkCanvas" class="spark-canvas"></canvas>
   <div class="hero-content">
     <div class="hero-tagline">Precision &nbsp;•&nbsp; Purity &nbsp;•&nbsp; Power</div>
-    <img src="../p-ironcell-logo-flag.webp" alt="IronCell Research" class="hero-logo-img">
+    <img src="../p-ironcell-logo.webp" alt="IronCell Research" class="hero-logo-img">
     <h1>Life-Changing <em>Research</em> Compounds</h1>
     <p class="hero-sub">IronCell Research is your trusted partner for high-quality, third-party verified research compounds. Every batch tested. Every result published.</p>
 
@@ -1859,6 +1859,34 @@
         <div class="vial-discount-tag" id="vialDiscount11" style="display:none;"></div>
         <div class="product-bottom">
           <span class="product-price">$39.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    <!-- ARA-290 -->
+    <div class="product-card" onclick="openModal(44)">
+      <div class="product-img">
+        <span class="product-badge">New</span>
+        <img src="../p-ara-290.jpg" alt="ARA-290" class="product-real-img">
+      </div>
+      <div class="product-info">
+        <div class="product-name">ARA-290</div>
+        <div class="product-subtitle">Cytoprotective Peptide &bull; 10mg</div>
+        <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
+          <option value="1">1 Vial</option>
+          <option value="2">2 Vials</option>
+          <option value="3">3 Vials</option>
+          <option value="4">4 Vials</option>
+          <option value="5">5 Vials — 15% OFF</option>
+          <option value="6">6 Vials — 15% OFF</option>
+          <option value="7">7 Vials — 15% OFF</option>
+          <option value="8">8 Vials — 15% OFF</option>
+          <option value="9">9 Vials — 15% OFF</option>
+          <option value="10">10+ Vials — 25% OFF</option>
+        </select>
+        <div class="vial-discount-tag" style="display:none;"></div>
+        <div class="product-bottom">
+          <span class="product-price">$69.99</span>
           <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
         </div>
       </div>
@@ -2180,6 +2208,34 @@
         </div>
       </div>
     </div>
+    <!-- PT-141 -->
+    <div class="product-card" onclick="openModal(43)">
+      <div class="product-img">
+        <span class="product-badge">New</span>
+        <img src="../p-pt-141.jpg" alt="PT-141" class="product-real-img">
+      </div>
+      <div class="product-info">
+        <div class="product-name">PT-141</div>
+        <div class="product-subtitle">Melanocortin Analog &bull; 10mg</div>
+        <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
+          <option value="1">1 Vial</option>
+          <option value="2">2 Vials</option>
+          <option value="3">3 Vials</option>
+          <option value="4">4 Vials</option>
+          <option value="5">5 Vials — 15% OFF</option>
+          <option value="6">6 Vials — 15% OFF</option>
+          <option value="7">7 Vials — 15% OFF</option>
+          <option value="8">8 Vials — 15% OFF</option>
+          <option value="9">9 Vials — 15% OFF</option>
+          <option value="10">10+ Vials — 25% OFF</option>
+        </select>
+        <div class="vial-discount-tag" style="display:none;"></div>
+        <div class="product-bottom">
+          <span class="product-price">$59.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
         <!-- SLU-PP-332 5mg -->
     <div class="product-card" onclick="openModal(23)">
       <div class="product-img">
@@ -2403,6 +2459,34 @@
         <div class="vial-discount-tag" style="display:none;"></div>
         <div class="product-bottom">
           <span class="product-price">$59.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    <!-- Sermorelin -->
+    <div class="product-card" onclick="openModal(42)">
+      <div class="product-img">
+        <span class="product-badge">New</span>
+        <img src="../p-sermorelin.jpg" alt="Sermorelin" class="product-real-img">
+      </div>
+      <div class="product-info">
+        <div class="product-name">Sermorelin</div>
+        <div class="product-subtitle">GHRH Analog &bull; GH Secretagogue &bull; 10mg</div>
+        <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
+          <option value="1">1 Vial</option>
+          <option value="2">2 Vials</option>
+          <option value="3">3 Vials</option>
+          <option value="4">4 Vials</option>
+          <option value="5">5 Vials — 15% OFF</option>
+          <option value="6">6 Vials — 15% OFF</option>
+          <option value="7">7 Vials — 15% OFF</option>
+          <option value="8">8 Vials — 15% OFF</option>
+          <option value="9">9 Vials — 15% OFF</option>
+          <option value="10">10+ Vials — 25% OFF</option>
+        </select>
+        <div class="vial-discount-tag" style="display:none;"></div>
+        <div class="product-bottom">
+          <span class="product-price">$79.99</span>
           <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
         </div>
       </div>
@@ -3617,6 +3701,27 @@
       desc: "SLU-PP332 is a research-grade small molecule that activates ERRα (estrogen-related receptor alpha), a key transcription factor regulating mitochondrial biogenesis, fatty acid oxidation, and aerobic metabolism. Studied as an exercise mimetic for its potential to replicate molecular benefits of physical exercise at the cellular level — including increased oxidative capacity and metabolic markers — in preclinical research models. Supplied as 500mcg oral capsules, 100 pills per bottle. For research use only — not for human consumption.",
       strengths: null,
       price: "$129.99"
+    },
+    {
+      name: "Sermorelin",
+      subtitle: "GHRH Analog · GH Secretagogue · 10mg",
+      desc: "Sermorelin is a synthetic peptide analog of the first 29 amino acids of endogenous growth hormone-releasing hormone (GHRH). Studied in preclinical and clinical research for its ability to stimulate pituitary release of growth hormone (GH) and downstream IGF-1 elevation. Investigated for effects on sleep architecture, body composition, and endocrine axis modulation in research models. Supplied as a 10mg lyophilized vial for laboratory research use only.",
+      strengths: null,
+      price: "$79.99"
+    },
+    {
+      name: "PT-141",
+      subtitle: "Melanocortin Analog · 10mg",
+      desc: "PT-141 (Bremelanotide) is a synthetic cyclic heptapeptide analog of alpha-MSH that acts as a non-selective agonist at melanocortin receptors, notably MC3R and MC4R in the central nervous system. Studied in preclinical and clinical research settings for its effects on sexual arousal pathways, energy homeostasis, and inflammatory signaling. Supplied as a 10mg lyophilized vial for laboratory research use only.",
+      strengths: null,
+      price: "$59.99"
+    },
+    {
+      name: "ARA-290",
+      subtitle: "Cytoprotective Peptide · 10mg",
+      desc: "ARA-290 (Cibinetide) is a synthetic 11-amino acid peptide derived from the helix-B domain of erythropoietin. It selectively activates the innate repair receptor (IRR), distinct from the classical erythropoietic receptor, and has been studied in research models for tissue-protective, anti-inflammatory, and neuroregenerative properties — without affecting red blood cell production. Supplied as a 10mg lyophilized vial for laboratory research use only.",
+      strengths: null,
+      price: "$69.99"
     }
   ];
 
