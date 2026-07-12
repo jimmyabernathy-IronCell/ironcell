@@ -4286,8 +4286,9 @@
     const summary = document.getElementById('checkoutSummary');
     const orderNum = document.getElementById('orderNumber');
 
-    // Generate order number
-    orderNum.textContent = generateOrderNumber();
+    // Generate order number — RAY20 coupon on main site gets RS_ prefix so Ray is credited on Site Summary
+    const _affiliatePrefix = (appliedCoupon === 'RAY20') ? 'RS_' : '';
+    orderNum.textContent = _affiliatePrefix + generateOrderNumber();
 
     // Build summary with shipping + tax
     buildCheckoutSummary = function() {
