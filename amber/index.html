@@ -4238,10 +4238,10 @@
       return;
     }
 
-    // Detect pills in cart — coupon still applies, but only to non-pill items.
-    // Pills are already tagged noCoupon:true so discountableSubtotal excludes them.
-    const PILL_PRODUCTS = ['MK677','Tesofensine','Dihexa','SLU-PP332','BPC-157 Oral'];
-    const hasPill = cart.some(item => PILL_PRODUCTS.indexOf(item.name) >= 0);
+    // Detect items excluded from all discounts (pills, Gen10, etc.)
+    // These are already tagged noCoupon:true so discountableSubtotal excludes them.
+    const hasExcludedItem = cart.some(item => NO_COUPON_PRODUCTS.indexOf(item.name) >= 0);
+    const allExcluded = cart.length > 0 && cart.every(item => NO_COUPON_PRODUCTS.indexOf(item.name) >= 0);
 
     if (COUPONS[code] !== undefined) {
       if (code === 'WELCOME20') { applyWelcomeCode(code, input, msg); return; }
@@ -4268,10 +4268,18 @@
           return;
         }
       }
+      // If every item in cart is excluded from discounts, reject the coupon cleanly
+      if (allExcluded) {
+        appliedCoupon = null;
+        couponDiscount = 0;
+        msg.textContent = 'Items in your cart are excluded from discounts.';
+        msg.className = 'coupon-msg error';
+        return;
+      }
       appliedCoupon = code;
       couponDiscount = COUPONS[code];
       msg.textContent = '✓ Code "' + code + '" applied — ' + (couponDiscount * 100) + '% off!'
-        + (hasPill ? ' (Pill products excluded from discount.)' : '');
+        + (hasExcludedItem ? ' (Some items excluded from discount.)' : '');
       msg.className = 'coupon-msg success';
       input.disabled = true;
       // Recalculate checkout summary
