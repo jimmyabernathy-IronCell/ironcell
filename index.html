@@ -2462,6 +2462,22 @@
         </div>
       </div>
     </div>
+    <!-- Gen10 -->
+    <div class="product-card" onclick="openModal(45)">
+      <div class="product-img">
+        <span class="product-badge">New</span>
+        <img src="p-gen10.jpg" alt="Gen10" class="product-real-img">
+      </div>
+      <div class="product-info">
+        <div class="product-name">Gen10</div>
+        <div class="product-subtitle">Growth Peptide Complex &bull; 10 Vial Kit</div>
+        <div class="no-coupon-tag">Excluded from Discounts</div>
+        <div class="product-bottom">
+          <span class="product-price">$149.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
     <!-- Ipamorelin -->
     <div class="product-card" onclick="openModal(12)">
       <div class="product-img">
@@ -3749,6 +3765,13 @@
       desc: "ARA-290 (Cibinetide) is a synthetic 11-amino acid peptide derived from the helix-B domain of erythropoietin. It selectively activates the innate repair receptor (IRR), distinct from the classical erythropoietic receptor, and has been studied in research models for tissue-protective, anti-inflammatory, and neuroregenerative properties — without affecting red blood cell production. Supplied as a 10mg lyophilized vial for laboratory research use only.",
       strengths: null,
       price: "$69.99"
+    },
+    {
+      name: "Gen10",
+      subtitle: "Growth Peptide Complex • 10 Vial Kit",
+      desc: "Gen10 is a naturally occurring peptide hormone that plays an important role in growth, metabolism, and cellular function. Due to its biological significance, Gen10 has been widely studied in scientific and laboratory settings to better understand its role in various physiological processes. For Research Use Only. Not for human or veterinary use. Not intended to diagnose, treat, cure, or prevent any disease.",
+      strengths: null,
+      price: "$149.99"
     }
   ];
 
@@ -4098,7 +4121,7 @@
   }
 
   // Products excluded from coupon discounts (pills)
-  const NO_COUPON_PRODUCTS = ['SLU-PP332', 'BPC-157 Oral', 'MK677', 'Tesofensine', 'Dihexa'];
+  const NO_COUPON_PRODUCTS = ['SLU-PP332', 'BPC-157 Oral', 'MK677', 'Tesofensine', 'Dihexa', 'Gen10'];
 
   // ─── COUPON SYSTEM ───
   const COUPONS = {
