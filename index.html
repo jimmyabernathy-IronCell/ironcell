@@ -4138,6 +4138,7 @@
     'FREEDOM25': 0.25,
     'TTSHRED20': 0.20,
     'RAY20': 0.20,
+    'DAVU20': 0.20,
     'DUPREE20': 0.20,
     'FAMILY': 0.30
   };
@@ -4317,7 +4318,8 @@
     const orderNum = document.getElementById('orderNumber');
 
     // Generate order number — RAY20 coupon on main site gets RS_ prefix so Ray is credited on Site Summary
-    const _affiliatePrefix = (appliedCoupon === 'RAY20') ? 'RS_' : '';
+    const _AFFILIATE_CODE_PREFIX = { 'RAY20': 'RS_', 'DAVU20': 'DV_' };
+    const _affiliatePrefix = _AFFILIATE_CODE_PREFIX[appliedCoupon] || '';
     orderNum.textContent = _affiliatePrefix + generateOrderNumber();
 
     // Build summary with shipping + tax
