@@ -4116,7 +4116,7 @@
       if (code === 'THANKYOU25') {
         var now = new Date();
         var start = new Date(2026, 6, 26);  // Sun Jul 26 2026 00:00
-        var end   = new Date(2026, 7, 2);   // active through Sat Aug 1 (exclusive Sun Aug 2)
+        var end   = new Date(2026, 7, 3);   // active through Sun Aug 2 (exclusive Mon Aug 3)
         if (now < start || now >= end) {
           appliedCoupon = null; couponDiscount = 0;
           msg.textContent = 'THANKYOU25 promotion has ended.';
