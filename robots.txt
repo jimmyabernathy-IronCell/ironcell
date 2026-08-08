@@ -39,4 +39,12 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
+# Bing (Edge, DuckDuckGo, Copilot)
+User-agent: Bingbot
+Allow: /
+
+# Apple (Safari Siri/Spotlight suggestions)
+User-agent: Applebot
+Allow: /
+
 Sitemap: https://ironcellresearch.com/sitemap.xml
