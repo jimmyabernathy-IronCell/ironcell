@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>IronCell Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a; --card:#141414; --card2:#0f0f0f; --border:#2a2a2a;
+    --text:#f5f5f5; --muted:#8a8a8a; --red:#c8102e; --red2:#e01b3c;
+    --green:#22c55e;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',-apple-system,sans-serif; font-size:15px; line-height:1.5; }
+  a { color:var(--red2); }
+  .wrap { max-width:1240px; margin:0 auto; padding:24px 20px 70px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-bottom:20px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand img { height:34px; }
+  .brand span { font-weight:900; letter-spacing:1px; text-transform:uppercase; font-size:.95rem; }
+  .who { color:var(--muted); font-size:.8rem; }
+  button { font-family:inherit; font-size:.85rem; font-weight:700; border:none; border-radius:6px; padding:11px 20px; cursor:pointer; background:var(--red); color:#fff; transition:background .15s; }
+  button:hover { background:var(--red2); }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+  button.ghost:hover { background:var(--card); color:var(--text); }
+  button.sm { padding:7px 12px; font-size:.75rem; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  input, textarea, select { width:100%; background:var(--card2); border:1px solid var(--border); border-radius:6px; padding:12px 14px; color:var(--text); font-family:inherit; font-size:.9rem; outline:none; }
+  input:focus, textarea:focus { border-color:var(--red); }
+  textarea { resize:vertical; }
+  label { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:7px; font-weight:700; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:22px; }
+  .tabs { display:flex; gap:6px; margin:24px 0 20px; flex-wrap:wrap; }
+  .tabs button { background:transparent; color:var(--muted); border:1px solid var(--border); }
+  .tabs button.on { background:var(--red); color:#fff; border-color:var(--red); }
+  .grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); margin-bottom:20px; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .stat b { display:block; font-size:1.9rem; font-weight:900; line-height:1.1; }
+  .stat small { color:var(--muted); font-size:.72rem; text-transform:uppercase; letter-spacing:1.2px; }
+  table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  th { text-align:left; color:var(--muted); font-size:.68rem; text-transform:uppercase; letter-spacing:1.2px; padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:12px; border-bottom:1px solid #1e1e1e; vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .scroll { overflow-x:auto; }
+  .pill { display:inline-block; font-size:.68rem; font-weight:700; padding:3px 9px; border-radius:20px; background:#1f1f1f; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  .pill.up { background:rgba(34,197,94,.14); color:var(--green); }
+  .pill.down { background:rgba(200,16,46,.16); color:var(--red2); }
+  .muted { color:var(--muted); }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .note { font-size:.78rem; color:var(--muted); line-height:1.6; }
+  .banner { border-radius:8px; padding:14px 16px; font-size:.84rem; margin-bottom:16px; border:1px solid; }
+  .banner.warn { background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.3); color:#fcd34d; }
+  .banner.ok { background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.3); color:#86efac; }
+  .banner.err { background:rgba(200,16,46,.08); border-color:rgba(200,16,46,.3); color:#fca5a5; }
+  .login { max-width:420px; margin:11vh auto; }
+  .login h1 { font-size:1.5rem; font-weight:900; margin-bottom:8px; }
+  .login p { color:var(--muted); font-size:.86rem; margin-bottom:22px; }
+  .field { margin-bottom:16px; }
+  .hide { display:none !important; }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8rem; }
+  h2 { font-size:1.1rem; font-weight:800; margin-bottom:4px; }
+  .sub { color:var(--muted); font-size:.82rem; margin-bottom:18px; }
+  /* composer */
+  .composer { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; }
+  @media (max-width:960px) { .composer { grid-template-columns:1fr; } }
+  .blk { background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:10px; }
+  .blk .blkhead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .blk .tag { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:1.3px; color:var(--red2); }
+  .blk .ctrls button { background:transparent; border:1px solid var(--border); color:var(--muted); padding:4px 9px; font-size:.72rem; border-radius:5px; }
+  .blk .ctrls button:hover { color:var(--text); background:#1c1c1c; }
+  .addbar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .addbar button { background:#181818; border:1px solid var(--border); color:var(--text); font-size:.75rem; padding:8px 13px; }
+  .addbar button:hover { border-color:var(--red); background:#1f1414; }
+  .preview-shell { position:sticky; top:16px; }
+  .preview-frame { width:100%; height:640px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+  .thumb { max-height:70px; border-radius:5px; border:1px solid var(--border); margin-top:8px; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal .card { max-width:440px; width:100%; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="wrap">
+  <div class="login">
+    <div class="brand" style="margin-bottom:26px">
+      <img src="/p-ironcell-logo.webp" alt="IronCell Research"><span>Admin</span>
+    </div>
+    <h1>Sign in</h1>
+    <p>Use your IronCell email and the password you were given. You'll set your own password right after.</p>
+    <div id="loginMsg"></div>
+    <div class="field">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" autocomplete="username" placeholder="jimmy@ironcellresearch.com">
+    </div>
+    <div class="field">
+      <label for="loginPw">Password</label>
+      <input id="loginPw" type="password" autocomplete="current-password">
+    </div>
+    <button id="pwBtn" style="width:100%">Sign in</button>
+    <p class="note" style="margin-top:18px">
+      Forgot it? <a href="#" id="magicToggle">Email me a sign-in link instead</a>
+    </p>
+    <div id="magicBlock" class="hide" style="margin-top:12px">
+      <button id="magicBtn" class="ghost" style="width:100%">Send sign-in link</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORCED PASSWORD CHANGE -->
+<div id="pwModal" class="modal hide">
+  <div class="card">
+    <h2>Set your password</h2>
+    <p class="sub">You're signed in with a temporary password. Choose your own to finish setup.</p>
+    <div id="pwModalMsg"></div>
+    <div class="field"><label for="newPw1">New password</label><input id="newPw1" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>
+    <div class="field"><label for="newPw2">Confirm password</label><input id="newPw2" type="password" autocomplete="new-password"></div>
+    <div class="row"><button id="savePw" style="flex:1">Save password</button></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" class="wrap hide">
+  <header>
+    <div class="brand"><img src="/p-ironcell-logo.webp" alt="IronCell Research"><span>Admin</span></div>
+    <div class="row">
+      <span class="who" id="whoami"></span>
+      <a href="/" class="who">&larr; Store</a>
+      <button class="ghost sm" id="changePwBtn">Change password</button>
+      <button class="ghost sm" id="signOut">Sign out</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button data-tab="orders" class="on">Orders</button>
+    <button data-tab="list">Email list</button>
+    <button data-tab="newsletter">Newsletter</button>
+    <button data-tab="seo">SEO rankings</button>
+  </div>
+
+  <!-- ORDERS -->
+  <section id="tab-orders">
+    <div class="grid">
+      <div class="stat"><b id="oCount">-</b><small>Orders recorded</small></div>
+      <div class="stat"><b id="oRevenue">-</b><small>Total value</small></div>
+      <div class="stat"><b id="o30">-</b><small>Last 30 days</small></div>
+      <div class="stat"><b id="oCustomers">-</b><small>Unique customers</small></div>
+    </div>
+    <div class="card">
+      <h2>Recent orders</h2>
+      <p class="sub">Every order placed on the store is recorded here automatically. Your Google Sheet keeps working exactly as before - this is an additional copy.</p>
+      <div id="ordersBanner"></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Date</th><th>Customer</th><th>Email</th><th>Items</th><th>Total</th></tr></thead>
+        <tbody id="ordersBody"><tr><td colspan="5" class="muted">Loading...</td></tr></tbody>
+      </table></div>
+      <div class="row" style="margin-top:16px"><button class="ghost" id="exportOrders">Export orders (CSV)</button></div>
+    </div>
+  </section>
+
+  <!-- EMAIL LIST -->
+  <section id="tab-list" class="hide">
+    <div class="grid">
+      <div class="stat"><b id="sCount">-</b><small>Active subscribers</small></div>
+      <div class="stat"><b id="sSignup">-</b><small>From site signup</small></div>
+      <div class="stat"><b id="sOrders">-</b><small>From orders</small></div>
+      <div class="stat"><b id="sImported">-</b><small>Imported</small></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h2>Your email list</h2>
+      <p class="sub">Built from every source on the site: newsletter signups, customer orders, and anything you import. Duplicates merge automatically.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Email</th><th>Source</th><th>First seen</th><th>Status</th></tr></thead>
+        <tbody id="subsBody"><tr><td colspan="4" class="muted">Loading...</td></tr></tbody>
+      </table></div>
+      <div class="row" style="margin-top:16px"><button class="ghost" id="exportSubs">Export list (CSV)</button></div>
+    </div>
+    <div class="card">
+      <h2>Import emails</h2>
+      <p class="sub">Paste emails from your existing newsletter platform - one per line or comma separated. Anything already on the list is skipped.</p>
+      <div class="field"><textarea id="importBox" rows="5" placeholder="jane@example.com&#10;john@example.com"></textarea></div>
+      <div class="row"><button id="importBtn">Add to list</button><span id="importMsg" class="note"></span></div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section id="tab-newsletter" class="hide">
+    <div id="nlBanner"></div>
+    <div class="composer">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Newsletter</h2>
+          <p class="sub">Build it block by block. The preview on the right is exactly what subscribers receive.</p>
+          <div class="field"><label for="nlSubject">Subject line</label><input id="nlSubject" placeholder="August restock and new arrivals"></div>
+          <div class="field"><label for="nlPreheader">Preview text <span class="muted">(the grey line inboxes show after the subject)</span></label><input id="nlPreheader" placeholder="Fresh COAs posted, plus what's back in stock"></div>
+          <div class="field" style="margin-bottom:0"><label for="nlIssue">Issue label <span class="muted">(header line)</span></label><input id="nlIssue" placeholder="Monthly Newsletter - August 2026"></div>
+        </div>
+
+        <div class="card">
+          <h2>Content blocks</h2>
+          <p class="sub">Add, edit, reorder, remove. Images upload straight from your computer.</p>
+          <div class="addbar">
+            <button data-add="heading">+ Heading</button>
+            <button data-add="text">+ Text</button>
+            <button data-add="image">+ Image</button>
+            <button data-add="button">+ Button</button>
+            <button data-add="promo">+ Promo code</button>
+            <button data-add="product">+ Product</button>
+            <button data-add="divider">+ Divider</button>
+          </div>
+          <div id="blocks"></div>
+          <p class="note" style="margin-top:6px">A research-use-only disclaimer and unsubscribe line are added to every send automatically. Keep copy to products, stock, testing and offers - no dosing, medical or human-use claims.</p>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="row">
+            <button class="ghost" id="nlTest">Send test to me</button>
+            <button id="nlSend">Send to list (<span id="nlCount">0</span>)</button>
+          </div>
+          <p class="note" id="nlMsg" style="margin-top:10px"></p>
+        </div>
+      </div>
+
+      <div class="preview-shell">
+        <div class="card" style="padding:14px">
+          <div class="row" style="justify-content:space-between;margin-bottom:10px">
+            <b style="font-size:.8rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)">Live preview</b>
+            <button class="ghost sm" id="openPreview">Open full size</button>
+          </div>
+          <iframe id="previewFrame" class="preview-frame" title="Newsletter preview"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEO -->
+  <section id="tab-seo" class="hide">
+    <div class="grid">
+      <div class="stat"><b id="seoTracked">-</b><small>Keywords tracked</small></div>
+      <div class="stat"><b id="seoTop10">-</b><small>On page 1</small></div>
+      <div class="stat"><b id="seoImproved">-</b><small>Improved this cycle</small></div>
+      <div class="stat"><b id="seoCycle">-</b><small>Last updated</small></div>
+    </div>
+    <div class="card">
+      <h2>Search rankings</h2>
+      <p class="sub">Where ironcellresearch.com ranks on Google, refreshed every Monday, Wednesday and Friday by Move Marketing.</p>
+      <div id="seoBanner"></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Keyword</th><th>Position</th><th>Change</th></tr></thead>
+        <tbody id="seoBody"><tr><td colspan="3" class="muted">Loading...</td></tr></tbody>
+      </table></div>
+      <div id="seoEdits" class="note" style="margin-top:16px"></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  var SB_URL = 'https://fnodwwpunekaycxxshbb.supabase.co';
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZub2R3d3B1bmVrYXljeHhzaGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxMTA1NzMsImV4cCI6MjA3NzY4NjU3M30.Ln8GIZzOIf2X6wqGQdnew-iFEslT5U2VbAKOOl24qB4';
+  var sb = window.supabase.createClient(SB_URL, SB_KEY);
+  var SITE = 'https://ironcellresearch.com';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var show = function (el, on) { el.classList[on ? 'remove' : 'add']('hide'); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  var money = function (n) { return '$' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var dateStr = function (s) { if (!s) return '-'; var d = new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); };
+  var banner = function (el, kind, msg) { el.innerHTML = msg ? '<div class="banner ' + kind + '">' + esc(msg) + '</div>' : ''; };
+
+  var state = { orders: [], subs: [], blocks: [] };
+
+  /* ================= EMAIL TEMPLATE (matches his April newsletter branding) ================= */
+  function buildEmail() {
+    var issue = $('nlIssue').value.trim() || 'IronCell Research Newsletter';
+    var pre = $('nlPreheader').value.trim();
+    var inner = state.blocks.map(renderBlock).join('');
+    return '' +
+'<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<title>' + esc($('nlSubject').value || 'IronCell Research') + '</title></head>' +
+'<body style="margin:0;padding:0;background:#0d0d0d;">' +
+(pre ? '<div style="display:none;font-size:1px;color:#0d0d0d;max-height:0;overflow:hidden">' + esc(pre) + '</div>' : '') +
+'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:24px 12px">' +
+'<tr><td align="center">' +
+'<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden">' +
+/* header */
+'<tr><td align="center" style="background:#0d0d0d;padding:26px 24px 18px;border-bottom:2px solid #cc0000">' +
+'<img src="' + SITE + '/p-newsletter-logo.jpg" width="150" alt="IronCell Research" style="display:block;width:150px;max-width:60%;height:auto;margin:0 auto 12px">' +
+'<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#ff4444;font-weight:bold">Research Peptides</div>' +
+'<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8a8a8a;margin-top:8px">' + esc(issue) + '</div>' +
+'</td></tr>' +
+/* body */
+'<tr><td style="padding:26px 26px 8px">' + (inner || '<p style="font-family:Arial,Helvetica,sans-serif;color:#8a8a8a;font-size:14px">Add a content block to get started.</p>') + '</td></tr>' +
+/* footer + RUO compliance (marker string is required by the send function) */
+'<tr><td style="padding:8px 26px 26px">' +
+'<hr style="margin:22px 0;border:none;border-top:1px solid #2a2a2a">' +
+'<p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8a8a8a;line-height:1.6;margin:0 0 10px">' +
+'<a href="' + SITE + '/" style="color:#ff4444;text-decoration:none">ironcellresearch.com</a> &nbsp;|&nbsp; orders@ironcellresearch.com</p>' +
+'<p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6d6d6d;line-height:1.55;margin:0">' +
+'IronCell Research products are sold for laboratory and research use only (RUO). They are not for human consumption, are not dietary supplements, and are not intended to diagnose, treat, cure, or prevent any disease. ' +
+'You are receiving this email because you subscribed or ordered at ironcellresearch.com. To stop receiving these emails, reply with UNSUBSCRIBE.</p>' +
+'</td></tr>' +
+'</table></td></tr></table></body></html>';
+  }
+
+  function renderBlock(b) {
+    var A = 'font-family:Arial,Helvetica,sans-serif';
+    if (b.type === 'heading')
+      return '<h2 style="' + A + ';font-size:20px;font-weight:bold;color:#ffffff;margin:18px 0 10px;line-height:1.3">' + esc(b.text) + '</h2>';
+    if (b.type === 'text')
+      return esc(b.text).split(/\n{2,}/).map(function (p) {
+        return '<p style="' + A + ';font-size:15px;line-height:1.65;color:#d9d9d9;margin:0 0 14px">' + p.replace(/\n/g, '<br>') + '</p>';
+      }).join('');
+    if (b.type === 'image')
+      return b.url ? '<div style="margin:16px 0"><img src="' + esc(b.url) + '" alt="' + esc(b.alt || '') + '" style="display:block;width:100%;max-width:548px;height:auto;border-radius:8px;border:1px solid #2a2a2a"></div>' : '';
+    if (b.type === 'button')
+      return '<div style="margin:22px 0;text-align:center"><a href="' + esc(b.url || SITE + '/') + '" style="' + A + ';display:inline-block;background:#cc0000;color:#ffffff;font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:1.5px;text-decoration:none;padding:14px 30px;border-radius:6px">' + esc(b.text || 'Shop Now') + '</a></div>';
+    if (b.type === 'promo')
+      return '<div style="margin:20px 0;background:#1c0303;border:1px solid #3d1a1a;border-radius:8px;padding:20px;text-align:center">' +
+        '<div style="' + A + ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff6666;font-weight:bold;margin-bottom:8px">' + esc(b.label || 'Limited Time Offer') + '</div>' +
+        '<div style="' + A + ';font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:3px;margin-bottom:8px">' + esc(b.code || 'CODE') + '</div>' +
+        (b.detail ? '<div style="' + A + ';font-size:13px;color:#b9b9b9">' + esc(b.detail) + '</div>' : '') + '</div>';
+    if (b.type === 'product')
+      return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:8px"><tr>' +
+        (b.url ? '<td width="120" style="padding:12px"><img src="' + esc(b.url) + '" alt="' + esc(b.name || '') + '" width="108" style="display:block;width:108px;height:auto;border-radius:6px"></td>' : '') +
+        '<td style="padding:14px">' +
+        '<div style="' + A + ';font-size:15px;font-weight:bold;color:#ffffff;margin-bottom:4px">' + esc(b.name || 'Product') + '</div>' +
+        (b.detail ? '<div style="' + A + ';font-size:13px;color:#b9b9b9;line-height:1.5">' + esc(b.detail) + '</div>' : '') +
+        (b.price ? '<div style="' + A + ';font-size:14px;color:#ff4444;font-weight:bold;margin-top:6px">' + esc(b.price) + '</div>' : '') +
+        '</td></tr></table>';
+    if (b.type === 'divider')
+      return '<hr style="margin:22px 0;border:none;border-top:1px solid #2a2a2a">';
+    return '';
+  }
+
+  /* ================= COMPOSER UI ================= */
+  var FIELDS = {
+    heading: [['text', 'Heading text', 'input']],
+    text: [['text', 'Paragraph(s)', 'textarea']],
+    image: [['alt', 'Description (alt text)', 'input']],
+    button: [['text', 'Button label', 'input'], ['url', 'Links to', 'input']],
+    promo: [['label', 'Label', 'input'], ['code', 'Code', 'input'], ['detail', 'Details', 'input']],
+    product: [['name', 'Product name', 'input'], ['detail', 'Short description', 'input'], ['price', 'Price', 'input']],
+    divider: [],
+  };
+  var LABEL = { heading: 'Heading', text: 'Text', image: 'Image', button: 'Button', promo: 'Promo code', product: 'Product', divider: 'Divider' };
+
+  function drawBlocks() {
+    var host = $('blocks');
+    host.innerHTML = '';
+    state.blocks.forEach(function (b, i) {
+      var d = document.createElement('div');
+      d.className = 'blk';
+      var fields = (FIELDS[b.type] || []).map(function (f) {
+        var val = esc(b[f[0]] || '');
+        var el = f[2] === 'textarea'
+          ? '<textarea rows="4" data-k="' + f[0] + '">' + val + '</textarea>'
+          : '<input data-k="' + f[0] + '" value="' + val + '">';
+        return '<div class="field" style="margin-bottom:10px"><label>' + f[1] + '</label>' + el + '</div>';
+      }).join('');
+      var imgPart = (b.type === 'image' || b.type === 'product')
+        ? '<div class="field" style="margin-bottom:10px"><label>' + (b.type === 'product' ? 'Product image' : 'Image file') + '</label>' +
+          '<input type="file" accept="image/*" data-upload="1">' +
+          '<span class="note" data-up-msg></span>' +
+          (b.url ? '<br><img class="thumb" src="' + esc(b.url) + '" alt="">' : '') + '</div>'
+        : '';
+      d.innerHTML = '<div class="blkhead"><span class="tag">' + LABEL[b.type] + '</span>' +
+        '<span class="ctrls"><button data-mv="-1"' + (i === 0 ? ' disabled' : '') + '>&uarr;</button> ' +
+        '<button data-mv="1"' + (i === state.blocks.length - 1 ? ' disabled' : '') + '>&darr;</button> ' +
+        '<button data-del="1">Remove</button></span></div>' + fields + imgPart;
+
+      d.querySelectorAll('[data-k]').forEach(function (inp) {
+        inp.addEventListener('input', function () { b[inp.dataset.k] = inp.value; paint(); });
+      });
+      d.querySelector('[data-mv="-1"]') && d.querySelector('[data-mv="-1"]').addEventListener('click', function () { move(i, -1); });
+      d.querySelector('[data-mv="1"]') && d.querySelector('[data-mv="1"]').addEventListener('click', function () { move(i, 1); });
+      d.querySelector('[data-del]').addEventListener('click', function () { state.blocks.splice(i, 1); drawBlocks(); paint(); });
+      var fileInp = d.querySelector('[data-upload]');
+      if (fileInp) fileInp.addEventListener('change', function () { upload(fileInp, b, d.querySelector('[data-up-msg]')); });
+      host.appendChild(d);
+    });
+  }
+  function move(i, dir) {
+    var j = i + dir;
+    if (j < 0 || j >= state.blocks.length) return;
+    var t = state.blocks[i]; state.blocks[i] = state.blocks[j]; state.blocks[j] = t;
+    drawBlocks(); paint();
+  }
+  function paint() { $('previewFrame').srcdoc = buildEmail(); }
+
+  async function upload(input, block, msgEl) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { msgEl.textContent = ' That image is over 5MB - please use a smaller one.'; return; }
+    msgEl.textContent = ' Uploading...';
+    var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+    var path = 'img/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    var r = await sb.storage.from('ironcell-newsletter').upload(path, file, { contentType: file.type, upsert: false });
+    if (r.error) { msgEl.textContent = ' Upload failed: ' + r.error.message; return; }
+    block.url = sb.storage.from('ironcell-newsletter').getPublicUrl(path).data.publicUrl;
+    msgEl.textContent = ' Added.';
+    drawBlocks(); paint();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
+    b.addEventListener('click', function () {
+      var t = b.dataset.add;
+      var seed = { type: t };
+      if (t === 'heading') seed.text = 'New heading';
+      if (t === 'text') seed.text = 'Write your update here.';
+      if (t === 'button') { seed.text = 'Shop Now'; seed.url = SITE + '/'; }
+      if (t === 'promo') { seed.label = 'Limited Time Offer'; seed.code = 'CODE20'; seed.detail = 'All products sitewide. No minimums.'; }
+      if (t === 'product') { seed.name = 'Product name'; seed.detail = ''; seed.price = ''; }
+      state.blocks.push(seed);
+      drawBlocks(); paint();
+    });
+  });
+  ['nlSubject', 'nlPreheader', 'nlIssue'].forEach(function (id) { $(id).addEventListener('input', paint); });
+  $('openPreview').addEventListener('click', function () {
+    var w = window.open('', '_blank');
+    w.document.write(buildEmail()); w.document.close();
+  });
+
+  /* ================= AUTH ================= */
+  $('magicToggle').addEventListener('click', function (e) { e.preventDefault(); show($('magicBlock'), $('magicBlock').classList.contains('hide')); });
+  $('magicBtn').addEventListener('click', async function () {
+    var email = $('loginEmail').value.trim();
+    if (!email) { banner($('loginMsg'), 'err', 'Enter your email first.'); return; }
+    this.disabled = true;
+    var res = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.href } });
+    this.disabled = false;
+    banner($('loginMsg'), res.error ? 'err' : 'ok', res.error ? res.error.message : 'Check your inbox - the sign-in link is on its way.');
+  });
+  $('pwBtn').addEventListener('click', async function () {
+    var email = $('loginEmail').value.trim(), pw = $('loginPw').value;
+    if (!email || !pw) { banner($('loginMsg'), 'err', 'Email and password are both required.'); return; }
+    this.disabled = true;
+    var res = await sb.auth.signInWithPassword({ email: email, password: pw });
+    this.disabled = false;
+    if (res.error) banner($('loginMsg'), 'err', res.error.message); else boot();
+  });
+  $('signOut').addEventListener('click', async function () { await sb.auth.signOut(); window.location.reload(); });
+  $('changePwBtn').addEventListener('click', function () { show($('pwModal'), true); });
+  $('savePw').addEventListener('click', async function () {
+    var a = $('newPw1').value, b = $('newPw2').value;
+    if (a.length < 8) { banner($('pwModalMsg'), 'err', 'Use at least 8 characters.'); return; }
+    if (a !== b) { banner($('pwModalMsg'), 'err', 'The two passwords do not match.'); return; }
+    this.disabled = true;
+    var res = await sb.auth.updateUser({ password: a, data: { must_change_password: false } });
+    this.disabled = false;
+    if (res.error) { banner($('pwModalMsg'), 'err', res.error.message); return; }
+    banner($('pwModalMsg'), 'ok', 'Password saved.');
+    setTimeout(function () { show($('pwModal'), false); banner($('pwModalMsg'), '', ''); $('newPw1').value = ''; $('newPw2').value = ''; }, 900);
+  });
+
+  /* ================= TABS ================= */
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      ['orders', 'list', 'newsletter', 'seo'].forEach(function (t) { show($('tab-' + t), t === b.dataset.tab); });
+      if (b.dataset.tab === 'seo') loadSeo();
+      if (b.dataset.tab === 'newsletter') paint();
+    });
+  });
+
+  /* ================= DATA ================= */
+  async function loadOrders() {
+    var r = await sb.from('ironcell_orders').select('created_at,customer_name,customer_email,items,total').order('created_at', { ascending: false }).limit(500);
+    if (r.error) { banner($('ordersBanner'), 'err', r.error.message); return; }
+    state.orders = r.data || [];
+    var rows = state.orders;
+    $('oCount').textContent = rows.length;
+    $('oRevenue').textContent = money(rows.reduce(function (a, x) { return a + (Number(x.total) || 0); }, 0));
+    var cut = Date.now() - 30 * 864e5;
+    $('o30').textContent = rows.filter(function (x) { return new Date(x.created_at).getTime() > cut; }).length;
+    var em = {}; rows.forEach(function (x) { if (x.customer_email) em[x.customer_email.toLowerCase()] = 1; });
+    $('oCustomers').textContent = Object.keys(em).length;
+    if (!rows.length) {
+      banner($('ordersBanner'), 'warn', 'No orders recorded yet. Orders from now on appear here automatically - past orders stay in your Google Sheet.');
+      $('ordersBody').innerHTML = '<tr><td colspan="5" class="muted">Nothing yet.</td></tr>';
+      return;
+    }
+    banner($('ordersBanner'), '', '');
+    $('ordersBody').innerHTML = rows.slice(0, 100).map(function (o) {
+      return '<tr><td class="mono">' + dateStr(o.created_at) + '</td><td>' + esc(o.customer_name || '-') +
+        '</td><td class="mono">' + esc(o.customer_email || '-') + '</td><td class="muted">' + esc((o.items || '').slice(0, 90)) +
+        '</td><td>' + money(o.total) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadSubs() {
+    var r = await sb.from('ironcell_subscribers').select('email,source,first_seen_at,unsubscribed_at').order('first_seen_at', { ascending: false }).limit(2000);
+    if (r.error) return;
+    state.subs = r.data || [];
+    var rows = state.subs, active = rows.filter(function (s) { return !s.unsubscribed_at; });
+    $('sCount').textContent = active.length;
+    $('sSignup').textContent = rows.filter(function (s) { return s.source === 'site_signup'; }).length;
+    $('sOrders').textContent = rows.filter(function (s) { return s.source === 'order'; }).length;
+    $('sImported').textContent = rows.filter(function (s) { return s.source === 'import'; }).length;
+    $('nlCount').textContent = active.length;
+    $('subsBody').innerHTML = rows.length
+      ? rows.slice(0, 300).map(function (s) {
+          return '<tr><td class="mono">' + esc(s.email) + '</td><td><span class="pill">' + esc((s.source || '').replace('_', ' ')) +
+            '</span></td><td class="mono">' + dateStr(s.first_seen_at) + '</td><td>' +
+            (s.unsubscribed_at ? '<span class="pill down">Unsubscribed</span>' : '<span class="pill up">Active</span>') + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="4" class="muted">No subscribers yet. Signups and orders are added automatically - or paste emails in below.</td></tr>';
+  }
+
+  async function loadSeo() {
+    var s = await sb.auth.getSession();
+    var token = s.data.session ? s.data.session.access_token : '';
+    var res = await fetch(SB_URL + '/functions/v1/ironcell-seo', { headers: { Authorization: 'Bearer ' + token, apikey: SB_KEY } });
+    var out = await res.json().catch(function () { return {}; });
+    var cycles = out.cycles || [];
+    if (!cycles.length) {
+      banner($('seoBanner'), 'warn', 'No ranking cycles yet. Rankings refresh Monday, Wednesday and Friday.');
+      $('seoBody').innerHTML = '<tr><td colspan="3" class="muted">Nothing yet.</td></tr>';
+      return;
+    }
+    banner($('seoBanner'), '', '');
+    var latest = cycles[0], research = latest.ranking_research || [];
+    $('seoCycle').textContent = dateStr(latest.cycle_date);
+    $('seoTracked').textContent = (latest.keywords_targeted || []).length || research.length;
+    $('seoTop10').textContent = research.filter(function (k) { return k.current_rank && k.current_rank <= 10; }).length;
+    $('seoImproved').textContent = research.filter(function (k) { return k.previous_rank && k.current_rank && k.current_rank < k.previous_rank; }).length;
+    research.sort(function (a, b) { return (a.current_rank || 999) - (b.current_rank || 999); });
+    $('seoBody').innerHTML = research.map(function (k) {
+      var pos = k.current_rank ? '#' + k.current_rank : '<span class="muted">Not in top 100</span>';
+      var chg = '<span class="muted">-</span>';
+      if (k.previous_rank && k.current_rank) {
+        var d = k.previous_rank - k.current_rank;
+        if (d > 0) chg = '<span class="pill up">&uarr; ' + d + '</span>';
+        else if (d < 0) chg = '<span class="pill down">&darr; ' + Math.abs(d) + '</span>';
+        else chg = '<span class="pill">No change</span>';
+      }
+      return '<tr><td>' + esc(k.keyword) + '</td><td>' + pos + '</td><td>' + chg + '</td></tr>';
+    }).join('');
+    $('seoEdits').innerHTML = latest.edits_applied ? '<b>Work applied this cycle:</b> ' + esc(latest.edits_applied) : '';
+  }
+
+  /* ================= IMPORT / CSV ================= */
+  $('importBtn').addEventListener('click', async function () {
+    var list = ($('importBox').value || '').split(/[\s,;]+/).map(function (e) { return e.trim().toLowerCase(); })
+      .filter(function (e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); });
+    var uniq = list.filter(function (e, i) { return list.indexOf(e) === i; });
+    if (!uniq.length) { $('importMsg').textContent = 'No valid email addresses found.'; return; }
+    this.disabled = true; $('importMsg').textContent = 'Adding ' + uniq.length + '...';
+    var added = 0, skipped = 0;
+    for (var i = 0; i < uniq.length; i++) {
+      var r = await sb.from('ironcell_subscribers').insert({ email: uniq[i], source: 'import' });
+      if (r.error) skipped++; else added++;
+    }
+    this.disabled = false;
+    $('importMsg').textContent = added + ' added' + (skipped ? ', ' + skipped + ' already on the list' : '') + '.';
+    $('importBox').value = '';
+    loadSubs();
+  });
+  function csv(filename, header, rows) {
+    var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+    var body = [header.join(',')].concat(rows.map(function (r) { return r.map(q).join(','); })).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv' }));
+    a.download = filename; a.click();
+  }
+  $('exportSubs').addEventListener('click', function () {
+    csv('ironcell-email-list.csv', ['email', 'source', 'first_seen', 'status'],
+      state.subs.map(function (s) { return [s.email, s.source, s.first_seen_at, s.unsubscribed_at ? 'unsubscribed' : 'active']; }));
+  });
+  $('exportOrders').addEventListener('click', function () {
+    csv('ironcell-orders.csv', ['date', 'customer', 'email', 'items', 'total'],
+      state.orders.map(function (o) { return [o.created_at, o.customer_name, o.customer_email, o.items, o.total]; }));
+  });
+
+  /* ================= SEND ================= */
+  async function send(testOnly) {
+    var subject = $('nlSubject').value.trim();
+    if (!subject) { banner($('nlBanner'), 'err', 'Add a subject line first.'); return; }
+    if (!state.blocks.length) { banner($('nlBanner'), 'err', 'Add at least one content block.'); return; }
+    var s = await sb.auth.getSession(), sess = s.data.session;
+    var payload = { subject: subject, html: buildEmail(), wrapped: true };
+    if (testOnly) payload.testTo = sess.user.email;
+    banner($('nlBanner'), 'warn', testOnly ? 'Sending test...' : 'Sending to your list...');
+    var res = await fetch(SB_URL + '/functions/v1/ironcell-send-newsletter', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sess.access_token, apikey: SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var out = await res.json().catch(function () { return {}; });
+    if (out.needs_config) banner($('nlBanner'), 'warn', 'Sending is not switched on yet (' + out.recipient_count + ' subscribers ready). Move Marketing is finishing the email sender setup - meanwhile use Export list on the Email list tab.');
+    else if (out.ok) banner($('nlBanner'), 'ok', out.test ? 'Test sent to ' + sess.user.email + '.' : 'Sent to ' + out.sent + ' of ' + out.total + ' subscribers.');
+    else banner($('nlBanner'), 'err', out.error || 'Send failed.');
+  }
+  $('nlTest').addEventListener('click', function () { send(true); });
+  $('nlSend').addEventListener('click', function () {
+    if (confirm('Send "' + $('nlSubject').value.trim() + '" to your whole list?')) send(false);
+  });
+
+  /* ================= BOOT ================= */
+  async function boot() {
+    var s = await sb.auth.getSession(), sess = s.data.session;
+    if (!sess) { show($('loginView'), true); show($('appView'), false); return; }
+    var a = await sb.from('ironcell_admins').select('email').ilike('email', sess.user.email).maybeSingle();
+    if (!a.data) {
+      show($('loginView'), true); show($('appView'), false);
+      banner($('loginMsg'), 'err', 'That account does not have admin access to this site.');
+      await sb.auth.signOut();
+      return;
+    }
+    show($('loginView'), false); show($('appView'), true);
+    $('whoami').textContent = sess.user.email;
+    if (sess.user.user_metadata && sess.user.user_metadata.must_change_password) show($('pwModal'), true);
+    if (!state.blocks.length) {
+      state.blocks = [
+        { type: 'heading', text: 'Back in stock' },
+        { type: 'text', text: 'Write your update here. Keep it to products, stock, testing and offers.' },
+        { type: 'button', text: 'Shop Now', url: SITE + '/' },
+      ];
+      $('nlIssue').value = 'Monthly Newsletter - ' + new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      drawBlocks();
+    }
+    paint(); loadOrders(); loadSubs();
+  }
+  sb.auth.onAuthStateChange(function (evt) { if (evt === 'SIGNED_IN' || evt === 'TOKEN_REFRESHED') boot(); });
+  boot();
+})();
+</script>
+</body>
+</html>

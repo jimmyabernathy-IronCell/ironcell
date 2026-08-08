@@ -4538,6 +4538,18 @@
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
     sheetImg.src = sheetUrl;
 
+    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;
+    // isolated in its own try/catch so it can never affect checkout)
+    try {
+      var mmOrderImg = new Image();
+      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +
+        '&email=' + encodeURIComponent(email) +
+        '&name=' + encodeURIComponent(name) +
+        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +
+        '&coupon=' + encodeURIComponent(appliedCoupon || '') +
+        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | '));
+    } catch (e) {}
+
   }
 
   function subscribeNewsletter() {
@@ -4552,6 +4564,9 @@
     try {
       const trackImg = new Image();
       trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);
+      // Mirror to the IronCell admin list (additive; the Google Sheet above is unchanged)
+      const mmSubImg = new Image();
+      mmSubImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=sub&email=' + encodeURIComponent(email);
     } catch (e) {}
     fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
         access_key: '603b0822-9385-4831-ba22-13f82778ebab',
