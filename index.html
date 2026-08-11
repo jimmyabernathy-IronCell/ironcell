@@ -4944,5 +4944,106 @@
 
 
 
+
+<!-- ============================================================
+     STAY-IN-THE-LOOP CAPTURE (added Aug 11 2026, Move Marketing)
+     Fully ADDITIVE: appended before </body>, modifies nothing above.
+     All ids/classes are ic-loop-* namespaced so they cannot collide.
+
+     Behaviour, deliberately restrained:
+       - NEVER shows while the age gate is up. The gate has no persistence
+         and renders on every load, so the popup polls for it to be closed
+         first; stacking two modals on arrival would be hostile and could
+         obscure the legal notice.
+       - Waits 15s after that, or triggers earlier on exit intent.
+       - Once dismissed or subscribed it never shows again (localStorage).
+       - Small bottom-right card, not a takeover.
+     Submits to the SAME three destinations as the footer form, so the
+     data lands identically: Jimmy's Google Sheet tracker, the IronCell
+     admin list, and the web3forms notification.
+     ============================================================ -->
+<style>
+#ic-loop-popup{position:fixed;right:20px;bottom:20px;z-index:9000;width:330px;max-width:calc(100vw - 32px);
+  background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:20px 20px 18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);font-family:'Inter',sans-serif;
+  transform:translateY(14px);opacity:0;transition:opacity .35s ease,transform .35s ease;display:none}
+#ic-loop-popup.ic-loop-in{opacity:1;transform:translateY(0)}
+#ic-loop-popup .ic-loop-logo{display:block;width:120px;height:auto;margin:0 0 12px}
+#ic-loop-popup h3{font-family:'Space Grotesk',sans-serif;font-size:1.02rem;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.3}
+#ic-loop-popup p{font-size:.82rem;line-height:1.55;color:#b9b9b9;margin:0 0 14px}
+#ic-loop-popup input{width:100%;box-sizing:border-box;background:#141414;border:1px solid #2a2a2a;border-radius:7px;
+  padding:10px 12px;color:#fff;font-size:.85rem;font-family:'Inter',sans-serif;outline:none}
+#ic-loop-popup input:focus{border-color:#ff4444}
+#ic-loop-popup button.ic-loop-go{width:100%;margin-top:9px;background:#ff4444;color:#fff;border:none;border-radius:7px;
+  padding:10px 12px;font-size:.85rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background .18s}
+#ic-loop-popup button.ic-loop-go:hover{background:#cc0000}
+#ic-loop-popup .ic-loop-x{position:absolute;top:9px;right:11px;background:none;border:none;color:#8a8a8a;
+  font-size:1.15rem;line-height:1;cursor:pointer;padding:4px}
+#ic-loop-popup .ic-loop-x:hover{color:#fff}
+#ic-loop-popup .ic-loop-fine{font-size:.68rem;color:#8a8a8a;margin:10px 0 0;line-height:1.5}
+#ic-loop-popup .ic-loop-ok{font-size:.85rem;color:#fff;margin:0;line-height:1.6}
+@media(max-width:480px){#ic-loop-popup{right:12px;left:12px;bottom:12px;width:auto}}
+</style>
+<div id="ic-loop-popup" role="dialog" aria-label="Join the IronCell mailing list" aria-live="polite">
+  <button class="ic-loop-x" type="button" aria-label="Close">&times;</button>
+  <div id="ic-loop-body">
+    <img class="ic-loop-logo" src="p-ironcell-logo.webp" alt="IronCell Research">
+    <h3>Stay in the loop</h3>
+    <p>Join our mailing list to hear first about new products, restocks and promotions.</p>
+    <input type="email" id="ic-loop-email" placeholder="Enter your email address" autocomplete="email">
+    <button class="ic-loop-go" type="button">Notify me</button>
+    <p class="ic-loop-fine">Research use only. Unsubscribe any time.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='ic_loop_seen_v1', el=document.getElementById('ic-loop-popup');
+  if(!el) return;
+  function seen(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
+  function mark(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} }
+  if(seen()) return;
+
+  var shown=false;
+  function show(){
+    if(shown||seen()) return;
+    var gate=document.getElementById('ageGate');
+    if(gate && !gate.classList.contains('hidden')) return;   // never stack on the legal notice
+    shown=true; el.style.display='block';
+    requestAnimationFrame(function(){ el.classList.add('ic-loop-in'); });
+  }
+  function close(){ el.classList.remove('ic-loop-in'); mark(); setTimeout(function(){ el.style.display='none'; },350); }
+
+  // Arm only once the age gate is gone, then wait before asking for anything.
+  var poll=setInterval(function(){
+    var gate=document.getElementById('ageGate');
+    if(!gate || gate.classList.contains('hidden')){ clearInterval(poll); setTimeout(show,15000); }
+  },600);
+  document.addEventListener('mouseout',function(e){ if(!e.relatedTarget && e.clientY<=0) show(); });
+
+  el.querySelector('.ic-loop-x').addEventListener('click',close);
+  el.querySelector('.ic-loop-go').addEventListener('click',function(){
+    var input=document.getElementById('ic-loop-email'), email=(input.value||'').trim();
+    if(!email||email.indexOf('@')<1){ input.style.borderColor='#ff4444'; input.placeholder='Please enter a valid email'; return; }
+    // Same three destinations as the footer form - identical data, no new plumbing.
+    try{
+      var a=new Image(); a.src='https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email='+encodeURIComponent(email);
+      var b=new Image(); b.src='https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=sub&email='+encodeURIComponent(email);
+    }catch(e){}
+    try{
+      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        access_key:'603b0822-9385-4831-ba22-13f82778ebab',
+        subject:'New Newsletter Subscriber - IronCell Research',
+        from_name:'IronCell Research Newsletter',
+        subscriber_email:email,
+        message:'New newsletter subscriber (site popup):\n\nEmail: '+email
+      }),keepalive:true}).catch(function(){});
+    }catch(e){}
+    mark();
+    document.getElementById('ic-loop-body').innerHTML='<img class="ic-loop-logo" src="p-ironcell-logo.webp" alt="IronCell Research"><h3>You are on the list</h3><p class="ic-loop-ok">Thanks - we will let you know as soon as something new lands.</p>';
+    setTimeout(function(){ el.classList.remove('ic-loop-in'); setTimeout(function(){ el.style.display='none'; },350); },2600);
+  });
+  document.getElementById('ic-loop-email').addEventListener('keydown',function(ev){ if(ev.key==='Enter') el.querySelector('.ic-loop-go').click(); });
+})();
+</script>
 </body>
 </html>
