@@ -596,8 +596,38 @@
     else banner($('nlBanner'), 'err', out.error || 'Send failed.');
   }
   $('nlTest').addEventListener('click', function () { send(true); });
-  $('nlSend').addEventListener('click', function () {
-    if (confirm('Send "' + $('nlSubject').value.trim() + '" to your whole list?')) send(false);
+
+  /* Confirm-to-send. A newsletter cannot be recalled once Resend accepts it, so
+     this is deliberately not a one-click action: it shows the real live recipient
+     count and the exact subject, and requires the word SEND to be typed. */
+  $('nlSend').addEventListener('click', async function () {
+    var subject = $('nlSubject').value.trim();
+    if (!subject) { banner($('nlBanner'), 'err', 'Add a subject line first.'); return; }
+    if (!state.blocks.length) { banner($('nlBanner'), 'err', 'Add at least one content block.'); return; }
+
+    var count = null;
+    try {
+      var c = await sb.from('ironcell_subscribers')
+        .select('id', { count: 'exact', head: true })
+        .is('unsubscribed_at', null);
+      count = c.count;
+    } catch (e) { /* fall back to an unspecified count rather than blocking */ }
+
+    var who = (count === null ? 'your whole list' : count + ' subscriber' + (count === 1 ? '' : 's'));
+    var typed = prompt(
+      'SEND THIS NEWSLETTER?\n\n' +
+      'Subject:  ' + subject + '\n' +
+      'Going to: ' + who + '\n\n' +
+      'This sends immediately and cannot be recalled.\n' +
+      'Tip: use "Send test to me" first if you have not previewed it.\n\n' +
+      'Type SEND to confirm:'
+    );
+    if (typed === null) return;                     // cancelled
+    if (typed.trim().toUpperCase() !== 'SEND') {
+      banner($('nlBanner'), 'warn', 'Not sent - confirmation did not match. Type SEND exactly to confirm.');
+      return;
+    }
+    send(false);
   });
 
   /* ================= BOOT ================= */
