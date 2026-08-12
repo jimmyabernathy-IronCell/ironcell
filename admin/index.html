@@ -138,6 +138,7 @@
     <button data-tab="list">Email list</button>
     <button data-tab="newsletter">Newsletter</button>
     <button data-tab="seo">SEO rankings</button>
+    <button data-tab="history">History &amp; stats</button>
   </div>
 
   <!-- ORDERS -->
@@ -198,6 +199,33 @@
           <div class="field" style="margin-bottom:0"><label for="nlIssue">Issue label <span class="muted">(header line)</span></label><input id="nlIssue" placeholder="Monthly Newsletter - August 2026"></div>
         </div>
 
+        <div class="card" style="margin-bottom:16px">
+          <h2>Templates, drafts &amp; signature</h2>
+          <p class="sub">Save a layout once (a promotion, a restock notice), reuse it any time. Drafts keep work in progress.</p>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <select id="tplSelect" style="min-width:180px"><option value="">Templates&hellip;</option></select>
+            <button class="ghost sm" id="tplLoad">Load</button>
+            <button class="ghost sm" id="tplSave">Save current as template</button>
+            <button class="ghost sm" id="tplDel">Delete</button>
+          </div>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <select id="draftSelect" style="min-width:180px"><option value="">Drafts&hellip;</option></select>
+            <button class="ghost sm" id="draftLoad">Load</button>
+            <button class="ghost sm" id="draftSave">Save draft</button>
+            <button class="ghost sm" id="draftDel">Delete</button>
+          </div>
+          <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)"><input type="checkbox" id="sigInclude" checked> Append signature</label>
+            <button class="ghost sm" id="sigEdit">Edit signature</button>
+          </div>
+          <div id="sigBox" class="hide" style="margin-top:10px">
+            <textarea id="sigText" rows="4" style="width:100%" placeholder="Jimmy &amp; the IronCell team&#10;ironcellresearch.com &middot; orders@ironcellresearch.com"></textarea>
+            <div class="row" style="margin-top:8px"><button class="ghost sm" id="sigSave">Save signature</button></div>
+            <p class="note" style="margin-top:6px">Plain text; line breaks are kept. Shown above the disclaimer on every send while the box is ticked.</p>
+          </div>
+          <p class="note" id="tplMsg" style="margin-top:8px"></p>
+        </div>
+
         <div class="card">
           <h2>Content blocks</h2>
           <p class="sub">Add, edit, reorder, remove. Images upload straight from your computer.</p>
@@ -254,6 +282,26 @@
       <div id="seoEdits" class="note" style="margin-top:16px"></div>
     </div>
   </section>
+
+  <!-- HISTORY & STATS -->
+  <section id="tab-history" class="hide">
+    <div class="card">
+      <h2>Sends &amp; statistics</h2>
+      <p class="sub">Every newsletter sent from here, with delivery and engagement. Opens and clicks appear as recipients read.</p>
+      <div class="row" id="histChips" style="gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="histTable" style="overflow-x:auto"></div>
+    </div>
+    <div class="card hide" id="histDetail" style="margin-top:16px">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <h2 id="histDetailTitle" style="margin:0">Campaign</h2>
+        <div class="row" style="gap:8px">
+          <button class="ghost sm" id="histReuse">Load into composer</button>
+          <button class="ghost sm" id="histClose">Close</button>
+        </div>
+      </div>
+      <div id="histRecipients" style="overflow-x:auto;margin-top:12px"></div>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
@@ -278,6 +326,10 @@
     var issue = $('nlIssue').value.trim() || 'IronCell Research Newsletter';
     var pre = $('nlPreheader').value.trim();
     var inner = state.blocks.map(renderBlock).join('');
+    if (state.sig && $('sigInclude') && $('sigInclude').checked) {
+      inner += '<div style="margin-top:20px;padding-top:14px;border-top:1px solid #2a2a2a;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#b9b9b9;line-height:1.7">' +
+        esc(state.sig).split(String.fromCharCode(10)).join('<br>') + '</div>';
+    }
     return '' +
 '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
 '<title>' + esc($('nlSubject').value || 'IronCell Research') + '</title></head>' +
@@ -461,7 +513,8 @@
     b.addEventListener('click', function () {
       Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (x) { x.classList.remove('on'); });
       b.classList.add('on');
-      ['orders', 'list', 'newsletter', 'seo'].forEach(function (t) { show($('tab-' + t), t === b.dataset.tab); });
+      ['orders', 'list', 'newsletter', 'seo', 'history'].forEach(function (t) { show($('tab-' + t), t === b.dataset.tab); });
+      if (b.dataset.tab === 'history') loadHistory();
       if (b.dataset.tab === 'seo') loadSeo();
       if (b.dataset.tab === 'newsletter') paint();
     });
@@ -582,7 +635,7 @@
     if (!subject) { banner($('nlBanner'), 'err', 'Add a subject line first.'); return; }
     if (!state.blocks.length) { banner($('nlBanner'), 'err', 'Add at least one content block.'); return; }
     var s = await sb.auth.getSession(), sess = s.data.session;
-    var payload = { subject: subject, html: buildEmail(), wrapped: true };
+    var payload = { subject: subject, html: buildEmail(), wrapped: true, blocks: captureDoc() };
     if (testOnly) payload.testTo = sess.user.email;
     banner($('nlBanner'), 'warn', testOnly ? 'Sending test...' : 'Sending to your list...');
     var res = await fetch(SB_URL + '/functions/v1/ironcell-send-newsletter', {
@@ -645,6 +698,12 @@
     $('whoami').textContent = sess.user.email;
     if (sess.user.user_metadata && sess.user.user_metadata.must_change_password) show($('pwModal'), true);
     if (!state.blocks.length) {
+      try {
+        var __as = JSON.parse(localStorage.getItem('ic_autosave_v1') || 'null');
+        if (__as && __as.blocks && __as.blocks.length) { applyDoc(__as); }
+      } catch (e) {}
+    }
+    if (!state.blocks.length) {
       state.blocks = [
         { type: 'heading', text: 'Back in stock' },
         { type: 'text', text: 'Write your update here. Keep it to products, stock, testing and offers.' },
@@ -653,8 +712,173 @@
       $('nlIssue').value = 'Monthly Newsletter - ' + new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
       drawBlocks();
     }
-    paint(); loadOrders(); loadSubs();
+    paint(); loadOrders(); loadSubs(); refreshTpls(); refreshDrafts(); loadSig();
   }
+  
+  /* ============ TEMPLATES / DRAFTS / SIGNATURE / HISTORY (admin-only; RLS-gated) ============ */
+  function captureDoc() {
+    return { meta: { subject: $('nlSubject').value, preheader: $('nlPreheader').value, issue: $('nlIssue').value },
+             blocks: state.blocks };
+  }
+  function applyDoc(doc) {
+    doc = doc || {}; var m = doc.meta || {};
+    $('nlSubject').value = m.subject || ''; $('nlPreheader').value = m.preheader || ''; $('nlIssue').value = m.issue || '';
+    state.blocks = Array.isArray(doc.blocks) ? doc.blocks : [];
+    drawBlocks(); paint();
+  }
+  async function refreshTpls() {
+    var r = await sb.from('ironcell_templates').select('id,name').order('name');
+    var el = $('tplSelect'); el.innerHTML = '<option value="">Templates&hellip;</option>';
+    (r.data || []).forEach(function (t) {
+      if (t.name && t.name.indexOf('__') === 0) return;
+      var o = document.createElement('option'); o.value = t.id; o.textContent = t.name; el.appendChild(o);
+    });
+  }
+  async function refreshDrafts() {
+    var r = await sb.from('ironcell_drafts').select('id,subject,updated_at').order('updated_at', { ascending: false }).limit(15);
+    var el = $('draftSelect'); el.innerHTML = '<option value="">Drafts&hellip;</option>';
+    (r.data || []).forEach(function (d) {
+      var o = document.createElement('option'); o.value = d.id;
+      o.textContent = (d.subject || '(no subject)') + ' - ' + dateStr(d.updated_at);
+      el.appendChild(o);
+    });
+  }
+  $('tplSave').addEventListener('click', async function () {
+    var name = prompt('Template name (e.g. Promotion, Restock notice):'); if (!name) return;
+    name = name.trim().slice(0, 80); if (!name || name.indexOf('__') === 0) return;
+    var doc = captureDoc();
+    var ex = await sb.from('ironcell_templates').select('id').ilike('name', name).maybeSingle();
+    var res;
+    if (ex.data) {
+      res = await sb.from('ironcell_templates').update({ blocks: doc, subject: doc.meta.subject, updated_at: new Date().toISOString() }).eq('id', ex.data.id);
+    } else {
+      res = await sb.from('ironcell_templates').insert({ name: name, blocks: doc, subject: doc.meta.subject });
+    }
+    $('tplMsg').textContent = res.error ? 'Could not save: ' + res.error.message : 'Template "' + name + '" saved.';
+    refreshTpls();
+  });
+  $('tplLoad').addEventListener('click', async function () {
+    var id = $('tplSelect').value; if (!id) return;
+    var r = await sb.from('ironcell_templates').select('blocks').eq('id', id).maybeSingle();
+    if (r.data) { applyDoc(r.data.blocks); $('tplMsg').textContent = 'Template loaded into the composer.'; }
+  });
+  $('tplDel').addEventListener('click', async function () {
+    var el = $('tplSelect'), id = el.value; if (!id) return;
+    if (!confirm('Delete template "' + el.options[el.selectedIndex].text + '"?')) return;
+    await sb.from('ironcell_templates').delete().eq('id', id); refreshTpls();
+    $('tplMsg').textContent = 'Template deleted.';
+  });
+  $('draftSave').addEventListener('click', async function () {
+    var doc = captureDoc();
+    var res = await sb.from('ironcell_drafts').insert({ subject: doc.meta.subject || null, blocks: doc });
+    $('tplMsg').textContent = res.error ? 'Could not save draft: ' + res.error.message : 'Draft saved.';
+    refreshDrafts();
+  });
+  $('draftLoad').addEventListener('click', async function () {
+    var id = $('draftSelect').value; if (!id) return;
+    var r = await sb.from('ironcell_drafts').select('blocks').eq('id', id).maybeSingle();
+    if (r.data) { applyDoc(r.data.blocks); $('tplMsg').textContent = 'Draft loaded.'; }
+  });
+  $('draftDel').addEventListener('click', async function () {
+    var id = $('draftSelect').value; if (!id) return;
+    if (!confirm('Delete this draft?')) return;
+    await sb.from('ironcell_drafts').delete().eq('id', id); refreshDrafts();
+    $('tplMsg').textContent = 'Draft deleted.';
+  });
+  /* signature lives in ironcell_templates under a reserved name */
+  async function loadSig() {
+    var r = await sb.from('ironcell_templates').select('blocks').eq('name', '__signature__').maybeSingle();
+    state.sig = (r.data && r.data.blocks && r.data.blocks.html) ? String(r.data.blocks.html) : '';
+    $('sigText').value = state.sig; paint();
+  }
+  $('sigEdit').addEventListener('click', function () { show($('sigBox'), $('sigBox').classList.contains('hide')); });
+  $('sigSave').addEventListener('click', async function () {
+    var txt = $('sigText').value.slice(0, 2000);
+    var ex = await sb.from('ironcell_templates').select('id').eq('name', '__signature__').maybeSingle();
+    var res;
+    if (ex.data) {
+      res = await sb.from('ironcell_templates').update({ blocks: { html: txt }, updated_at: new Date().toISOString() }).eq('id', ex.data.id);
+    } else {
+      res = await sb.from('ironcell_templates').insert({ name: '__signature__', description: 'auto-managed newsletter signature', blocks: { html: txt } });
+    }
+    state.sig = txt; paint();
+    $('tplMsg').textContent = res.error ? 'Could not save signature: ' + res.error.message : 'Signature saved.';
+  });
+  $('sigInclude').addEventListener('change', function () { paint(); });
+
+  /* ---------- history & stats ---------- */
+  function chipHtml(label, val) {
+    return '<span style="border:1px solid #2a2a2a;background:#141414;border-radius:8px;padding:8px 14px;font-size:.8rem;color:#b9b9b9">' +
+      esc(label) + ' <b style="color:#fff;margin-left:6px">' + esc(String(val)) + '</b></span>';
+  }
+  var histCache = {};
+  var histOpenId = null;
+  async function loadHistory() {
+    var subs = await sb.from('ironcell_subscribers').select('id,unsubscribed_at');
+    var act = 0, uns = 0; (subs.data || []).forEach(function (x) { if (x.unsubscribed_at) { uns++; } else { act++; } });
+    var r = await sb.from('ironcell_campaigns').select('id,subject,sent_at,sent_by,sent_count,total_count,status,opens,clicks,unsubscribes,bounces,delivered').order('sent_at', { ascending: false }).limit(50);
+    var rows = r.data || []; histCache = {};
+    $('histChips').innerHTML = chipHtml('Active subscribers', act) + chipHtml('Unsubscribed', uns) + chipHtml('Campaigns sent', rows.length);
+    if (!rows.length) { $('histTable').innerHTML = '<p class="note">Nothing sent yet. Your first campaign will appear here with its delivery and engagement numbers.</p>'; return; }
+    var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
+      '<tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:.68rem;letter-spacing:1px">' +
+      '<th style="padding:8px 10px">Date</th><th style="padding:8px 10px">Subject</th><th style="padding:8px 10px">Sent</th><th style="padding:8px 10px">Opens</th><th style="padding:8px 10px">Clicks</th><th style="padding:8px 10px">Unsubs</th><th style="padding:8px 10px">Bounces</th><th style="padding:8px 10px">Status</th></tr>';
+    rows.forEach(function (c) {
+      histCache[c.id] = c;
+      h += '<tr data-cid="' + c.id + '" style="border-top:1px solid #2a2a2a;cursor:pointer">' +
+        '<td style="padding:9px 10px;white-space:nowrap">' + dateStr(c.sent_at) + '</td>' +
+        '<td style="padding:9px 10px">' + esc(c.subject || '') + '</td>' +
+        '<td style="padding:9px 10px">' + (c.sent_count || 0) + '/' + (c.total_count || 0) + '</td>' +
+        '<td style="padding:9px 10px">' + (c.opens || 0) + '</td>' +
+        '<td style="padding:9px 10px">' + (c.clicks || 0) + '</td>' +
+        '<td style="padding:9px 10px">' + (c.unsubscribes || 0) + '</td>' +
+        '<td style="padding:9px 10px">' + (c.bounces || 0) + '</td>' +
+        '<td style="padding:9px 10px">' + esc(c.status || 'sent') + '</td></tr>';
+    });
+    $('histTable').innerHTML = h + '</table><p class="note" style="margin-top:8px">Click a row for per-recipient detail.</p>';
+    Array.prototype.forEach.call($('histTable').querySelectorAll('tr[data-cid]'), function (tr) {
+      tr.addEventListener('click', function () { showCampaign(tr.getAttribute('data-cid')); });
+    });
+  }
+  async function showCampaign(id) {
+    histOpenId = id; var c = histCache[id] || {};
+    $('histDetailTitle').textContent = (c.subject || 'Campaign') + ' - ' + dateStr(c.sent_at);
+    show($('histDetail'), true);
+    var r = await sb.from('ironcell_campaign_recipients').select('email,status,sent_at,delivered_at,opened_at,clicked_at,bounced_at,unsubscribed_at,error').eq('campaign_id', id).order('email').limit(500);
+    var rows = r.data || [];
+    if (!rows.length) { $('histRecipients').innerHTML = '<p class="note">No per-recipient rows for this campaign (sent before tracking was added).</p>'; return; }
+    var mark = function (v) { return v ? '<span style="color:#7fce7f">&#10003;</span>' : '<span style="color:#555">-</span>'; };
+    var h = '<table style="width:100%;border-collapse:collapse;font-size:.8rem">' +
+      '<tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:.66rem;letter-spacing:1px">' +
+      '<th style="padding:7px 10px">Email</th><th style="padding:7px 10px">Status</th><th style="padding:7px 10px">Delivered</th><th style="padding:7px 10px">Opened</th><th style="padding:7px 10px">Clicked</th><th style="padding:7px 10px">Unsub</th></tr>';
+    rows.forEach(function (x) {
+      h += '<tr style="border-top:1px solid #222">' +
+        '<td style="padding:7px 10px">' + esc(x.email) + '</td>' +
+        '<td style="padding:7px 10px">' + esc(x.status || '') + (x.error ? ' <span class="muted" title="' + esc(x.error) + '">!</span>' : '') + '</td>' +
+        '<td style="padding:7px 10px">' + mark(x.delivered_at) + '</td>' +
+        '<td style="padding:7px 10px">' + mark(x.opened_at) + '</td>' +
+        '<td style="padding:7px 10px">' + mark(x.clicked_at) + '</td>' +
+        '<td style="padding:7px 10px">' + mark(x.unsubscribed_at) + '</td></tr>';
+    });
+    $('histRecipients').innerHTML = h + '</table>' + (rows.length === 500 ? '<p class="note">Showing first 500.</p>' : '');
+  }
+  $('histClose').addEventListener('click', function () { show($('histDetail'), false); });
+  $('histReuse').addEventListener('click', async function () {
+    if (!histOpenId) return;
+    var r = await sb.from('ironcell_campaigns').select('blocks,subject').eq('id', histOpenId).maybeSingle();
+    if (r.data && r.data.blocks) { applyDoc(r.data.blocks); }
+    else if (r.data) { $('nlSubject').value = r.data.subject || ''; }
+    document.querySelector('[data-tab="newsletter"]').click();
+    $('tplMsg').textContent = 'Campaign loaded into the composer.';
+  });
+
+  /* ---------- crash-safe local autosave (server drafts are the durable copy) ---------- */
+  var __paintOrig = paint;
+  paint = function () {
+    __paintOrig();
+    try { localStorage.setItem('ic_autosave_v1', JSON.stringify(captureDoc())); } catch (e) {}
+  };
+
   sb.auth.onAuthStateChange(function (evt) { if (evt === 'SIGNED_IN' || evt === 'TOKEN_REFRESHED') boot(); });
   boot();
 })();
