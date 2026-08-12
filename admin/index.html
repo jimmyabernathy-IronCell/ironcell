@@ -482,7 +482,11 @@
     var email = $('loginEmail').value.trim();
     if (!email) { banner($('loginMsg'), 'err', 'Enter your email first.'); return; }
     this.disabled = true;
-    var res = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.href } });
+    // Explicit, stable redirect target. window.location.href carried whatever query
+    // string happened to be on the page, and Supabase only honours redirects that
+    // match its allow-list exactly - any mismatch silently falls back to the project
+    // Site URL, which lands the session on the storefront instead of here.
+    var res = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: SITE + '/admin/' } });
     this.disabled = false;
     banner($('loginMsg'), res.error ? 'err' : 'ok', res.error ? res.error.message : 'Check your inbox - the sign-in link is on its way.');
   });
@@ -684,9 +688,32 @@
   });
 
   /* ================= BOOT ================= */
+  // Read a failed auth callback out of the URL. Without this a sign-in link that
+  // expires, gets reused, or comes back to a redirect Supabase will not honour just
+  // re-renders the login form with no message, which reads as "the link did nothing".
+  function authCallbackError() {
+    var frag = (window.location.hash || '').replace(/^#/, '');
+    var qs = (window.location.search || '').replace(/^\?/, '');
+    var p = new URLSearchParams(frag + (frag && qs ? '&' : '') + qs);
+    var desc = p.get('error_description') || p.get('error');
+    if (desc) return desc.replace(/\+/g, ' ');
+    if (p.get('access_token') || p.get('code')) {
+      return 'That sign-in link reached this page but could not be completed. Request a new one - if it keeps failing, ' +
+             SITE + '/admin/ needs to be added to the allowed redirect URLs in Supabase.';
+    }
+    return '';
+  }
+
   async function boot() {
     var s = await sb.auth.getSession(), sess = s.data.session;
-    if (!sess) { show($('loginView'), true); show($('appView'), false); return; }
+    if (!sess) {
+      show($('loginView'), true); show($('appView'), false);
+      var cbErr = authCallbackError();
+      if (cbErr) banner($('loginMsg'), 'err', cbErr);
+      return;
+    }
+    // Drop the access token out of the address bar once it has been consumed.
+    if (window.location.hash) { try { history.replaceState(null, '', window.location.pathname); } catch (e) {} }
     var a = await sb.from('ironcell_admins').select('email').ilike('email', sess.user.email).maybeSingle();
     if (!a.data) {
       show($('loginView'), true); show($('appView'), false);
