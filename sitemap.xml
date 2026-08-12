@@ -14,6 +14,14 @@
 
   The affiliate pages are also full self-canonical copies of the storefront,
   so listing them had them competing against "/" for the same commercial terms.
+
+  ADDED Aug 12 2026: /research-supplies/. It is part of the store, not an
+  affiliate copy, and it targets its own terms (bacteriostatic water, insulin
+  syringes, starter kits) so it does not compete with "/" for the compound
+  terms. Measured demand is strong - "bacteriostatic water" and "31 gauge
+  insulin syringes" both max out Google autocomplete - and it carries no
+  compound names, so it is the one page here that can chase that traffic
+  without any compliance exposure.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -21,5 +29,11 @@
     <lastmod>2026-08-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/research-supplies/</loc>
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

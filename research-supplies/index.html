@@ -4,10 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- STAGED FOR REVIEW - not indexed, not in sitemap, not linked from the store.
-     Remove this robots tag and add the URL to scripts/generate-sitemap.mjs only
-     once Julien has approved the page. -->
-<meta name="robots" content="noindex, nofollow">
+<!-- INDEXABLE (Julien, Aug 12 2026: "i want to ensure we get the traffic we need").
+     Measured demand is real - "bacteriostatic water" and "31 gauge insulin syringes"
+     both max out Google autocomplete - and organic is a zero-risk channel, unlike
+     paid. The page carries no compound names and no invented claims, so it is safe
+     to index. Still NOT linked from the storefront nav; that is a client-facing
+     navigation change and Julien's call. -->
+<meta name="robots" content="index, follow">
 
 <title>Research Supplies | Bacteriostatic Water, Syringes &amp; Starter Kits - IronCell Research</title>
 <meta name="description" content="Laboratory research supplies from a US supplier - bacteriostatic water, 31 gauge insulin syringes, alcohol prep pads and starter kits. Fast domestic shipping. Laboratory research use only.">
@@ -175,10 +178,13 @@ footer{border-top:1px solid var(--border-subtle);padding:36px 0;margin-top:24px}
     <h1>Research <em>Supplies</em></h1>
     <p>Bacteriostatic water, insulin syringes, alcohol prep pads and ready-made starter kits. Shipped from the United States, typically arriving in 2 to 4 days.</p>
     <div class="trust">
+      <!-- Every badge below is a fact already stated on the storefront or in its
+           cart code. Do not add one that is not - an earlier draft claimed "Sealed,
+           sterile packaging", which the catalog never says. -->
       <span><i class="dot"></i> US supplier</span>
       <span><i class="dot"></i> Domestic shipping 2-4 days</span>
-      <span><i class="dot"></i> Sealed, sterile packaging</span>
       <span><i class="dot"></i> Flat $10.99 shipping</span>
+      <span><i class="dot"></i> Research use only</span>
     </div>
   </div>
 </section>
