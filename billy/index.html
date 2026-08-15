@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <!-- IronCell Research v2.1 - Updated 2026-03-07 -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!-- Google tag (gtag.js) - Google Ads AW-18389709216 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18389709216"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18389709216');
+</script>
+
 
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4501,6 +4510,21 @@
     const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
     var _ct = document.getElementById('confirmTotal');
     if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);
+
+    // Google Ads purchase conversion (tag AW-18389709216, action "Purchase").
+    // Sits below the _submittedOrders guard above, so it fires at most once per
+    // order number, and inside try/catch because gtag is absent whenever the tag
+    // script is blocked - measurement must never be able to break checkout.
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',
+          'value': Number(grandTotal.toFixed(2)),
+          'currency': 'USD',
+          'transaction_id': orderNum
+        });
+      }
+    } catch (e) {}
 
     const itemsList = cart.map(item =>
       `${item.name}${item.strength ? ' (' + item.strength + ')' : ''} x${item.qty} - $${(item.price * item.qty).toFixed(2)}`
