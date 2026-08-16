@@ -1,39 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  SCOPE (Aug 11 2026, Julien): SEO effort is the STORE only. The 8 affiliate
-  landing pages and /peptidecalculator/ are intentionally NOT listed here.
-
-  Nothing has been removed from the site - every one of those pages is still
-  live, still reachable, and still works exactly as before. Delisting them only
-  stops us actively submitting them to search engines:
-    - the affiliates handle their own SEO (Julien), so their pages do not
-      belong in our submission set;
-    - /peptidecalculator/ is compliance-flagged (a dosing tool on a
-      research-use-only store), so we do not promote it while it is pending
-      Jimmy + counsel.
-
-  The affiliate pages are also full self-canonical copies of the storefront,
-  so listing them had them competing against "/" for the same commercial terms.
-
-  ADDED Aug 12 2026: /research-supplies/. It is part of the store, not an
-  affiliate copy, and it targets its own terms (bacteriostatic water, insulin
-  syringes, starter kits) so it does not compete with "/" for the compound
-  terms. Measured demand is strong - "bacteriostatic water" and "31 gauge
-  insulin syringes" both max out Google autocomplete - and it carries no
-  compound names, so it is the one page here that can chase that traffic
-  without any compliance exposure.
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ironcellresearch.com/</loc>
-    <lastmod>2026-08-11</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ironcellresearch.com/research-supplies/</loc>
-    <lastmod>2026-08-12</lastmod>
+    <loc>https://ironcellresearch.com/amber/</loc>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/davu/</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/ray/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/dupree/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/billy/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/chel/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/merv/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/truetransformation</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ironcellresearch.com/peptidecalculator/</loc>
+    <lastmod>2026-07-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
