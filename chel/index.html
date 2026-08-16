@@ -4571,6 +4571,16 @@
         message: `New newsletter subscriber:\n\nEmail: ${email}`
       }), keepalive:true}).catch(function(){});
 
+    // Google Ads newsletter conversion (tag AW-18389709216, action "Newsletter
+    // signup"). Secondary and valueless in Ads, so it reports without competing
+    // with purchases for bidding. Same try/catch + typeof guard as the purchase
+    // event - gtag is absent whenever the tag script is blocked.
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
+      }
+    } catch (e) {}
+
     // Immediate optimistic UI feedback so customers see confirmation
     emailInput.value = '';
     emailInput.placeholder = 'Subscribed! Check your inbox.';
