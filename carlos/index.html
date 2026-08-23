@@ -4541,8 +4541,8 @@
         access_key: '603b0822-9385-4831-ba22-13f82778ebab',
         to: 'orders@ironcellresearch.com',
         ccemail: 'carloscortezjr@gmail.com',
-        subject: `New Order #${orderNum} - IronCell Research (Amber)`,
-        from_name: 'IronCell Research Orders (Amber)',
+        subject: `New Order #${orderNum} - IronCell Research (Carlos)`,
+        from_name: 'IronCell Research Orders (Carlos)',
         name: name,
         email: email,
         message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${city}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
