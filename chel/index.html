@@ -2,22 +2,13 @@
 <!-- IronCell Research v2.1 - Updated 2026-03-07 -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<!-- Google tag (gtag.js) - Google Ads AW-18389709216 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18389709216"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'AW-18389709216');
-</script>
-
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IronCell Research | Third-Party Tested Research Peptides</title>
+<title>IronCell Research — Precision, Purity &amp; Power</title>
 <meta name="description" content="Premium research peptides — GLP3-Reta, GLP2-Tirz, BPC-157, GHK-Cu &amp; more from IronCell Research. Third-party tested, precision-dosed, fast US shipping.">
 <meta name="keywords" content="research peptides, GLP3-Reta, GLP2-Tirz, Semaglutide, BPC-157, TB-500, GHK-Cu, MK677, Sermorelin, PT-141, ARA-290, Melanotan, MOTS-c, NAD+, SLU-PP-332, Ipamorelin, Tesamorelin, KLOW, peptide research, IronCell Research">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://ironcellresearch.com/">
+<link rel="canonical" href="https://ironcellresearch.com/chel/">
 <!-- Open Graph / Social -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="IronCell Research — Precision, Purity &amp; Power">
@@ -1698,7 +1689,7 @@
   <div class="hero-content">
     <div class="hero-tagline">Precision &nbsp;•&nbsp; Purity &nbsp;•&nbsp; Power</div>
     <img src="../p-ironcell-logo.webp" alt="IronCell Research" class="hero-logo-img">
-    <h1>Third-Party Tested <em>Research</em> Compounds</h1>
+    <h1>Life-Changing <em>Research</em> Compounds</h1>
     <p class="hero-sub">IronCell Research is your trusted partner for high-quality, third-party verified research compounds. Every batch tested. Every result published.</p>
 
   </div>
@@ -3450,7 +3441,7 @@
     {
       name: "GLP3-Reta",
       subtitle: "Triple-Agonist Injectable · GIP/GLP-1/Glucagon",
-      desc: "GLP3-Reta is an investigational triple-agonist compound that acts on the GIP, GLP-1, and glucagon receptors, and is currently in Phase 3 clinical development. Supplied strictly for laboratory research. For research use only - not for human consumption. Not intended to diagnose, treat, cure, or prevent any disease.",
+      desc: "GLP3-Reta is an investigational, once-weekly injectable therapy designed to target obesity and metabolic disorders through a powerful triple-agonist mechanism. By activating GIP, GLP-1, and glucagon receptors simultaneously, it helps reduce appetite, improve metabolic function, and increase energy expenditure. Early clinical trials show substantial weight-loss potential and promising improvements in metabolic health, positioning GLP3-Reta as a next-generation option currently advancing through Phase 3 development.",
       strengths: ["10mg — $99.99", "20mg — $159.99", "30mg — $179.99"],
       price: "$99.99"
     },
@@ -4113,6 +4104,36 @@
   // Products excluded from coupon discounts (pills)
   const NO_COUPON_PRODUCTS = ['SLU-PP332', 'BPC-157 Oral', 'MK677', 'Tesofensine', 'Dihexa', 'Gen10'];
 
+  // ─── SPEND & SAVE — Mon Aug 24 to Sun Aug 30, 2026 (auto-apply, no code) ───
+  const SPEND_SAVE_START = new Date(2026, 7, 24, 0, 0, 0);
+  const SPEND_SAVE_END   = new Date(2026, 7, 30, 23, 59, 59);
+  function isSpendSaveActive() {
+    var now = new Date();
+    return now >= SPEND_SAVE_START && now <= SPEND_SAVE_END;
+  }
+  function getSpendSaveTier(subtotal) {
+    if (!isSpendSaveActive()) return null;
+    if (subtotal >= 750) return { rate: 0.35, code: 'SPEND35', label: 'SPEND & SAVE 35% OFF ($750+)' };
+    if (subtotal >= 500) return { rate: 0.30, code: 'SPEND30', label: 'SPEND & SAVE 30% OFF ($500+)' };
+    if (subtotal >= 250) return { rate: 0.25, code: 'SPEND25', label: 'SPEND & SAVE 25% OFF ($250+)' };
+    return { rate: 0, code: null, label: null, needToUnlock: 250 - subtotal };
+  }
+  function getNextSpendSaveTier(subtotal) {
+    if (subtotal < 250) return { threshold: 250, pct: '25%', add: 250 - subtotal };
+    if (subtotal < 500) return { threshold: 500, pct: '30%', add: 500 - subtotal };
+    if (subtotal < 750) return { threshold: 750, pct: '35%', add: 750 - subtotal };
+    return null;
+  }
+  // Sticky top banner while promo is live
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!isSpendSaveActive()) return;
+    var bar = document.createElement('div');
+    bar.id = 'spendSaveBar';
+    bar.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#cc0000,#8B0000);color:#fff;text-align:center;padding:10px 14px;font-family:\'Inter\',sans-serif;font-weight:700;letter-spacing:0.8px;font-size:13px;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+    bar.innerHTML = '\u2605 SPEND & SAVE WEEK \u2605 Spend $250 = 25% OFF \u00b7 $500 = 30% OFF \u00b7 $750+ = 35% OFF \u00b7 Auto-applied at checkout \u2605';
+    document.body.insertBefore(bar, document.body.firstChild);
+  });
+
   // ─── COUPON SYSTEM ───
   const COUPONS = {
     'RETA10': 0,
@@ -4130,6 +4151,7 @@
     'RAY20': 0.20,
     'DUPREE20': 0.20,
     'DAVU20': 0.20,
+    'CARLOS20': 0.20,
     'THANKYOU25': 0.25,
     'FAMILY': 0.30
   };
@@ -4336,6 +4358,13 @@
           (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
         discountAmount = retaFlatPerVial * retaQty;
       }
+      // SPEND & SAVE auto-tier — applies to FULL cart (Gen10 + pills included). Wins if it beats current discount.
+      var _sst = getSpendSaveTier(subtotalPrice);
+      var _sstApplied = false;
+      if (_sst && _sst.rate > 0) {
+        var _sstDisc = subtotalPrice * _sst.rate;
+        if (_sstDisc > discountAmount) { discountAmount = _sstDisc; _sstApplied = true; }
+      }
       const taxAmount = (subtotalPrice - discountAmount) * taxRate;
       const discountedSubtotal = subtotalPrice - discountAmount;
       const grandTotal = discountedSubtotal + shipping + taxAmount;
@@ -4348,10 +4377,18 @@
       `).join('');
       html += `<div class="checkout-summary-line"><span>Subtotal</span><span>$${subtotalPrice.toFixed(2)}</span></div>`;
       if (discountAmount > 0) {
-        const discLabel = (appliedCoupon === 'RETA10')
-          ? `Discount (RETA10 — $30 off per GLP3-Reta 10mg)`
-          : `Discount (${appliedCoupon} ${(couponDiscount * 100)}% off)`;
+        var discLabel;
+        if (_sstApplied) discLabel = 'Discount (' + _sst.label + ')';
+        else if (appliedCoupon === 'RETA10') discLabel = 'Discount (RETA10 — $30 off per GLP3-Reta 10mg)';
+        else discLabel = 'Discount (' + appliedCoupon + ' ' + (couponDiscount * 100) + '% off)';
         html += `<div class="checkout-summary-line discount"><span>${discLabel}</span><span>-$${discountAmount.toFixed(2)}</span></div>`;
+      }
+      // Prompt to unlock next tier during Spend & Save week
+      if (isSpendSaveActive()) {
+        var _next = getNextSpendSaveTier(subtotalPrice);
+        if (_next) {
+          html += `<div class="checkout-summary-line" style="background:#fff5f5;border:1px dashed #cc0000;border-radius:6px;padding:8px 12px;margin-top:8px;color:#cc0000;font-weight:600;font-size:0.9rem;"><span>\u2605 Add $${_next.add.toFixed(2)} more to unlock ${_next.pct} off!</span><span></span></div>`;
+        }
       }
       html += `<div class="checkout-summary-line"><span>Shipping</span><span>$${shipping.toFixed(2)}</span></div>`;
       html += `<div class="checkout-summary-line"><span>Tax${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ' (enter zip for estimate)'}</span><span>$${taxAmount.toFixed(2)}</span></div>`;
@@ -4481,25 +4518,21 @@
         (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
       discountAmt = retaFlatPerVial * retaQty;
     }
+    // SPEND & SAVE auto-tier — mirror of checkout summary logic
+    var _sstP = getSpendSaveTier(subtotalPrice);
+    var _sstCode = null;
+    var _sstRate = 0;
+    if (_sstP && _sstP.rate > 0) {
+      var _sstD = subtotalPrice * _sstP.rate;
+      if (_sstD > discountAmt) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; }
+    }
+    // Effective coupon label sent to tracker + email
+    var effectiveCoupon = _sstCode || appliedCoupon;
+    var effectiveRate = _sstCode ? _sstRate : couponDiscount;
     const taxAmount = (subtotalPrice - discountAmt) * taxRate;
     const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
     var _ct = document.getElementById('confirmTotal');
     if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);
-
-    // Google Ads purchase conversion (tag AW-18389709216, action "Purchase").
-    // Sits below the _submittedOrders guard above, so it fires at most once per
-    // order number, and inside try/catch because gtag is absent whenever the tag
-    // script is blocked - measurement must never be able to break checkout.
-    try {
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
-          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',
-          'value': Number(grandTotal.toFixed(2)),
-          'currency': 'USD',
-          'transaction_id': orderNum
-        });
-      }
-    } catch (e) {}
 
     const itemsList = cart.map(item =>
       `${item.name}${item.strength ? ' (' + item.strength + ')' : ''} x${item.qty} - $${(item.price * item.qty).toFixed(2)}`
@@ -4514,7 +4547,7 @@
         from_name: 'IronCell Research Orders (Chel)',
         name: name,
         email: email,
-        message: `NEW ORDER RECEIVED${(appliedCoupon && discountAmt > 0) ? '\nCOUPON: ' + appliedCoupon + ' (' + (couponDiscount * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${city}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
+        message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\n\nOrder #: ${orderNum}\nPayment Method: ${method.toUpperCase()}\n\nCUSTOMER INFO:\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nAddress: ${address}, ${city}, ${state} ${zip}\n\nITEMS:\n${itemsList}\n\nSubtotal: $${subtotalPrice.toFixed(2)}\nShipping: $${shipping.toFixed(2)}\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\nTOTAL: $${grandTotal.toFixed(2)}`
       }), keepalive:true}).catch(function(){});
 
     // Send order to Google Sheets tracker (GET request via Image pixel to avoid CORS)
@@ -4528,9 +4561,9 @@
       '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) +
       '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) +
       '&shipping=' + encodeURIComponent(shipping.toFixed(2)) +
-      '&coupon=' + encodeURIComponent(appliedCoupon || '') +
+      '&coupon=' + encodeURIComponent(effectiveCoupon || '') +
       '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) +
-      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + ((appliedCoupon && discountAmt > 0) ? ' | Coupon: ' + appliedCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
+      '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));
     var sheetImg = new Image();
     sheetImg.onload = function() { console.log('Order sent to Google Sheet'); };
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
@@ -4558,16 +4591,6 @@
         subscriber_email: email,
         message: `New newsletter subscriber:\n\nEmail: ${email}`
       }), keepalive:true}).catch(function(){});
-
-    // Google Ads newsletter conversion (tag AW-18389709216, action "Newsletter
-    // signup"). Secondary and valueless in Ads, so it reports without competing
-    // with purchases for bidding. Same try/catch + typeof guard as the purchase
-    // event - gtag is absent whenever the tag script is blocked.
-    try {
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
-      }
-    } catch (e) {}
 
     // Immediate optimistic UI feedback so customers see confirmation
     emailInput.value = '';
