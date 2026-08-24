@@ -4,8 +4,7 @@ name: Keep admin entry
 # The storefront is published by writing whole files back from a local copy
 # (the commits titled "Update index.html - peptide calculator"). Every such
 # publish silently reverts anything newer than the copy it was written from.
-# Measured, not guessed - the newsletter admin entry has been dropped three
-# times this way:
+# Measured, not guessed - the newsletter admin entry has been dropped this way:
 #   2026-08-16  7dd054d2 index.html / 26c1504e robots.txt
 #   2026-08-18  277b2669 index.html / f4b78155 robots.txt
 #   2026-08-23  7c8ad139 index.html / c2c91ed3 robots.txt
@@ -16,17 +15,30 @@ name: Keep admin entry
 # so they survive. Only the entry POINT is lost. This workflow puts the entry
 # point back automatically, so nobody has to notice or do anything.
 #
+# HARDENED 2026-08-24. The 08-23 drop stayed live for 19 hours, across three
+# further publishes (b18f5e02, d6dfd705, fb2756e5), because this job did not
+# exist yet. Three changes so a gap that size cannot happen again:
+#   * SCHEDULE. It now runs every 30 minutes as well as on push, so a loss is
+#     repaired even when nobody pushes again and nobody is watching.
+#   * cancel-in-progress is OFF. Publishes arrive in storms of 20+ commits in
+#     30 seconds and cancellation left the repair to one surviving run.
+#   * admin/index.html is checked by CONTENT, not merely by existence, so a
+#     publish that overwrites it with an older gutted copy is caught as well
+#     as one that deletes it.
+#
 # Nothing here touches product copy, pricing, cart, checkout, payment, PayPal
 # or the age gate. It writes only when something is genuinely missing.
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 concurrency:
   group: keep-admin-entry
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -46,30 +58,47 @@ jobs:
 
           ADMIN_LINK = '<a href="/admin/" rel="nofollow noopener">Admin</a>'
           FENCE = 'Disallow: /admin/'
-          GUARDED = ['admin/index.html',
-                     'email-icon-instagram.png',
-                     'email-icon-tiktok.png',
-                     'email-icon-facebook.png']
+
+          # A guarded file counts as good only when it still carries every
+          # marker listed for it. Existence on its own is not enough: a
+          # whole-file publish can put an older, gutted admin page back and
+          # leave the composer and the send button dead while the file is
+          # present and the repo looks correct.
+          GUARDED = {
+              'admin/index.html': [b'function buildEmail',
+                                   b'ironcell-send-newsletter',
+                                   b'email-icon-instagram.png',
+                                   b'email-icon-tiktok.png',
+                                   b'email-icon-facebook.png'],
+              'email-icon-instagram.png': [],
+              'email-icon-tiktok.png': [],
+              'email-icon-facebook.png': [],
+          }
           changed = []
 
           def git(*a):
               return subprocess.run(['git', *a], capture_output=True)
 
-          def last_good(path, test=lambda b: True):
+          def good(blob, markers):
+              return all(m in blob for m in markers)
+
+          def last_good(path, markers):
               r = git('log', '--format=%H', '--', path)
               for sha in r.stdout.decode().split():
                   b = git('show', f'{sha}:{path}')
-                  if b.returncode == 0 and test(b.stdout):
+                  if b.returncode == 0 and good(b.stdout, markers):
                       return sha, b.stdout
               return None, None
 
-          # 1. Files that must simply exist (the admin page and its icons).
-          for path in GUARDED:
+          # 1. Files that must exist and must still be the real thing.
+          for path, markers in GUARDED.items():
               if os.path.exists(path):
-                  continue
-              sha, blob = last_good(path)
+                  if good(open(path, 'rb').read(), markers):
+                      continue
+                  print(f'{path} is present but no longer complete - restoring')
+              sha, blob = last_good(path, markers)
               if blob is None:
-                  print(f'CANNOT RESTORE {path}: no version of it in history')
+                  print(f'CANNOT RESTORE {path}: no good version in history')
                   continue
               os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
               open(path, 'wb').write(blob)
