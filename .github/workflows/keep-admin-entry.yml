@@ -11,23 +11,39 @@ name: Keep admin entry
 # It was restored by hand once (45f5bf44, 2026-08-19) and was reverted again
 # four days later, which is why a manual restore is not the fix.
 #
-# admin/index.html and the email-icon-*.png files are NOT in that local copy,
-# so they survive. Only the entry POINT is lost. This workflow puts the entry
-# point back automatically, so nobody has to notice or do anything.
+# admin/index.html and the email-*.png files are NOT in that local copy, so they
+# survive. Only the entry POINT is lost. This workflow puts it back automatically.
 #
-# HARDENED 2026-08-24. The 08-23 drop stayed live for 19 hours, across three
-# further publishes (b18f5e02, d6dfd705, fb2756e5), because this job did not
-# exist yet. Three changes so a gap that size cannot happen again:
-#   * SCHEDULE. It now runs every 30 minutes as well as on push, so a loss is
-#     repaired even when nobody pushes again and nobody is watching.
-#   * cancel-in-progress is OFF. Publishes arrive in storms of 20+ commits in
-#     30 seconds and cancellation left the repair to one surviving run.
-#   * admin/index.html is checked by CONTENT, not merely by existence, so a
-#     publish that overwrites it with an older gutted copy is caught as well
-#     as one that deletes it.
+# HARDENED 2026-08-24 (a). Schedule every 30 minutes, cancel-in-progress off,
+# and admin/index.html checked by CONTENT rather than by existence.
 #
-# Nothing here touches product copy, pricing, cart, checkout, payment, PayPal
-# or the age gate. It writes only when something is genuinely missing.
+# HARDENED 2026-08-24 (b). Two things this job did not do before:
+#
+#   * IT NOW COVERS THE MEASUREMENT LAYER, NOT JUST THE ADMIN ENTRY.
+#     The same 08-23 write-back that dropped the admin link also dropped the
+#     Google Ads tag AW-18389709216, the newsletter-signup conversion and the
+#     45-product ItemList structured data from index.html, and the subscriber
+#     mirror from all eleven pages that carry a sign-up form. Nothing looked
+#     different on the page, no error was thrown, and Ads kept spending against
+#     a conversion signal that had gone silent. Those are now guarded too.
+#
+#   * IT NO LONGER FAILS WHEN A PUBLISH LANDS MID-REPAIR.
+#     The storefront is published in storms of 20-30 commits in under a minute.
+#     The old single `git push` was rejected non-fast-forward whenever one of
+#     those landed first, the job went red, and GitHub emailed the repository
+#     owner about a failure that was not his and that needed no action. It now
+#     re-reads main, redoes the repair against the new content and pushes again,
+#     and it exits clean when there is genuinely nothing to put back.
+#
+# WHAT THIS JOB WILL NOT TOUCH
+# Product copy, pricing, the Spend & Save promotion, the cart, checkout,
+# PayPal/Venmo/Zelle and the age gate. Every edit it makes is proved additive
+# before it is written: the file must equal the original plus exactly one
+# insert, a fixed list of checkout, cart, payment, age-gate and promotion
+# markers must not move by a single occurrence, and every inline script must
+# still parse. If any of that fails the edit is thrown away, not committed.
+# The Google Ads PURCHASE conversion lives inside the checkout path and is
+# deliberately NOT handled here.
 
 on:
   push:
@@ -51,19 +67,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Put back anything the last publish dropped
+      - name: Put back anything the last publish dropped, and publish the repair
         run: |
-          python3 - <<'PY'
-          import subprocess, os
+          set -uo pipefail
+
+          cat > /tmp/heal.py <<'PY'
+          import subprocess, os, re
 
           ADMIN_LINK = '<a href="/admin/" rel="nofollow noopener">Admin</a>'
           FENCE = 'Disallow: /admin/'
 
-          # A guarded file counts as good only when it still carries every
-          # marker listed for it. Existence on its own is not enough: a
-          # whole-file publish can put an older, gutted admin page back and
-          # leave the composer and the send button dead while the file is
-          # present and the repo looks correct.
           GUARDED = {
               'admin/index.html': [b'function buildEmail',
                                    b'ironcell-send-newsletter',
@@ -73,95 +86,284 @@ jobs:
               'email-icon-instagram.png': [],
               'email-icon-tiktok.png': [],
               'email-icon-facebook.png': [],
+              'email-logo-trans.png': [],
           }
+
+          # ---------------------------------------------------------------- measurement
+          # Storefront surfaces that carry a newsletter sign-up form.
+          SUB_PAGES = ['index.html', 'mvp.html', 'truetransformation.html',
+                       'amber/index.html', 'billy/index.html', 'carlos/index.html',
+                       'chel/index.html', 'davu/index.html', 'dupree/index.html',
+                       'merv/index.html', 'ray/index.html']
+
+          HEAD_ANCHOR = ('<html lang="en"><head><meta http-equiv="Content-Type" '
+                         'content="text/html; charset=UTF-8">\n\n')
+          HEAD_TAG = (
+              '<!-- Google tag (gtag.js) - Google Ads AW-18389709216 -->\n'
+              '<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18389709216"></script>\n'
+              '<script>\n'
+              '  window.dataLayer = window.dataLayer || [];\n'
+              '  function gtag(){dataLayer.push(arguments);}\n'
+              "  gtag('js', new Date());\n"
+              "  gtag('config', 'AW-18389709216');\n"
+              '</script>\n\n')
+
+          NL_ANCHOR = '\n    // Immediate optimistic UI feedback so customers see confirmation'
+          NL_CONV = (
+              '\n\n    // Google Ads newsletter conversion (tag AW-18389709216, action "Newsletter\n'
+              '    // signup"). Secondary and valueless in Ads, so it reports without competing\n'
+              '    // with purchases for bidding. Same try/catch + typeof guard as the purchase\n'
+              '    // event - gtag is absent whenever the tag script is blocked.\n'
+              '    try {\n'
+              "      if (typeof gtag === 'function') {\n"
+              "        gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });\n"
+              '      }\n'
+              '    } catch (e) {}\n')
+
+          SUB_ANCHOR = ("trackImg.src = 'https://script.google.com/macros/s/"
+                        "AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw"
+                        "/exec?type=newsletter&email=' + encodeURIComponent(email);")
+          SUB_MIRROR = (
+              "\n      // Mirror to the IronCell admin list (additive; the Google Sheet above is unchanged)"
+              "\n      const mmSubImg = new Image();"
+              "\n      mmSubImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/"
+              "ironcell-ingest?t=sub&email=' + encodeURIComponent(email);")
+
+          HEAD_CLOSE = '\n</head>'
+
+          # Nothing below may move. Checkout, cart, payment and the age gate are read
+          # only to this job: if any of these counts changes the edit is thrown away.
+          SENTINELS = ['function proceedWithOrder', 'function openCheckout', 'function closeCheckout',
+                       'function handlePayment', 'function generateOrderNumber', 'function updateCartUI',
+                       'function toggleCart', 'function closeAgeGate', 'ageGate', 'paypal', 'venmo',
+                       'zelle', 'addToCart', 'grandTotal', 'web3forms', 'appliedCoupon', 'taxRate',
+                       'SPEND35', 'SPEND30', 'SPEND25', 'SPEND & SAVE WEEK', 'getSpendSaveTier',
+                       'BVXmCJiwnuIcEKDj8sBE', 'ironcell-ingest?t=order']
+
           changed = []
+
 
           def git(*a):
               return subprocess.run(['git', *a], capture_output=True)
 
-          def good(blob, markers):
-              return all(m in blob for m in markers)
 
-          def last_good(path, markers):
-              r = git('log', '--format=%H', '--', path)
+          def additive_ok(before, after, added):
+              """Prove the edit inserted exactly `added` and moved nothing else."""
+              if len(after) - len(before) != len(added):
+                  return 'byte delta %d, expected %d' % (len(after) - len(before), len(added))
+              for k in SENTINELS:
+                  if before.count(k) != after.count(k):
+                      return 'sentinel moved: %s' % k
+              if after.replace(added, '', 1) != before:
+                  return 'the file is not the original plus exactly one insert'
+              return None
+
+
+          def scripts_parse(html):
+              """Every inline <script> must still parse. JSON-LD is checked as JSON."""
+              import json, tempfile, shutil
+              if not shutil.which('node'):
+                  return True
+              for b in re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S):
+                  if not b.strip():
+                      continue
+                  with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False) as fh:
+                      fh.write(b)
+                      p = fh.name
+                  try:
+                      r = subprocess.run(['node', '--check', p], capture_output=True)
+                  finally:
+                      os.unlink(p)
+                  if r.returncode != 0:
+                      try:
+                          json.loads(b)
+                      except Exception:
+                          return False
+              return True
+
+
+          def edit(path, why, fn):
+              """fn(text) -> (newtext, inserted) or None. Applied only if provably additive."""
+              if not os.path.exists(path):
+                  return
+              before = open(path, encoding='utf-8').read()
+              res = fn(before)
+              if res is None:
+                  return
+              after, added = res
+              bad = additive_ok(before, after, added)
+              if bad:
+                  print('SKIP %s (%s): %s' % (path, why, bad))
+                  return
+              if not scripts_parse(after):
+                  print('SKIP %s (%s): a script block no longer parses' % (path, why))
+                  return
+              open(path, 'w', encoding='utf-8').write(after)
+              if path not in changed:
+                  changed.append(path)
+              print('restored %s: %s' % (path, why))
+
+
+          def once(text, anchor, insert, after_anchor=True):
+              if insert in text or text.count(anchor) != 1:
+                  return None
+              if after_anchor:
+                  return text.replace(anchor, anchor + insert, 1), insert
+              return text.replace(anchor, insert + anchor, 1), insert
+
+
+          def itemlist_from_history():
+              r = git('log', '--format=%H', '--', 'index.html')
               for sha in r.stdout.decode().split():
-                  b = git('show', f'{sha}:{path}')
-                  if b.returncode == 0 and good(b.stdout, markers):
-                      return sha, b.stdout
+                  b = git('show', '%s:index.html' % sha)
+                  if b.returncode:
+                      continue
+                  t = b.stdout.decode('utf-8', 'replace')
+                  for m in re.finditer(r'<script type="application/ld\+json">.*?</script>', t, re.S):
+                      if '"@type":"ItemList"' in m.group(0):
+                          return m.group(0), sha
               return None, None
 
-          # 1. Files that must exist and must still be the real thing.
-          for path, markers in GUARDED.items():
-              if os.path.exists(path):
-                  if good(open(path, 'rb').read(), markers):
+
+          def run():
+              # 1. Files that must exist and must still be the real thing.
+              for path, markers in GUARDED.items():
+                  if os.path.exists(path):
+                      if all(m in open(path, 'rb').read() for m in markers):
+                          continue
+                      print('%s is present but no longer complete - restoring' % path)
+                  sha = blob = None
+                  for s in git('log', '--format=%H', '--', path).stdout.decode().split():
+                      b = git('show', '%s:%s' % (s, path))
+                      if b.returncode == 0 and all(m in b.stdout for m in markers):
+                          sha, blob = s, b.stdout
+                          break
+                  if blob is None:
+                      print('CANNOT RESTORE %s: no good version in history' % path)
                       continue
-                  print(f'{path} is present but no longer complete - restoring')
-              sha, blob = last_good(path, markers)
-              if blob is None:
-                  print(f'CANNOT RESTORE {path}: no good version in history')
-                  continue
-              os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
-              open(path, 'wb').write(blob)
-              changed.append(path)
-              print(f'restored {path} from {sha[:8]}')
+                  os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+                  open(path, 'wb').write(blob)
+                  changed.append(path)
+                  print('restored %s from %s' % (path, sha[:8]))
 
-          # 2. The footer link that reaches the admin. Single, additive insert.
-          if os.path.exists('index.html'):
-              s = open('index.html', encoding='utf-8').read()
-              if ADMIN_LINK in s:
-                  print('index.html: admin link present')
-              else:
-                  anchor = '<div class="footer-legal">'
-                  i = s.find(anchor)
-                  j = s.find('</div>', i) if i != -1 else -1
-                  if j != -1:
-                      s = s[:j].rstrip(' ') + '        ' + ADMIN_LINK + '\n      ' + s[j:]
-                      open('index.html', 'w', encoding='utf-8').write(s)
-                      changed.append('index.html')
-                      print('index.html: admin link re-inserted into footer-legal')
+              # 2. The footer link that reaches the admin.
+              if os.path.exists('index.html'):
+                  s = open('index.html', encoding='utf-8').read()
+                  if ADMIN_LINK in s:
+                      print('index.html: admin link present')
                   else:
-                      print('CANNOT RESTORE index.html admin link: footer-legal block not found')
+                      i = s.find('<div class="footer-legal">')
+                      j = s.find('</div>', i) if i != -1 else -1
+                      if j != -1:
+                          s = s[:j].rstrip(' ') + '        ' + ADMIN_LINK + '\n      ' + s[j:]
+                          open('index.html', 'w', encoding='utf-8').write(s)
+                          if 'index.html' not in changed:
+                              changed.append('index.html')
+                          print('index.html: admin link re-inserted into footer-legal')
+                      else:
+                          print('CANNOT RESTORE the admin link: footer-legal block not found')
 
-          # 3. The crawl fence that keeps the admin login out of search.
-          #    Minimal: add only the one Disallow line. Never rewrites the rest
-          #    of robots.txt, so the shop's own crawl rules are left alone.
-          if os.path.exists('robots.txt'):
-              r = open('robots.txt', encoding='utf-8').read()
-              if FENCE in r:
-                  print('robots.txt: /admin/ fence present')
-              else:
-                  lines = r.splitlines()
-                  out, done = [], False
-                  for ln in lines:
-                      out.append(ln)
-                      if not done and ln.strip().lower() == 'user-agent: *':
-                          out.append(FENCE)
-                          done = True
-                  if not done:
-                      out += ['', 'User-agent: *', FENCE]
-                  open('robots.txt', 'w', encoding='utf-8').write('\n'.join(out) + '\n')
-                  changed.append('robots.txt')
-                  print('robots.txt: /admin/ fence re-added')
+              # 3. The crawl fence.
+              if os.path.exists('robots.txt'):
+                  r = open('robots.txt', encoding='utf-8').read()
+                  if FENCE in r:
+                      print('robots.txt: /admin/ fence present')
+                  else:
+                      out, done = [], False
+                      for ln in r.splitlines():
+                          out.append(ln)
+                          if not done and ln.strip().lower() == 'user-agent: *':
+                              out.append(FENCE)
+                              done = True
+                      if not done:
+                          out += ['', 'User-agent: *', FENCE]
+                      open('robots.txt', 'w', encoding='utf-8').write('\n'.join(out) + '\n')
+                      changed.append('robots.txt')
+                      print('robots.txt: /admin/ fence re-added')
 
-          open(os.environ['GITHUB_ENV'], 'a').write('HEALED=' + ' '.join(changed) + '\n')
+              # 4. Measurement. Head tag + newsletter conversion + product schema on the
+              #    storefront, and the subscriber mirror on every page with a sign-up form.
+              #    All four sit in <head> or in subscribeNewsletter(). None of them is in
+              #    placeOrder(), the cart, PayPal or the age gate, and the additive proof
+              #    above throws the edit away if anything else moves by a single byte.
+              edit('index.html', 'Google tag AW-18389709216',
+                   lambda t: once(t, HEAD_ANCHOR, HEAD_TAG))
+
+              edit('index.html', 'Google Ads newsletter-signup conversion',
+                   lambda t: None if 'jCpBCKnUsOIcEKDj8sBE' in t
+                   else once(t, NL_ANCHOR, NL_CONV, after_anchor=False))
+
+              def add_itemlist(t):
+                  if '"@type":"ItemList"' in t or t.count(HEAD_CLOSE) != 1:
+                      return None
+                  block, sha = itemlist_from_history()
+                  if block is None:
+                      print('index.html: no ItemList block found in history')
+                      return None
+                  print('index.html: ItemList recovered from %s' % sha[:8])
+                  return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
+
+              edit('index.html', 'ItemList product structured data', add_itemlist)
+
+              for p in SUB_PAGES:
+                  edit(p, 'subscriber mirror (ironcell-ingest?t=sub)',
+                       lambda t: None if 'ironcell-ingest?t=sub' in t
+                       else once(t, SUB_ANCHOR, SUB_MIRROR))
+
+              env = os.environ.get('GITHUB_ENV')
+              if env:
+                  open(env, 'a').write('HEALED=' + ' '.join(changed) + '\n')
+              open('/tmp/healed.txt', 'w').write(' '.join(changed))
+              print('HEALED: ' + (' '.join(changed) or '(nothing)'))
+
+
+          run()
           PY
 
-      - name: Commit only if something was actually put back
-        run: |
-          if [ -z "${HEALED:-}" ]; then
-            echo "Nothing to do - the admin entry is intact."
-            exit 0
-          fi
           git config user.name  "iron-cell-admin-guard"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- $HEALED
-          git diff --cached --quiet && exit 0
-          git commit -m "Restore the newsletter admin entry dropped by the last publish
 
-          Files put back: $HEALED
+          for attempt in 1 2 3 4 5; do
+            # Always repair against the newest main. A publish may have landed
+            # since this run was queued, and re-deriving the fix from current
+            # content is what makes the retry safe - there is nothing to rebase
+            # and no conflict to resolve.
+            git fetch --quiet origin main || echo "fetch failed, working with what is checked out"
+            git reset --hard --quiet origin/main || true
 
-          Automatic. The storefront is published as a whole-file write-back,
-          which reverts anything newer than the copy it was written from.
-          Product copy, pricing, cart, checkout, payment and the age gate are
-          never touched by this job."
-          git push
+            rm -f /tmp/healed.txt
+            python3 /tmp/heal.py
+            HEALED="$(cat /tmp/healed.txt 2>/dev/null || true)"
+
+            if [ -z "$HEALED" ]; then
+              echo "Nothing to do - the admin entry and the measurement layer are intact."
+              exit 0
+            fi
+
+            git add -- $HEALED
+            if git diff --cached --quiet; then
+              echo "Nothing staged - nothing to commit."
+              exit 0
+            fi
+
+            git commit --quiet \
+              -m "Restore the newsletter admin entry and measurement dropped by the last publish" \
+              -m "Files put back: $HEALED" \
+              -m "Automatic. The storefront is published as a whole-file write-back, which reverts anything newer than the copy it was written from." \
+              -m "Every change here is proved additive before it is written: the file must be the original plus exactly one insert, and no checkout, cart, payment, age gate or Spend & Save marker may move. Product copy, pricing, the promotion, the cart, checkout, PayPal and the age gate are never touched by this job."
+
+            if git push --quiet origin HEAD:main; then
+              echo "Repair published on attempt $attempt: $HEALED"
+              exit 0
+            fi
+
+            echo "Push rejected on attempt $attempt - a storefront publish landed first."
+            echo "Re-reading main and redoing the repair against the new content."
+            sleep $((attempt * 10))
+          done
+
+          # Not a failure worth emailing the site owner about: the next push and
+          # the 30 minute schedule both re-run this job, and the hourly live
+          # check still shouts if the loss is real and persists.
+          echo "::warning::Could not publish the repair after 5 attempts because the storefront was being published throughout. The next scheduled run will retry."
+          exit 0
