@@ -16,6 +16,15 @@ name: Admin entry live check
 #   3. probe again, and only now fail for real
 # Hourly rather than three-hourly, so the worst case is one hour of loss.
 #
+# HARDENED AGAIN 2026-08-24. One repair cycle was not always enough. The
+# storefront is published in storms of 20-30 commits in under a minute, and
+# during a storm the dispatched heal run can be superseded before it starts and
+# a Pages build can be cancelled by the next commit, so a probe four minutes
+# later can still be looking at a stale page for reasons that need no human.
+# It now runs TWO repair-and-wait cycles before it fails, which removes that
+# false alarm without weakening the real one: if the loss is genuine it survives
+# both cycles and the job still goes red and still emails.
+#
 # Every marker below was verified present on the live site on 2026-08-24.
 # If one of these ever fails, something real broke - it is not a flaky check.
 
@@ -96,14 +105,34 @@ jobs:
           echo "Waiting 4 minutes for the heal commit and the Pages build."
           sleep 240
 
-      - name: Probe again, and fail for real this time
+      - name: Probe again after the first repair
+        id: second
         if: steps.first.outcome == 'failure'
+        continue-on-error: true
+        run: |
+          bash /tmp/probe.sh && echo "Repaired automatically. No action needed."
+
+      - name: Second repair cycle, in case a publish storm ate the first one
+        if: steps.first.outcome == 'failure' && steps.second.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Still not reachable. A publish storm can supersede the heal run and"
+          echo "cancel the Pages build, so try once more before raising this."
+          gh workflow run keep-admin-entry.yml --ref main || echo "could not dispatch the heal job"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" >/dev/null 2>&1 \
+            || echo "could not request a Pages rebuild"
+          echo "Waiting 5 minutes for the heal commit and the Pages build."
+          sleep 300
+
+      - name: Final probe, and fail for real this time
+        if: steps.first.outcome == 'failure' && steps.second.outcome == 'failure'
         run: |
           bash /tmp/probe.sh || {
             echo
-            echo "The newsletter admin entry is STILL lost after an automatic repair attempt."
+            echo "The newsletter admin entry is STILL lost after two automatic repair attempts."
             echo "Open the Actions tab, look at the last 'Keep admin entry' run, and at"
             echo "the last 'pages build and deployment' run, in that order."
             exit 1
           }
-          echo "Repaired automatically. No action needed."
+          echo "Repaired automatically on the second cycle. No action needed."
