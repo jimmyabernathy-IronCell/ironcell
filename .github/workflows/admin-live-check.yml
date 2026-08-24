@@ -1,0 +1,63 @@
+name: Admin entry live check
+
+# Makes a loss LOUD instead of silent.
+#
+# It probes the PUBLISHED site, not the repo, so it catches a bad or cancelled
+# Pages build as well as a dropped file. GitHub emails the owner of a scheduled
+# workflow when it fails, so a silent disappearance becomes an email.
+#
+# Every marker below was verified present on the live site on 2026-08-24.
+# If one of these ever fails, something real broke - it is not a flaky check.
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe the published site
+        run: |
+          set -uo pipefail
+          BASE=https://ironcellresearch.com
+          CB=$(date +%s)$RANDOM
+          fails=0
+          note () { echo "FAIL: $1"; fails=$((fails+1)); }
+
+          # 1. The admin page itself loads.
+          code=$(curl -sS -o /tmp/admin.html -w '%{http_code}' "$BASE/admin/?cb=$CB")
+          [ "$code" = "200" ] || note "/admin/ returned HTTP $code"
+
+          # 2. It is the real newsletter admin, not a placeholder, and the
+          #    footer social row is still wired into the email template.
+          for marker in 'function buildEmail' 'ironcell-send-newsletter' \
+                        'email-icon-instagram.png' 'email-icon-tiktok.png' 'email-icon-facebook.png'; do
+            grep -qF "$marker" /tmp/admin.html || note "/admin/ is missing: $marker"
+          done
+
+          # 3. The three hosted icons still resolve as real PNGs.
+          for n in instagram tiktok facebook; do
+            read -r c t <<<"$(curl -sS -o /dev/null -w '%{http_code} %{content_type}' "$BASE/email-icon-$n.png?cb=$CB")"
+            [ "$c" = "200" ] || note "email-icon-$n.png returned HTTP $c"
+            case "$t" in image/png*) ;; *) note "email-icon-$n.png content-type is $t" ;; esac
+          done
+
+          # 4. The admin is still REACHABLE from the storefront footer.
+          #    This is the check that catches the recurring publish revert.
+          curl -sS "$BASE/?cb=$CB" -o /tmp/home.html
+          grep -qF 'href="/admin/"' /tmp/home.html || note "the storefront footer has no link to /admin/"
+
+          # 5. The admin login is still fenced off from search crawlers.
+          curl -sS "$BASE/robots.txt?cb=$CB" -o /tmp/robots.txt
+          grep -qF 'Disallow: /admin/' /tmp/robots.txt || note "robots.txt no longer fences /admin/"
+
+          if [ "$fails" -ne 0 ]; then
+            echo
+            echo "$fails check(s) failed. The newsletter admin entry has been lost again."
+            echo "The self-heal workflow (Keep admin entry) runs on every push to main."
+            echo "Run it by hand from the Actions tab, then re-run this probe."
+            exit 1
+          fi
+          echo "All checks passed. The newsletter admin entry is intact and reachable."
