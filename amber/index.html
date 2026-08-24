@@ -4532,28 +4532,35 @@
         (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
       discountAmt = retaFlatPerVial * retaQty;
     }
-    // SPEND & SAVE auto-tier: bulk items get MAX(bulkRate, sstRate). Non-bulk items get sstRate.
+    // SPEND & SAVE auto-tier: MAX(bulkRate, sstRate) for bulk; sstRate for non-bulk.
+    // Compute effective gross (using basePrice for bumped items) and total discount.
     var _sstP = getSpendSaveTier(subtotalPrice);
     var _sstCode = null;
     var _sstRate = 0;
+    var _sstGrossP = subtotalPrice;
     if (_sstP && _sstP.rate > 0) {
       var _sstD = 0;
+      var _sstG = 0;
       cart.forEach(function(item){
         if (item.vialDiscount) {
           var bp = item.basePrice || item.price;
           var br = item.bulkRate || 0;
-          if (_sstP.rate > br) _sstD += (_sstP.rate - br) * bp * item.qty;
+          if (_sstP.rate > br) { _sstD += _sstP.rate * bp * item.qty; _sstG += bp * item.qty; }
+          else { _sstG += item.price * item.qty; }
         } else {
           _sstD += item.price * item.qty * _sstP.rate;
+          _sstG += item.price * item.qty;
         }
       });
-      if (_sstD > discountAmt) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; }
+      var _currentEffectiveDiscP = discountAmt + (subtotalPrice < _sstG ? (_sstG - subtotalPrice) : 0);
+      if (_sstD > _currentEffectiveDiscP) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; _sstGrossP = _sstG; }
     }
-    // Effective coupon label sent to tracker + email
+    // If SST bumped bulk items, recompute tax + total based on retail gross rather than bulk-discounted subtotalPrice
+    var _sstEffGross = _sstGrossP;
     var effectiveCoupon = _sstCode || appliedCoupon;
     var effectiveRate = _sstCode ? _sstRate : couponDiscount;
-    const taxAmount = (subtotalPrice - discountAmt) * taxRate;
-    const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
+    const taxAmount = (_sstEffGross - discountAmt) * taxRate;
+    const grandTotal = (_sstEffGross - discountAmt) + shipping + taxAmount;
     var _ct = document.getElementById('confirmTotal');
     if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);
 
