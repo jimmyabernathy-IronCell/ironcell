@@ -1,25 +1,41 @@
 name: Admin entry live check
 
-# Makes a loss LOUD instead of silent.
+# Makes a loss LOUD, and now also makes it SELF-CORRECTING.
 #
 # It probes the PUBLISHED site, not the repo, so it catches a bad or cancelled
 # Pages build as well as a dropped file. GitHub emails the owner of a scheduled
 # workflow when it fails, so a silent disappearance becomes an email.
+#
+# HARDENED 2026-08-24. Previously this job only reported. If it fired at 3am
+# nothing happened until a human read the mail. It now repairs first and only
+# shouts if the repair did not take:
+#   1. probe the live site
+#   2. if that fails, run the Keep admin entry job (fixes a dropped file or a
+#      dropped footer link) AND ask Pages to rebuild (fixes the case where the
+#      repo is correct but the published site is stale from a cancelled build)
+#   3. probe again, and only now fail for real
+# Hourly rather than three-hourly, so the worst case is one hour of loss.
 #
 # Every marker below was verified present on the live site on 2026-08-24.
 # If one of these ever fails, something real broke - it is not a flaky check.
 
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  pages: write
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe the published site
+      - name: Write the probe
         run: |
+          cat > /tmp/probe.sh <<'SH'
           set -uo pipefail
           BASE=https://ironcellresearch.com
           CB=$(date +%s)$RANDOM
@@ -54,10 +70,40 @@ jobs:
           grep -qF 'Disallow: /admin/' /tmp/robots.txt || note "robots.txt no longer fences /admin/"
 
           if [ "$fails" -ne 0 ]; then
-            echo
-            echo "$fails check(s) failed. The newsletter admin entry has been lost again."
-            echo "The self-heal workflow (Keep admin entry) runs on every push to main."
-            echo "Run it by hand from the Actions tab, then re-run this probe."
+            echo "$fails check(s) failed."
             exit 1
           fi
           echo "All checks passed. The newsletter admin entry is intact and reachable."
+          SH
+          chmod +x /tmp/probe.sh
+
+      - name: Probe the published site
+        id: first
+        continue-on-error: true
+        run: bash /tmp/probe.sh
+
+      - name: Repair, then wait for the publish
+        if: steps.first.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "The live admin entry is not reachable. Repairing before raising it."
+          gh workflow run keep-admin-entry.yml --ref main || echo "could not dispatch the heal job"
+          # Covers the other half: repo correct, published site stale because a
+          # Pages build was cancelled by the next commit in a publish storm.
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" >/dev/null 2>&1 \
+            || echo "could not request a Pages rebuild"
+          echo "Waiting 4 minutes for the heal commit and the Pages build."
+          sleep 240
+
+      - name: Probe again, and fail for real this time
+        if: steps.first.outcome == 'failure'
+        run: |
+          bash /tmp/probe.sh || {
+            echo
+            echo "The newsletter admin entry is STILL lost after an automatic repair attempt."
+            echo "Open the Actions tab, look at the last 'Keep admin entry' run, and at"
+            echo "the last 'pages build and deployment' run, in that order."
+            exit 1
+          }
+          echo "Repaired automatically. No action needed."
