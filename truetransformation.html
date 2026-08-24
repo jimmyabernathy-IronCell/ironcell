@@ -3748,17 +3748,21 @@
       const vialSelect = card ? card.querySelector('.vial-qty-select') : null;
       let addQty = 1;
       let discountedPrice = price;
+      let itemBasePrice = price;   // hoisted so cart-push can see it
+      let itemBulkRate = 0;         // hoisted so cart-push can see it
 
       if (vialSelect) {
         addQty = parseInt(vialSelect.value);
         // Use base price (not the displayed total)
         const basePrice = card.dataset.basePrice ? parseFloat(card.dataset.basePrice) : price;
+        itemBasePrice = basePrice;
         const noBulk = card.dataset.noBulkDiscount === 'true';
         let discount = 0;
         if (!noBulk) {
           if (addQty >= 10) discount = 0.25;
           else if (addQty >= 5) discount = 0.15;
         }
+        itemBulkRate = discount;
 
         // If coupon is applied and user tries bulk vial discount, remove coupon
         if (discount > 0 && appliedCoupon) {
@@ -3781,7 +3785,7 @@
         existing.qty += addQty;
         existing.price = discountedPrice; existing.vialDiscount = !noBulkForKey && (addQty >= 5);
       } else {
-        cart.push({ key, name, strength, price: discountedPrice, basePrice: (typeof basePrice !== 'undefined') ? basePrice : price, bulkRate: (typeof discount !== 'undefined') ? discount : 0, qty: addQty, vialDiscount: !noBulkForKey && (addQty >= 5), noCoupon: NO_COUPON_PRODUCTS.includes(name) });
+        cart.push({ key, name, strength, price: discountedPrice, basePrice: itemBasePrice, bulkRate: itemBulkRate, qty: addQty, vialDiscount: !noBulkForKey && (addQty >= 5), noCoupon: NO_COUPON_PRODUCTS.includes(name) });
       }
 
       updateCartUI();
