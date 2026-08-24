@@ -28,6 +28,7 @@
   button.sm { padding:7px 12px; font-size:.75rem; }
   button:disabled { opacity:.5; cursor:not-allowed; }
   input, textarea, select { width:100%; background:var(--card2); border:1px solid var(--border); border-radius:6px; padding:12px 14px; color:var(--text); font-family:inherit; font-size:.9rem; outline:none; }
+  input[type="checkbox"], input[type="radio"] { width:auto; flex:none; padding:0; }
   input:focus, textarea:focus { border-color:var(--red); }
   textarea { resize:vertical; }
   label { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:7px; font-weight:700; }
@@ -215,7 +216,7 @@
             <button class="ghost sm" id="draftDel">Delete</button>
           </div>
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)"><input type="checkbox" id="sigInclude" checked> Append signature</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);margin-bottom:0"><input type="checkbox" id="sigInclude" checked> Append signature</label>
             <button class="ghost sm" id="sigEdit">Edit signature</button>
           </div>
           <div id="sigBox" class="hide" style="margin-top:10px">
@@ -845,6 +846,15 @@
     return '<span style="border:1px solid #2a2a2a;background:#141414;border-radius:8px;padding:8px 14px;font-size:.8rem;color:#b9b9b9">' +
       esc(label) + ' <b style="color:#fff;margin-left:6px">' + esc(String(val)) + '</b></span>';
   }
+  function histErrHtml(e) {
+    var m = (e && e.message) ? e.message : 'Unknown error';
+    var c = (e && e.code) ? (' [' + e.code + ']') : '';
+    var d = (e && e.details) ? (' - ' + e.details) : '';
+    var diag = location.search.indexOf('diag=1') > -1;
+    return '<div style="border:1px solid #2a2a2a;background:#141414;border-radius:8px;padding:14px 16px;font-size:.82rem;color:#b9b9b9">' +
+      'Your campaign history will be back shortly. Nothing was sent and nothing was changed.' +
+      (diag ? '<br><span style="color:#d9a2a2;font-size:.74rem">' + esc(m + c + d) + '</span>' : '') + '</div>';
+  }
   var histCache = {};
   var histOpenId = null;
   async function loadHistory() {
@@ -852,7 +862,8 @@
     var act = 0, uns = 0; (subs.data || []).forEach(function (x) { if (x.unsubscribed_at) { uns++; } else { act++; } });
     var r = await sb.from('ironcell_campaigns').select('id,subject,sent_at,sent_by,sent_count,total_count,status,opens,clicks,unsubscribes,bounces,delivered').order('sent_at', { ascending: false }).limit(50);
     var rows = r.data || []; histCache = {};
-    $('histChips').innerHTML = chipHtml('Active subscribers', act) + chipHtml('Unsubscribed', uns) + chipHtml('Campaigns sent', rows.length);
+    $('histChips').innerHTML = chipHtml('Active subscribers', subs.error ? '?' : act) + chipHtml('Unsubscribed', subs.error ? '?' : uns) + chipHtml('Campaigns sent', r.error ? '?' : rows.length);
+    if (r.error || subs.error) { console.error('loadHistory failed', r.error || subs.error); $('histTable').innerHTML = histErrHtml(r.error || subs.error); return; }
     if (!rows.length) { $('histTable').innerHTML = '<p class="note">Nothing sent yet. Your first campaign will appear here with its delivery and engagement numbers.</p>'; return; }
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
       '<tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:.68rem;letter-spacing:1px">' +
@@ -880,6 +891,7 @@
     show($('histDetail'), true);
     var r = await sb.from('ironcell_campaign_recipients').select('email,status,sent_at,delivered_at,opened_at,clicked_at,bounced_at,unsubscribed_at,error').eq('campaign_id', id).order('email').limit(500);
     var rows = r.data || [];
+    if (r.error) { console.error('showCampaign failed', r.error); $('histRecipients').innerHTML = histErrHtml(r.error); return; }
     if (!rows.length) { $('histRecipients').innerHTML = '<p class="note">No per-recipient rows for this campaign (sent before tracking was added).</p>'; return; }
     var mark = function (v) { return v ? '<span style="color:#7fce7f">&#10003;</span>' : '<span style="color:#555">-</span>'; };
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.8rem">' +
@@ -900,6 +912,7 @@
   $('histReuse').addEventListener('click', async function () {
     if (!histOpenId) return;
     var r = await sb.from('ironcell_campaigns').select('blocks,subject').eq('id', histOpenId).maybeSingle();
+    if (r.error) { console.error('histReuse failed', r.error); $('tplMsg').textContent = 'That campaign will be back shortly.'; return; }
     if (r.data && r.data.blocks) { applyDoc(r.data.blocks); }
     else if (r.data) { $('nlSubject').value = r.data.subject || ''; }
     document.querySelector('[data-tab="newsletter"]').click();
