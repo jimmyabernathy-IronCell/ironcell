@@ -4354,7 +4354,7 @@
     // Build summary with shipping + tax
     buildCheckoutSummary = function() {
       const subtotalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const discountableSubtotal = cart.reduce((sum, item) => item.noCoupon ? sum : sum + (item.price * item.qty), 0);
+      const discountableSubtotal = cart.reduce((sum, item) => (item.noCoupon || item.vialDiscount) ? sum : sum + (item.price * item.qty), 0);
       const shipping = SHIPPING_FEE;
       const zip = (document.getElementById('custZip').value || '').trim();
       const stateDropdownVal = document.getElementById('custState').value;
@@ -4366,11 +4366,13 @@
           (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
         discountAmount = retaFlatPerVial * retaQty;
       }
-      // SPEND & SAVE auto-tier — applies to FULL cart (Gen10 + pills included). Wins if it beats current discount.
+      // SPEND & SAVE auto-tier — Gen10 + pills included, BUT multi-vial (bulk-discounted) items excluded (no stacking).
+      // Tier trigger still uses full subtotal so bulk items count toward reaching $250/$500/$750.
       var _sst = getSpendSaveTier(subtotalPrice);
       var _sstApplied = false;
       if (_sst && _sst.rate > 0) {
-        var _sstDisc = subtotalPrice * _sst.rate;
+        var _sstEligible = cart.reduce((s, item) => item.vialDiscount ? s : s + (item.price * item.qty), 0);
+        var _sstDisc = _sstEligible * _sst.rate;
         if (_sstDisc > discountAmount) { discountAmount = _sstDisc; _sstApplied = true; }
       }
       const taxAmount = (subtotalPrice - discountAmount) * taxRate;
@@ -4520,7 +4522,7 @@
     const city = cityVal;
     const state = stateVal;
     const subtotalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    const discountableSubtotal = cart.reduce((sum, item) => item.noCoupon ? sum : sum + (item.price * item.qty), 0);
+    const discountableSubtotal = cart.reduce((sum, item) => (item.noCoupon || item.vialDiscount) ? sum : sum + (item.price * item.qty), 0);
     const shipping = SHIPPING_FEE;
     const zip = zipVal;
     const taxState = getStateFromZip(zip) || stateVal || null;
@@ -4531,12 +4533,13 @@
         (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
       discountAmt = retaFlatPerVial * retaQty;
     }
-    // SPEND & SAVE auto-tier — mirror of checkout summary logic
+    // SPEND & SAVE auto-tier — mirror of checkout summary logic (excludes bulk-discounted items)
     var _sstP = getSpendSaveTier(subtotalPrice);
     var _sstCode = null;
     var _sstRate = 0;
     if (_sstP && _sstP.rate > 0) {
-      var _sstD = subtotalPrice * _sstP.rate;
+      var _sstEligibleP = cart.reduce((s, item) => item.vialDiscount ? s : s + (item.price * item.qty), 0);
+      var _sstD = _sstEligibleP * _sstP.rate;
       if (_sstD > discountAmt) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; }
     }
     // Effective coupon label sent to tracker + email
