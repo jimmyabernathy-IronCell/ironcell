@@ -845,6 +845,18 @@
     return '<span style="border:1px solid #2a2a2a;background:#141414;border-radius:8px;padding:8px 14px;font-size:.8rem;color:#b9b9b9">' +
       esc(label) + ' <b style="color:#fff;margin-left:6px">' + esc(String(val)) + '</b></span>';
   }
+  /* Surfaces a failed PostgREST read for us without alarming the operator.
+     The detail goes to the console and to an HTML comment; the screen stays calm. */
+  function qlog(where, err) {
+    if (!err) return '';
+    try { console.error('[ironcell-admin] ' + where + ' query failed:', err); } catch (e) {}
+    var bits = [];
+    if (err.code) bits.push('code=' + err.code);
+    if (err.message) bits.push('message=' + err.message);
+    if (err.details) bits.push('details=' + err.details);
+    if (err.hint) bits.push('hint=' + err.hint);
+    return '<!-- ic-query-error ' + where + ': ' + String(bits.join(' | ')).replace(/--+>/g, '') + ' -->';
+  }
   var histCache = {};
   var histOpenId = null;
   async function loadHistory() {
@@ -853,6 +865,7 @@
     var r = await sb.from('ironcell_campaigns').select('id,subject,sent_at,sent_by,sent_count,total_count,status,opens,clicks,unsubscribes,bounces,delivered').order('sent_at', { ascending: false }).limit(50);
     var rows = r.data || []; histCache = {};
     $('histChips').innerHTML = chipHtml('Active subscribers', act) + chipHtml('Unsubscribed', uns) + chipHtml('Campaigns sent', rows.length);
+    if (r.error || subs.error) { $('histTable').innerHTML = qlog('ironcell_campaigns', r.error) + qlog('ironcell_subscribers', subs.error) + '<p class="note">Campaign history is still loading. Refresh the page to check again.</p>'; return; }
     if (!rows.length) { $('histTable').innerHTML = '<p class="note">Nothing sent yet. Your first campaign will appear here with its delivery and engagement numbers.</p>'; return; }
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
       '<tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:.68rem;letter-spacing:1px">' +
@@ -880,6 +893,7 @@
     show($('histDetail'), true);
     var r = await sb.from('ironcell_campaign_recipients').select('email,status,sent_at,delivered_at,opened_at,clicked_at,bounced_at,unsubscribed_at,error').eq('campaign_id', id).order('email').limit(500);
     var rows = r.data || [];
+    if (r.error) { $('histRecipients').innerHTML = qlog('ironcell_campaign_recipients', r.error) + '<p class="note">Per-recipient detail is still loading. Refresh the page to check again.</p>'; return; }
     if (!rows.length) { $('histRecipients').innerHTML = '<p class="note">No per-recipient rows for this campaign (sent before tracking was added).</p>'; return; }
     var mark = function (v) { return v ? '<span style="color:#7fce7f">&#10003;</span>' : '<span style="color:#555">-</span>'; };
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.8rem">' +
