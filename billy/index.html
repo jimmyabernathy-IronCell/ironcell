@@ -4354,6 +4354,8 @@
     // Build summary with shipping + tax
     buildCheckoutSummary = function() {
       const subtotalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      // Retail subtotal = full basePrice for bulk items, item.price for non-bulk. Used when SST is active + bumps bulk.
+      const retailSubtotal = cart.reduce((sum, item) => sum + ((item.vialDiscount ? (item.basePrice || item.price) : item.price) * item.qty), 0);
       const discountableSubtotal = cart.reduce((sum, item) => (item.noCoupon || item.vialDiscount) ? sum : sum + (item.price * item.qty), 0);
       const shipping = SHIPPING_FEE;
       const zip = (document.getElementById('custZip').value || '').trim();
@@ -4366,45 +4368,56 @@
           (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
         discountAmount = retaFlatPerVial * retaQty;
       }
-      // SPEND & SAVE auto-tier: non-bulk items get sstRate on their price.
-      // Bulk items: effective rate = MAX(bulkRate, sstRate). If sstRate > bulkRate, add the delta * basePrice * qty as extra discount.
+      // SPEND & SAVE auto-tier: apply sst.rate to retail (basePrice for bulk, price for non-bulk).
+      // Bulk items with bulkRate >= sstRate: no bump (bulk already better). For those, use bulk price as effective retail.
       var _sst = getSpendSaveTier(subtotalPrice);
       var _sstApplied = false;
       var _sstBumped = false;
+      var _sstEffectiveGross = subtotalPrice;  // what "subtotal" means when we show the discount line
       if (_sst && _sst.rate > 0) {
         var _sstDisc = 0;
+        var _sstGross = 0;
         cart.forEach(function(item){
           if (item.vialDiscount) {
             var bp = item.basePrice || item.price;
             var br = item.bulkRate || 0;
-            if (_sst.rate > br) { _sstDisc += (_sst.rate - br) * bp * item.qty; _sstBumped = true; }
+            if (_sst.rate > br) { _sstDisc += _sst.rate * bp * item.qty; _sstGross += bp * item.qty; _sstBumped = true; }
+            else { _sstGross += item.price * item.qty; /* bulk wins, no SST discount */ }
           } else {
             _sstDisc += item.price * item.qty * _sst.rate;
+            _sstGross += item.price * item.qty;
           }
         });
-        if (_sstDisc > discountAmount) { discountAmount = _sstDisc; _sstApplied = true; }
+        // Compare against current discountAmount, but for "delta" logic: sstDisc includes bulk savings for bumped items.
+        var _currentEffectiveDisc = discountAmount + (subtotalPrice < _sstGross ? (_sstGross - subtotalPrice) : 0);
+        if (_sstDisc > _currentEffectiveDisc) {
+          _sstApplied = true;
+          _sstEffectiveGross = _sstGross;
+          discountAmount = _sstDisc;
+        }
       }
-      const taxAmount = (subtotalPrice - discountAmount) * taxRate;
-      const discountedSubtotal = subtotalPrice - discountAmount;
+      const taxAmount = (_sstEffectiveGross - discountAmount) * taxRate;
+      const discountedSubtotal = _sstEffectiveGross - discountAmount;
       const grandTotal = discountedSubtotal + shipping + taxAmount;
 
-      let html = cart.map(item => `
+      let html = cart.map(item => {
+        // If SST bumped this bulk item, show retail price line-by-line
+        var lineTotal = (_sstApplied && _sstBumped && item.vialDiscount && item.bulkRate < _sst.rate)
+          ? (item.basePrice || item.price) * item.qty
+          : item.price * item.qty;
+        return `
         <div class="checkout-summary-item">
           <span class="item-name">${item.name}${item.strength ? ' · ' + item.strength : ''} × ${item.qty}</span>
-          <span class="item-price">$${(item.price * item.qty).toFixed(2)}</span>
-        </div>
-      `).join('');
-      html += `<div class="checkout-summary-line"><span>Subtotal</span><span>$${subtotalPrice.toFixed(2)}</span></div>`;
+          <span class="item-price">$${lineTotal.toFixed(2)}</span>
+        </div>`;
+      }).join('');
+      html += `<div class="checkout-summary-line"><span>Subtotal</span><span>$${_sstEffectiveGross.toFixed(2)}</span></div>`;
       if (discountAmount > 0) {
         var discLabel;
         if (_sstApplied) discLabel = 'Discount (' + _sst.label + ')';
         else if (appliedCoupon === 'RETA10') discLabel = 'Discount (RETA10 — $30 off per GLP3-Reta 10mg)';
         else discLabel = 'Discount (' + appliedCoupon + ' ' + (couponDiscount * 100) + '% off)';
         html += `<div class="checkout-summary-line discount"><span>${discLabel}</span><span>-$${discountAmount.toFixed(2)}</span></div>`;
-      }
-      // Note when bulk pricing was bumped up to the Spend & Save tier rate
-      if (_sstApplied && _sstBumped) {
-        html += `<div class="checkout-summary-line" style="font-size:0.78rem;color:#888;font-style:italic;padding:2px 0 0 0;"><span>Multi-vial pricing bumped to ${(_sst.rate * 100)}% for Spend & Save week.</span><span></span></div>`;
       }
       // Prompt to unlock next tier during Spend & Save week
       if (isSpendSaveActive()) {
@@ -4546,28 +4559,35 @@
         (item.name === 'GLP3-Reta' && item.strength && item.strength.indexOf('10mg') === 0) ? s + item.qty : s, 0);
       discountAmt = retaFlatPerVial * retaQty;
     }
-    // SPEND & SAVE auto-tier: bulk items get MAX(bulkRate, sstRate). Non-bulk items get sstRate.
+    // SPEND & SAVE auto-tier: MAX(bulkRate, sstRate) for bulk; sstRate for non-bulk.
+    // Compute effective gross (using basePrice for bumped items) and total discount.
     var _sstP = getSpendSaveTier(subtotalPrice);
     var _sstCode = null;
     var _sstRate = 0;
+    var _sstGrossP = subtotalPrice;
     if (_sstP && _sstP.rate > 0) {
       var _sstD = 0;
+      var _sstG = 0;
       cart.forEach(function(item){
         if (item.vialDiscount) {
           var bp = item.basePrice || item.price;
           var br = item.bulkRate || 0;
-          if (_sstP.rate > br) _sstD += (_sstP.rate - br) * bp * item.qty;
+          if (_sstP.rate > br) { _sstD += _sstP.rate * bp * item.qty; _sstG += bp * item.qty; }
+          else { _sstG += item.price * item.qty; }
         } else {
           _sstD += item.price * item.qty * _sstP.rate;
+          _sstG += item.price * item.qty;
         }
       });
-      if (_sstD > discountAmt) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; }
+      var _currentEffectiveDiscP = discountAmt + (subtotalPrice < _sstG ? (_sstG - subtotalPrice) : 0);
+      if (_sstD > _currentEffectiveDiscP) { discountAmt = _sstD; _sstCode = _sstP.code; _sstRate = _sstP.rate; _sstGrossP = _sstG; }
     }
-    // Effective coupon label sent to tracker + email
+    // If SST bumped bulk items, recompute tax + total based on retail gross rather than bulk-discounted subtotalPrice
+    var _sstEffGross = _sstGrossP;
     var effectiveCoupon = _sstCode || appliedCoupon;
     var effectiveRate = _sstCode ? _sstRate : couponDiscount;
-    const taxAmount = (subtotalPrice - discountAmt) * taxRate;
-    const grandTotal = (subtotalPrice - discountAmt) + shipping + taxAmount;
+    const taxAmount = (_sstEffGross - discountAmt) * taxRate;
+    const grandTotal = (_sstEffGross - discountAmt) + shipping + taxAmount;
     var _ct = document.getElementById('confirmTotal');
     if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);
 
