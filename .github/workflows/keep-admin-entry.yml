@@ -1,0 +1,138 @@
+name: Keep admin entry
+
+# WHY THIS EXISTS
+# The storefront is published by writing whole files back from a local copy
+# (the commits titled "Update index.html - peptide calculator"). Every such
+# publish silently reverts anything newer than the copy it was written from.
+# Measured, not guessed - the newsletter admin entry has been dropped three
+# times this way:
+#   2026-08-16  7dd054d2 index.html / 26c1504e robots.txt
+#   2026-08-18  277b2669 index.html / f4b78155 robots.txt
+#   2026-08-23  7c8ad139 index.html / c2c91ed3 robots.txt
+# It was restored by hand once (45f5bf44, 2026-08-19) and was reverted again
+# four days later, which is why a manual restore is not the fix.
+#
+# admin/index.html and the email-icon-*.png files are NOT in that local copy,
+# so they survive. Only the entry POINT is lost. This workflow puts the entry
+# point back automatically, so nobody has to notice or do anything.
+#
+# Nothing here touches product copy, pricing, cart, checkout, payment, PayPal
+# or the age gate. It writes only when something is genuinely missing.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: keep-admin-entry
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  heal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Put back anything the last publish dropped
+        run: |
+          python3 - <<'PY'
+          import subprocess, os
+
+          ADMIN_LINK = '<a href="/admin/" rel="nofollow noopener">Admin</a>'
+          FENCE = 'Disallow: /admin/'
+          GUARDED = ['admin/index.html',
+                     'email-icon-instagram.png',
+                     'email-icon-tiktok.png',
+                     'email-icon-facebook.png']
+          changed = []
+
+          def git(*a):
+              return subprocess.run(['git', *a], capture_output=True)
+
+          def last_good(path, test=lambda b: True):
+              r = git('log', '--format=%H', '--', path)
+              for sha in r.stdout.decode().split():
+                  b = git('show', f'{sha}:{path}')
+                  if b.returncode == 0 and test(b.stdout):
+                      return sha, b.stdout
+              return None, None
+
+          # 1. Files that must simply exist (the admin page and its icons).
+          for path in GUARDED:
+              if os.path.exists(path):
+                  continue
+              sha, blob = last_good(path)
+              if blob is None:
+                  print(f'CANNOT RESTORE {path}: no version of it in history')
+                  continue
+              os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+              open(path, 'wb').write(blob)
+              changed.append(path)
+              print(f'restored {path} from {sha[:8]}')
+
+          # 2. The footer link that reaches the admin. Single, additive insert.
+          if os.path.exists('index.html'):
+              s = open('index.html', encoding='utf-8').read()
+              if ADMIN_LINK in s:
+                  print('index.html: admin link present')
+              else:
+                  anchor = '<div class="footer-legal">'
+                  i = s.find(anchor)
+                  j = s.find('</div>', i) if i != -1 else -1
+                  if j != -1:
+                      s = s[:j].rstrip(' ') + '        ' + ADMIN_LINK + '\n      ' + s[j:]
+                      open('index.html', 'w', encoding='utf-8').write(s)
+                      changed.append('index.html')
+                      print('index.html: admin link re-inserted into footer-legal')
+                  else:
+                      print('CANNOT RESTORE index.html admin link: footer-legal block not found')
+
+          # 3. The crawl fence that keeps the admin login out of search.
+          #    Minimal: add only the one Disallow line. Never rewrites the rest
+          #    of robots.txt, so the shop's own crawl rules are left alone.
+          if os.path.exists('robots.txt'):
+              r = open('robots.txt', encoding='utf-8').read()
+              if FENCE in r:
+                  print('robots.txt: /admin/ fence present')
+              else:
+                  lines = r.splitlines()
+                  out, done = [], False
+                  for ln in lines:
+                      out.append(ln)
+                      if not done and ln.strip().lower() == 'user-agent: *':
+                          out.append(FENCE)
+                          done = True
+                  if not done:
+                      out += ['', 'User-agent: *', FENCE]
+                  open('robots.txt', 'w', encoding='utf-8').write('\n'.join(out) + '\n')
+                  changed.append('robots.txt')
+                  print('robots.txt: /admin/ fence re-added')
+
+          open(os.environ['GITHUB_ENV'], 'a').write('HEALED=' + ' '.join(changed) + '\n')
+          PY
+
+      - name: Commit only if something was actually put back
+        run: |
+          if [ -z "${HEALED:-}" ]; then
+            echo "Nothing to do - the admin entry is intact."
+            exit 0
+          fi
+          git config user.name  "iron-cell-admin-guard"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $HEALED
+          git diff --cached --quiet && exit 0
+          git commit -m "Restore the newsletter admin entry dropped by the last publish
+
+          Files put back: $HEALED
+
+          Automatic. The storefront is published as a whole-file write-back,
+          which reverts anything newer than the copy it was written from.
+          Product copy, pricing, cart, checkout, payment and the age gate are
+          never touched by this job."
+          git push
