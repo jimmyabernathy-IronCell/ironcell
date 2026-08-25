@@ -303,7 +303,54 @@ jobs:
                           print('CANNOT RESTORE the admin link: footer-legal block not found')
 
               # 3. The crawl fence.
+              #
+              # Two layers. The per-agent layer first, because it is the one that
+              # keeps getting lost: three publishes on 08-23/08-24 removed 96 lines
+              # from robots.txt as pure deletions, and the /admin/ check below did
+              # not notice because the wildcard fence survived each time.
+              #
+              # A NAMED AGENT DOES NOT INHERIT THE `*` GROUP. If GPTBot has its own
+              # block it obeys only that block, so the fence has to be restated per
+              # agent or it does not apply to them. The Peptide Guides disallows are
+              # the load-bearing part: 34 .docx briefs carrying human dosing serve
+              # live from a research-use-only store, and an AI crawler ingesting
+              # them is a compliance problem rather than an SEO one.
+              #
+              # Recovered from history rather than hardcoded, so this job never
+              # invents robots.txt content - same approach as the ItemList above. A
+              # candidate is only accepted if it still carries the /admin/ fence.
               if os.path.exists('robots.txt'):
+                  cur = open('robots.txt', encoding='utf-8').read()
+                  if cur.count('User-agent:') < 14:
+                      good = None
+                      for sha in git('log', '--format=%H', '--', 'robots.txt').stdout.decode().split():
+                          b = git('show', '%s:robots.txt' % sha)
+                          if b.returncode:
+                              continue
+                          t = b.stdout.decode('utf-8', 'replace')
+                          if t.count('User-agent:') >= 14 and FENCE in t and 'Peptide' in t:
+                              good, gsha = t, sha
+                              break
+                      if good is None:
+                          print('robots.txt: per-agent fence missing and no good version in history')
+                      else:
+                          # Additive only in spirit: this is a whole-file restore, so
+                          # prove the replacement is a superset of what is there now.
+                          missing = [ln for ln in cur.splitlines()
+                                     if ln.strip() and ln not in good]
+                          if missing:
+                              print('robots.txt: SKIP per-agent restore, current file has '
+                                    'lines the historical one lacks: %s' % missing[:3])
+                          else:
+                              open('robots.txt', 'w', encoding='utf-8').write(good)
+                              if 'robots.txt' not in changed:
+                                  changed.append('robots.txt')
+                              print('robots.txt: per-agent crawl fence restored from %s '
+                                    '(%d User-agent groups)' % (gsha[:8], good.count('User-agent:')))
+                  else:
+                      print('robots.txt: per-agent fence present (%d groups)'
+                            % cur.count('User-agent:'))
+
                   r = open('robots.txt', encoding='utf-8').read()
                   if FENCE in r:
                       print('robots.txt: /admin/ fence present')

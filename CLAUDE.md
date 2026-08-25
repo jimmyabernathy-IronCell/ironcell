@@ -95,7 +95,33 @@ perfectly and throws no error - purchases simply stop being reported.
 ### 2.3 The crawl fence
 
 `robots.txt` must keep `Disallow: /admin/`, otherwise the admin login gets crawled and indexed.
-The whole file is four short directives and should stay that way.
+
+**It is not a four-line file, and it must not be reduced to one.** An earlier version of this
+section said it was, because it was written on 2026-08-24 while the file was in a stripped state -
+three publishes on 2026-08-23 and 2026-08-24 had removed 96 lines from it (`c2c91ed`, `f0b3c97`,
+`bda9dd0`, all pure deletions). That was the write-back in section 1, not a decision. Restored in
+`5beb48f`.
+
+The file carries **fourteen** `User-agent` groups: the `*` group plus thirteen named crawlers
+(GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, Claude-SearchBot, anthropic-ai,
+PerplexityBot, Perplexity-User, Google-Extended, Applebot, Applebot-Extended, CCBot). Each repeats
+the same four directives. They exist because **a named agent does not inherit the `*` group** - if
+`GPTBot` has its own block anywhere in the file, it obeys only that block, so the fence has to be
+restated per agent or it does not apply to them at all.
+
+Each group is `Allow: /` plus `Disallow:` for `/admin/`, `/IRONCELL/`, `/Peptide%20Guides/` and
+`/Peptide Guides/`. This is **not** a ban on AI crawlers - every one of them is explicitly allowed
+the public site, Applebot included, which matters for Siri and Spotlight. It fences four paths.
+
+The two `Peptide Guides` lines are load-bearing and are the reason this matters. Thirty-four
+`.docx` briefs are tracked in the repo and serve live (verified 2026-08-25: `200`,
+`application/vnd.openxmlformats-officedocument.wordprocessingml.document`). They contain human
+dosing information. This is a research-use-only supplier, so letting a search or AI crawler ingest
+and surface that content is a compliance exposure, not an SEO preference. Both spellings are
+needed: the encoded form for crawlers that normalise the space to `%20`, the literal for those
+that do not.
+
+Verify with `grep -c 'User-agent:' robots.txt` → `14`, and `grep -c 'Disallow: /admin/'` → `14`.
 
 ### 2.4 The automation in `.github/workflows/`
 
