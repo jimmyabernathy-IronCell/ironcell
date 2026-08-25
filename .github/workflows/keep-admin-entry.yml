@@ -101,11 +101,21 @@ jobs:
           }
 
           # ---------------------------------------------------------------- measurement
-          # Storefront surfaces that carry a newsletter sign-up form.
-          SUB_PAGES = ['index.html', 'mvp.html', 'truetransformation.html',
-                       'amber/index.html', 'billy/index.html', 'carlos/index.html',
-                       'chel/index.html', 'davu/index.html', 'dupree/index.html',
-                       'merv/index.html', 'ray/index.html']
+          # Every storefront surface. All eleven carry the same checkout - age gate,
+          # cart, PayPal/Venmo/Zelle, proceedWithOrder() - and the same newsletter
+          # sign-up form, so all eleven need the same measurement layer.
+          #
+          # This list used to be consulted for the subscriber mirror ONLY, while the
+          # tag and the two conversions were hard-coded to index.html. That gap is why
+          # the 08-23 pastes left ten live checkouts unmeasured for two days: the guard
+          # healed index.html, reported success and never looked at the clones, so
+          # orders placed on them were invisible to Google Ads and Smart Bidding
+          # optimised on a partial revenue signal. Anything page-general belongs in the
+          # loop below, not in a call that names a single file.
+          STOREFRONT_PAGES = ['index.html', 'mvp.html', 'truetransformation.html',
+                              'amber/index.html', 'billy/index.html', 'carlos/index.html',
+                              'chel/index.html', 'davu/index.html', 'dupree/index.html',
+                              'merv/index.html', 'ray/index.html']
 
           HEAD_ANCHOR = ('<html lang="en"><head><meta http-equiv="Content-Type" '
                          'content="text/html; charset=UTF-8">\n\n')
@@ -212,7 +222,17 @@ jobs:
               import json, tempfile, shutil
               if not shutil.which('node'):
                   return True
-              for b in re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S):
+              blocks = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S)
+              # A regex that silently matches nothing would "pass" every file without
+              # checking a single line, which is the failure mode most likely to let a
+              # broken checkout through. Every storefront page here carries well over a
+              # megabyte of inline script, so anything under 10KB means the extraction
+              # broke rather than the page being small. Refuse the edit instead.
+              if sum(len(b) for b in blocks) < 10000:
+                  print('script extraction returned only %d bytes - not trusting it'
+                        % sum(len(b) for b in blocks))
+                  return False
+              for b in blocks:
                   if not b.strip():
                       continue
                   with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False) as fh:
@@ -376,21 +396,44 @@ jobs:
                       changed.append('robots.txt')
                       print('robots.txt: /admin/ fence re-added')
 
-              # 4. Measurement. Head tag + newsletter conversion + product schema on the
-              #    storefront, the subscriber mirror on every page with a sign-up form,
-              #    and the purchase conversion. The first four sit in <head> or in
-              #    subscribeNewsletter(). The purchase conversion is the only one inside
-              #    proceedWithOrder(): it adds a tracking call and touches no checkout
-              #    logic, ordering, totals, coupon or promotion maths or payment handling.
-              #    Nothing here touches the cart, PayPal or the age gate, and the additive
-              #    proof above throws the edit away if anything else moves by a single byte.
-              edit('index.html', 'Google tag AW-18389709216',
-                   lambda t: once(t, HEAD_ANCHOR, HEAD_TAG))
+              # 4. Measurement, on EVERY storefront page rather than just the homepage.
+              #
+              #    Five inserts, each keyed on the marker it installs rather than on the
+              #    full text, so a reworded block can never be added twice and
+              #    double-count an order or a signup. Two sit in <head>, two in
+              #    subscribeNewsletter(), and two inside proceedWithOrder() - the
+              #    purchase conversion and the order mirror. Both of those only add a
+              #    tracking call: they touch no checkout logic, ordering, totals, coupon
+              #    or promotion maths and no payment handling. Nothing here touches the
+              #    cart, PayPal/Venmo/Zelle or the age gate, and the additive proof above
+              #    throws the edit away if anything else moves by a single byte.
+              #
+              #    Every one of these is page-general. Do not re-introduce a call that
+              #    names a single file - that is the bug this loop exists to close.
+              MEASUREMENT = [
+                  ('Google tag AW-18389709216', 'gtag/js?id=AW-18389709216',
+                   HEAD_ANCHOR, HEAD_TAG, True),
+                  ('Google Ads purchase conversion', 'BVXmCJiwnuIcEKDj8sBE',
+                   PURCHASE_ANCHOR, PURCHASE_CONV, True),
+                  ('Google Ads newsletter-signup conversion', 'jCpBCKnUsOIcEKDj8sBE',
+                   NL_ANCHOR, NL_CONV, False),
+                  ('order mirror (ironcell-ingest?t=order)', 'ironcell-ingest?t=order',
+                   ORDER_ANCHOR, ORDER_MIRROR, True),
+                  ('subscriber mirror (ironcell-ingest?t=sub)', 'ironcell-ingest?t=sub',
+                   SUB_ANCHOR, SUB_MIRROR, True),
+              ]
 
-              edit('index.html', 'Google Ads newsletter-signup conversion',
-                   lambda t: None if 'jCpBCKnUsOIcEKDj8sBE' in t
-                   else once(t, NL_ANCHOR, NL_CONV, after_anchor=False))
+              for p in STOREFRONT_PAGES:
+                  for why, marker, anchor, insert, after in MEASUREMENT:
+                      # Bind the loop variables per iteration - a bare closure would
+                      # read whatever the last iteration left behind.
+                      def add(t, _m=marker, _a=anchor, _i=insert, _af=after):
+                          return None if _m in t else once(t, _a, _i, after_anchor=_af)
+                      edit(p, why, add)
 
+              # The 45-product ItemList is homepage-only on purpose. The clones are
+              # near-identical storefronts, so copying it onto all eleven would publish
+              # eleven competing copies of the same product schema.
               def add_itemlist(t):
                   if '"@type":"ItemList"' in t or t.count(HEAD_CLOSE) != 1:
                       return None
@@ -402,21 +445,6 @@ jobs:
                   return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
 
               edit('index.html', 'ItemList product structured data', add_itemlist)
-
-              edit('index.html', 'Google Ads purchase conversion',
-                   lambda t: None if 'BVXmCJiwnuIcEKDj8sBE' in t
-                   else once(t, PURCHASE_ANCHOR, PURCHASE_CONV))
-
-              # Keyed on the marker, not the full text, so a reworded block can never be
-              # inserted twice and double-count an order.
-              edit('index.html', 'order mirror (ironcell-ingest?t=order)',
-                   lambda t: None if 'ironcell-ingest?t=order' in t
-                   else once(t, ORDER_ANCHOR, ORDER_MIRROR))
-
-              for p in SUB_PAGES:
-                  edit(p, 'subscriber mirror (ironcell-ingest?t=sub)',
-                       lambda t: None if 'ironcell-ingest?t=sub' in t
-                       else once(t, SUB_ANCHOR, SUB_MIRROR))
 
               env = os.environ.get('GITHUB_ENV')
               if env:

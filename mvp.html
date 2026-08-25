@@ -2,6 +2,15 @@
 <!-- MVP - Powered by Iron Cell Research -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
+<!-- Google tag (gtag.js) - Google Ads AW-18389709216 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18389709216"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18389709216');
+</script>
+
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MVP — Powered by Iron Cell Research</title>
@@ -4408,6 +4417,21 @@
     var _ct = document.getElementById('confirmTotal');
     if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);
 
+    // Google Ads purchase conversion (tag AW-18389709216, action "Purchase").
+    // Sits below the _submittedOrders guard above, so it fires at most once per
+    // order number, and inside try/catch because gtag is absent whenever the tag
+    // script is blocked - measurement must never be able to break checkout.
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',
+          'value': Number(grandTotal.toFixed(2)),
+          'currency': 'USD',
+          'transaction_id': orderNum
+        });
+      }
+    } catch (e) {}
+
     const itemsList = cart.map(item =>
       `${item.name}${item.strength ? ' (' + item.strength + ')' : ''} x${item.qty} - $${(item.price * item.qty).toFixed(2)}`
     ).join('\n');
@@ -4443,6 +4467,22 @@
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
     sheetImg.src = sheetUrl;
 
+    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;
+    // isolated in its own try/catch so it can never affect checkout). Sits below the
+    // _submittedOrders guard, so it fires at most once per order number. Uses
+    // effectiveCoupon, not appliedCoupon, so an auto-applied Spend & Save tier
+    // (SPEND25/30/35) is recorded here the same way it is in the order email and the
+    // Google Sheet. Deleting this block silently stops orders reaching /admin/.
+    try {
+      var mmOrderImg = new Image();
+      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +
+        '&email=' + encodeURIComponent(email) +
+        '&name=' + encodeURIComponent(name) +
+        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +
+        '&coupon=' + encodeURIComponent(effectiveCoupon || '') +
+        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | '));
+    } catch (e) {}
+
   }
 
   function subscribeNewsletter() {
@@ -4468,6 +4508,17 @@
         subscriber_email: email,
         message: `New newsletter subscriber:\n\nEmail: ${email}`
       }), keepalive:true}).catch(function(){});
+
+
+    // Google Ads newsletter conversion (tag AW-18389709216, action "Newsletter
+    // signup"). Secondary and valueless in Ads, so it reports without competing
+    // with purchases for bidding. Same try/catch + typeof guard as the purchase
+    // event - gtag is absent whenever the tag script is blocked.
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
+      }
+    } catch (e) {}
 
     // Immediate optimistic UI feedback so customers see confirmation
     emailInput.value = '';
