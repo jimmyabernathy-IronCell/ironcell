@@ -36,14 +36,25 @@ name: Keep admin entry
 #     and it exits clean when there is genuinely nothing to put back.
 #
 # WHAT THIS JOB WILL NOT TOUCH
-# Product copy, pricing, the Spend & Save promotion, the cart, checkout,
-# PayPal/Venmo/Zelle and the age gate. Every edit it makes is proved additive
-# before it is written: the file must equal the original plus exactly one
-# insert, a fixed list of checkout, cart, payment, age-gate and promotion
-# markers must not move by a single occurrence, and every inline script must
+# Product copy, pricing, the Spend & Save promotion, the cart, PayPal/Venmo/
+# Zelle and the age gate. Every edit it makes is proved additive before it is
+# written: the file must equal the original plus exactly one insert, a fixed
+# list of checkout, cart, payment, age-gate and promotion markers must not move
+# except where the insert itself contains them, and every inline script must
 # still parse. If any of that fails the edit is thrown away, not committed.
-# The Google Ads PURCHASE conversion lives inside the checkout path and is
-# deliberately NOT handled here.
+#
+# ONE EXCEPTION, ADDED 2026-08-24 (c): THE GOOGLE ADS PURCHASE CONVERSION.
+# This job used to leave the checkout path alone entirely, and the purchase
+# conversion AW-18389709216/BVXmCJiwnuIcEKDj8sBE was held back for that reason.
+# It is the only one of the four measurement pieces that lives inside
+# proceedWithOrder(), so leaving it out meant Google Ads received newsletter
+# signups and no revenue signal at all, and the one hand restore of it was
+# reverted by the next write-back four days later. It is maintained here now,
+# under exactly the same additive proof as everything else: one insert, no
+# sentinel may move beyond what the insert itself adds, and every inline script
+# must still parse. It adds a tracking call below the duplicate-order guard and
+# changes no checkout logic, no ordering, no totals, no coupon or promotion
+# maths and no payment handling.
 
 on:
   push:
@@ -120,6 +131,29 @@ jobs:
               '      }\n'
               '    } catch (e) {}\n')
 
+          # The purchase conversion. Anchored on the line that writes the grand total
+          # onto the confirmation screen, inside proceedWithOrder(), BELOW the
+          # _submittedOrders duplicate guard, so grandTotal and orderNum are both in
+          # scope and it can fire at most once per order number.
+          PURCHASE_ANCHOR = (
+              "    var _ct = document.getElementById('confirmTotal');\n"
+              "    if (_ct) _ct.textContent = '$' + grandTotal.toFixed(2);")
+          PURCHASE_CONV = (
+              '\n\n    // Google Ads purchase conversion (tag AW-18389709216, action "Purchase").'
+              '\n    // Sits below the _submittedOrders guard above, so it fires at most once per'
+              '\n    // order number, and inside try/catch because gtag is absent whenever the tag'
+              '\n    // script is blocked - measurement must never be able to break checkout.'
+              '\n    try {'
+              "\n      if (typeof gtag === 'function') {"
+              "\n        gtag('event', 'conversion', {"
+              "\n          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',"
+              "\n          'value': Number(grandTotal.toFixed(2)),"
+              "\n          'currency': 'USD',"
+              "\n          'transaction_id': orderNum"
+              '\n        });'
+              '\n      }'
+              '\n    } catch (e) {}')
+
           SUB_ANCHOR = ("trackImg.src = 'https://script.google.com/macros/s/"
                         "AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw"
                         "/exec?type=newsletter&email=' + encodeURIComponent(email);")
@@ -151,8 +185,13 @@ jobs:
               """Prove the edit inserted exactly `added` and moved nothing else."""
               if len(after) - len(before) != len(added):
                   return 'byte delta %d, expected %d' % (len(after) - len(before), len(added))
+              # A sentinel may appear inside the insert itself (the purchase conversion
+              # legitimately references grandTotal and carries the conversion id), so
+              # the requirement is that the count changes by EXACTLY what the insert
+              # brings and by nothing else. Any other movement means the edit did more
+              # than insert, and it is thrown away.
               for k in SENTINELS:
-                  if before.count(k) != after.count(k):
+                  if after.count(k) != before.count(k) + added.count(k):
                       return 'sentinel moved: %s' % k
               if after.replace(added, '', 1) != before:
                   return 'the file is not the original plus exactly one insert'
@@ -282,10 +321,13 @@ jobs:
                       print('robots.txt: /admin/ fence re-added')
 
               # 4. Measurement. Head tag + newsletter conversion + product schema on the
-              #    storefront, and the subscriber mirror on every page with a sign-up form.
-              #    All four sit in <head> or in subscribeNewsletter(). None of them is in
-              #    placeOrder(), the cart, PayPal or the age gate, and the additive proof
-              #    above throws the edit away if anything else moves by a single byte.
+              #    storefront, the subscriber mirror on every page with a sign-up form,
+              #    and the purchase conversion. The first four sit in <head> or in
+              #    subscribeNewsletter(). The purchase conversion is the only one inside
+              #    proceedWithOrder(): it adds a tracking call and touches no checkout
+              #    logic, ordering, totals, coupon or promotion maths or payment handling.
+              #    Nothing here touches the cart, PayPal or the age gate, and the additive
+              #    proof above throws the edit away if anything else moves by a single byte.
               edit('index.html', 'Google tag AW-18389709216',
                    lambda t: once(t, HEAD_ANCHOR, HEAD_TAG))
 
@@ -304,6 +346,10 @@ jobs:
                   return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
 
               edit('index.html', 'ItemList product structured data', add_itemlist)
+
+              edit('index.html', 'Google Ads purchase conversion',
+                   lambda t: None if 'BVXmCJiwnuIcEKDj8sBE' in t
+                   else once(t, PURCHASE_ANCHOR, PURCHASE_CONV))
 
               for p in SUB_PAGES:
                   edit(p, 'subscriber mirror (ironcell-ingest?t=sub)',
@@ -350,7 +396,7 @@ jobs:
               -m "Restore the newsletter admin entry and measurement dropped by the last publish" \
               -m "Files put back: $HEALED" \
               -m "Automatic. The storefront is published as a whole-file write-back, which reverts anything newer than the copy it was written from." \
-              -m "Every change here is proved additive before it is written: the file must be the original plus exactly one insert, and no checkout, cart, payment, age gate or Spend & Save marker may move. Product copy, pricing, the promotion, the cart, checkout, PayPal and the age gate are never touched by this job."
+              -m "Every change here is proved additive before it is written: the file must be the original plus exactly one insert, and no checkout, cart, payment, age gate or Spend & Save marker may move. Product copy, pricing, the promotion, the cart, PayPal and the age gate are never touched by this job. The only edit inside checkout is the Google Ads purchase conversion, which adds a tracking call and changes no checkout logic."
 
             if git push --quiet origin HEAD:main; then
               echo "Repair published on attempt $attempt: $HEALED"
