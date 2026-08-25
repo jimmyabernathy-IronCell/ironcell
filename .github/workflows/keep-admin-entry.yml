@@ -163,6 +163,15 @@ jobs:
               "\n      mmSubImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/"
               "ironcell-ingest?t=sub&email=' + encodeURIComponent(email);")
 
+          # The order mirror. Dropped by a client paste on 08-16 and again on 08-23; the
+          # second loss ran two days unnoticed, because losing it breaks nothing visible -
+          # the order still e-mails and still reaches the Google Sheet, it just stops
+          # reaching /admin/ and stops enrolling the buyer in the newsletter list. It was
+          # already a SENTINEL, which only stops it MOVING; nothing put it back. This does.
+          ORDER_ANCHOR = '    sheetImg.src = sheetUrl;'
+          ORDER_MIRROR = "\n\n    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;\n    // isolated in its own try/catch so it can never affect checkout). Sits below the\n    // _submittedOrders guard, so it fires at most once per order number. Uses\n    // effectiveCoupon, not appliedCoupon, so an auto-applied Spend & Save tier\n    // (SPEND25/30/35) is recorded here the same way it is in the order email and the\n    // Google Sheet. Deleting this block silently stops orders reaching /admin/.\n    try {\n      var mmOrderImg = new Image();\n      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +\n        '&email=' + encodeURIComponent(email) +\n        '&name=' + encodeURIComponent(name) +\n        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +\n        '&coupon=' + encodeURIComponent(effectiveCoupon || '') +\n        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | '));\n    } catch (e) {}"
+
+
           HEAD_CLOSE = '\n</head>'
 
           # Nothing below may move. Checkout, cart, payment and the age gate are read
@@ -397,6 +406,12 @@ jobs:
               edit('index.html', 'Google Ads purchase conversion',
                    lambda t: None if 'BVXmCJiwnuIcEKDj8sBE' in t
                    else once(t, PURCHASE_ANCHOR, PURCHASE_CONV))
+
+              # Keyed on the marker, not the full text, so a reworded block can never be
+              # inserted twice and double-count an order.
+              edit('index.html', 'order mirror (ironcell-ingest?t=order)',
+                   lambda t: None if 'ironcell-ingest?t=order' in t
+                   else once(t, ORDER_ANCHOR, ORDER_MIRROR))
 
               for p in SUB_PAGES:
                   edit(p, 'subscriber mirror (ironcell-ingest?t=sub)',

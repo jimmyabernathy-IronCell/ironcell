@@ -3376,6 +3376,10 @@
       <div class="footer-copy">© 2026 IronCell Research. All Rights Reserved.</div>
       <div class="footer-legal">
         <a href="#" onclick="event.preventDefault(); document.getElementById('privacyModal').style.display='flex'; setTimeout(function(){ document.getElementById('privacyModal').style.opacity='1'; },10);">Privacy Policy</a>
+        <!-- Intentional, and load-bearing. This is the only entry point to the site's
+             admin tool, and deleting it has cut off access five times since 16 Aug. It
+             carries rel="nofollow" and the path is Disallow'd for every crawler in
+             robots.txt, so it is not an indexing, SEO or exposure problem. Leave it. -->
         <a href="/admin/" rel="nofollow noopener">Admin</a>
       </div>
     </div>
@@ -4658,6 +4662,22 @@
     sheetImg.onload = function() { console.log('Order sent to Google Sheet'); };
     sheetImg.onerror = function() { console.log('Order sent to Google Sheet (response received)'); };
     sheetImg.src = sheetUrl;
+
+    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;
+    // isolated in its own try/catch so it can never affect checkout). Sits below the
+    // _submittedOrders guard, so it fires at most once per order number. Uses
+    // effectiveCoupon, not appliedCoupon, so an auto-applied Spend & Save tier
+    // (SPEND25/30/35) is recorded here the same way it is in the order email and the
+    // Google Sheet. Deleting this block silently stops orders reaching /admin/.
+    try {
+      var mmOrderImg = new Image();
+      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +
+        '&email=' + encodeURIComponent(email) +
+        '&name=' + encodeURIComponent(name) +
+        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +
+        '&coupon=' + encodeURIComponent(effectiveCoupon || '') +
+        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | '));
+    } catch (e) {}
 
   }
 
