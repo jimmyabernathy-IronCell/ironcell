@@ -248,6 +248,11 @@
             <button class="ghost" id="nlTest">Send test to me</button>
             <button id="nlSend">Send to list (<span id="nlCount">0</span>)</button>
           </div>
+          <div class="row" style="margin-top:10px;align-items:center;gap:8px">
+            <input type="datetime-local" id="nlSchedAt" style="flex:0 0 auto">
+            <button class="ghost" id="nlSchedule">Schedule send</button>
+          </div>
+          <div id="nlSchedList" style="margin-top:8px"></div>
           <p class="note" id="nlMsg" style="margin-top:10px"></p>
         </div>
       </div>
@@ -694,6 +699,71 @@
     }
     send(false);
   });
+
+  /* ================= SCHEDULED SENDS =================
+     "Schedule send" stores the finished newsletter in
+     ironcell_scheduled_newsletters; a dispatcher checks every 5 minutes and
+     sends anything due through the exact same pipeline as "Send to list"
+     (same footer, unsubscribe links, campaign history and stats). Times are
+     picked in the browser's local timezone and stored absolute. */
+  async function refreshScheduled() {
+    var box = $('nlSchedList');
+    if (!box) return;
+    try {
+      var r = await sb.from('ironcell_scheduled_newsletters')
+        .select('id, subject, scheduled_for, status')
+        .in('status', ['pending', 'sending'])
+        .order('scheduled_for');
+      var rows = r.data || [];
+      if (!rows.length) { box.innerHTML = ''; return; }
+      box.innerHTML = rows.map(function (row) {
+        var when = new Date(row.scheduled_for).toLocaleString();
+        return '<div class="note" style="display:flex;gap:8px;align-items:center">' +
+          '<span>&#8986; "' + row.subject.replace(/</g, '&lt;') + '" - ' + when +
+          (row.status === 'sending' ? ' (sending now)' : '') + '</span>' +
+          (row.status === 'pending'
+            ? '<a href="#" data-cancel="' + row.id + '" style="color:var(--red-primary)">cancel</a>'
+            : '') +
+          '</div>';
+      }).join('');
+      box.querySelectorAll('[data-cancel]').forEach(function (a) {
+        a.addEventListener('click', async function (ev) {
+          ev.preventDefault();
+          await sb.from('ironcell_scheduled_newsletters')
+            .update({ status: 'cancelled' })
+            .eq('id', a.getAttribute('data-cancel'))
+            .eq('status', 'pending');
+          refreshScheduled();
+        });
+      });
+    } catch (e) { /* list is a convenience; never block the composer */ }
+  }
+
+  $('nlSchedule').addEventListener('click', async function () {
+    var subject = $('nlSubject').value.trim();
+    if (!subject) { banner($('nlBanner'), 'err', 'Add a subject line first.'); return; }
+    if (!state.blocks.length) { banner($('nlBanner'), 'err', 'Add at least one content block.'); return; }
+    var at = $('nlSchedAt').value;
+    if (!at) { banner($('nlBanner'), 'err', 'Pick a date and time first.'); return; }
+    var when = new Date(at);
+    if (!(when.getTime() > Date.now() + 4 * 60 * 1000)) {
+      banner($('nlBanner'), 'err', 'Pick a time at least 5 minutes from now (or use Send to list for right now).');
+      return;
+    }
+    var s = await sb.auth.getSession(), sess = s.data.session;
+    var ins = await sb.from('ironcell_scheduled_newsletters').insert({
+      subject: subject,
+      html: buildEmail(),
+      blocks: captureDoc(),
+      scheduled_for: when.toISOString(),
+      created_by: sess.user.email,
+    });
+    if (ins.error) { banner($('nlBanner'), 'err', 'Could not schedule: ' + ins.error.message); return; }
+    banner($('nlBanner'), 'ok', 'Scheduled for ' + when.toLocaleString() + '. It sends automatically - cancel below any time before then.');
+    $('nlSchedAt').value = '';
+    refreshScheduled();
+  });
+  refreshScheduled();
 
   /* ================= BOOT ================= */
   // Read a failed auth callback out of the URL. Without this a sign-in link that
