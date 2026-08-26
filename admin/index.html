@@ -563,10 +563,13 @@
   }
 
   async function loadSubs() {
-    var r = await sb.from('ironcell_subscribers').select('email,source,first_seen_at,unsubscribed_at').order('first_seen_at', { ascending: false }).limit(2000);
+    var r = await sb.from('ironcell_subscribers').select('email,source,first_seen_at,unsubscribed_at,bounced_at').order('first_seen_at', { ascending: false }).limit(2000);
     if (r.error) return;
     state.subs = r.data || [];
-    var rows = state.subs, active = rows.filter(function (s) { return !s.unsubscribed_at; });
+    /* "Active" must mean EXACTLY what ironcell-send-newsletter will mail: it
+       excludes unsubscribes AND hard bounces (the function filters on both).
+       Counting bounced addresses as active overstated the recipient count. */
+    var rows = state.subs, active = rows.filter(function (s) { return !s.unsubscribed_at && !s.bounced_at; });
     $('sCount').textContent = active.length;
     $('sSignup').textContent = rows.filter(function (s) { return s.source === 'site_signup'; }).length;
     $('sOrders').textContent = rows.filter(function (s) { return s.source === 'order'; }).length;
@@ -576,7 +579,9 @@
       ? rows.slice(0, 300).map(function (s) {
           return '<tr><td class="mono">' + esc(s.email) + '</td><td><span class="pill">' + esc((s.source || '').replace('_', ' ')) +
             '</span></td><td class="mono">' + dateStr(s.first_seen_at) + '</td><td>' +
-            (s.unsubscribed_at ? '<span class="pill down">Unsubscribed</span>' : '<span class="pill up">Active</span>') + '</td></tr>';
+            (s.bounced_at ? '<span class="pill down">Bounced</span>'
+              : s.unsubscribed_at ? '<span class="pill down">Unsubscribed</span>'
+              : '<span class="pill up">Active</span>') + '</td></tr>';
         }).join('')
       : '<tr><td colspan="4" class="muted">No subscribers yet. Signups and orders are added automatically - or paste emails in below.</td></tr>';
   }
@@ -639,7 +644,7 @@
   }
   $('exportSubs').addEventListener('click', function () {
     csv('ironcell-email-list.csv', ['email', 'source', 'first_seen', 'status'],
-      state.subs.map(function (s) { return [s.email, s.source, s.first_seen_at, s.unsubscribed_at ? 'unsubscribed' : 'active']; }));
+      state.subs.map(function (s) { return [s.email, s.source, s.first_seen_at, s.bounced_at ? 'bounced' : s.unsubscribed_at ? 'unsubscribed' : 'active']; }));
   });
   $('exportOrders').addEventListener('click', function () {
     csv('ironcell-orders.csv', ['date', 'customer', 'email', 'items', 'total'],
@@ -679,7 +684,8 @@
     try {
       var c = await sb.from('ironcell_subscribers')
         .select('id', { count: 'exact', head: true })
-        .is('unsubscribed_at', null);
+        .is('unsubscribed_at', null)
+        .is('bounced_at', null);   // mirror the send function, or the confirm dialog overstates the send
       count = c.count;
     } catch (e) { /* fall back to an unspecified count rather than blocking */ }
 
@@ -928,11 +934,13 @@
   var histCache = {};
   var histOpenId = null;
   async function loadHistory() {
-    var subs = await sb.from('ironcell_subscribers').select('id,unsubscribed_at');
-    var act = 0, uns = 0; (subs.data || []).forEach(function (x) { if (x.unsubscribed_at) { uns++; } else { act++; } });
+    var subs = await sb.from('ironcell_subscribers').select('id,unsubscribed_at,bounced_at');
+    var act = 0, uns = 0, bnc = 0; (subs.data || []).forEach(function (x) {
+      if (x.bounced_at) { bnc++; } else if (x.unsubscribed_at) { uns++; } else { act++; }
+    });
     var r = await sb.from('ironcell_campaigns').select('id,subject,sent_at,sent_by,sent_count,total_count,status,opens,clicks,unsubscribes,bounces,delivered').order('sent_at', { ascending: false }).limit(50);
     var rows = r.data || []; histCache = {};
-    $('histChips').innerHTML = chipHtml('Active subscribers', subs.error ? '?' : act) + chipHtml('Unsubscribed', subs.error ? '?' : uns) + chipHtml('Campaigns sent', r.error ? '?' : rows.length);
+    $('histChips').innerHTML = chipHtml('Active subscribers', subs.error ? '?' : act) + chipHtml('Unsubscribed', subs.error ? '?' : uns) + chipHtml('Bounced', subs.error ? '?' : bnc) + chipHtml('Campaigns sent', r.error ? '?' : rows.length);
     if (r.error || subs.error) { console.error('loadHistory failed', r.error || subs.error); $('histTable').innerHTML = histErrHtml(r.error || subs.error); return; }
     if (!rows.length) { $('histTable').innerHTML = '<p class="note">Nothing sent yet. Your first campaign will appear here with its delivery and engagement numbers.</p>'; return; }
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
