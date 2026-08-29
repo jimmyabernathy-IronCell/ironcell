@@ -1,4 +1,101 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+# AI search crawlers - named agents do not inherit the * rules, so the
+# public allow and the admin disallow are repeated per agent.
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Applebot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin/
+Disallow: /IRONCELL/
+Disallow: /Peptide%20Guides/
+Disallow: /Peptide Guides/
 
 Sitemap: https://ironcellresearch.com/sitemap.xml
