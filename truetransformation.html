@@ -3986,6 +3986,7 @@
 
   // ─── COUPON SYSTEM ───
   const COUPONS = {
+    'LABORDAY25': 0.25,
     'RETA10': 0,
     'MERV20': 0.20,
     'JIMMY20': 0.20,
@@ -4154,6 +4155,17 @@
         if (now < start || now >= end) {
           appliedCoupon = null; couponDiscount = 0;
           msg.textContent = 'THANKYOU25 promotion has ended.';
+          msg.className = 'coupon-msg error';
+          return;
+        }
+      }
+      if (code === 'LABORDAY25') {
+        var now = new Date();
+        var start = new Date(2026, 8, 4);  // Fri Sep 4 2026 00:00 (month index 8 = September)
+        var end   = new Date(2026, 8, 8);  // active through Mon Sep 7 (exclusive Tue Sep 8)
+        if (now < start || now >= end) {
+          appliedCoupon = null; couponDiscount = 0;
+          msg.textContent = 'LABORDAY25 promotion has ended.';
           msg.className = 'coupon-msg error';
           return;
         }
