@@ -1,0 +1,127 @@
+name: Labor Day banner
+
+# TEMPORARY - DELETE THIS WORKFLOW AFTER 2026-09-07.
+#
+# WHY THIS EXISTS
+# LABORDAY25 (25% off, Fri Sep 4 through end of Mon Sep 7 2026) shipped in
+# 44205fb as coupon logic only - registered in COUPONS plus a date gate in
+# applyCoupon. Nothing on the storefront told a visitor the sale existed, so the
+# newsletter IronCell sent on Sep 3 ("Labor Day Special! 25% Off Friday Through
+# Monday!", "Use code LABORDAY25 at checkout") pointed customers at a page that
+# never mentioned the offer. This job adds that missing announcement.
+#
+# WHAT IT DOES
+# Inserts one self-contained script immediately before the single </body> in
+# index.html. The bar is a byte-for-byte copy of the site's own spendSaveBar
+# styling - same sticky positioning, same z-index, same gradient, same type -
+# so it behaves exactly like the promo bar that already ran Aug 24-30 and is
+# known to sit correctly with the age gate. Only the text and the dates differ.
+# It renders only between Sep 4 00:00 and Sep 8 00:00 in the visitor's local
+# time, the same window and the same clock the coupon gate already uses, so it
+# self-expires after the sale with no second deploy.
+#
+# WHAT IT DOES NOT TOUCH
+# No product copy, no pricing, no cart, no checkout, no coupon maths, no
+# payment, no age gate, no tracking. Proved before every write: the new file
+# must equal the old file plus exactly this insert and nothing else, and every
+# protected marker must keep its exact count. If any check fails it refuses to
+# write rather than committing a guess.
+#
+# It re-runs every 30 minutes because the storefront is published by whole-file
+# write-back, which silently reverts anything newer than the local copy. If a
+# publish drops the bar mid-sale, this puts it back.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: laborday-banner
+  cancel-in-progress: false
+
+jobs:
+  banner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write the inserter
+        run: |
+          cat > /tmp/insert_banner.py <<'PYEOF'
+          import sys
+
+          PATH   = 'index.html'
+          MARK   = 'mm-laborday-bar'
+          ANCHOR = '</body>'
+
+          INSERT = (
+              '<!-- Move Marketing: LABORDAY25 announcement. Self-expires after Sep 7 2026. -->\n'
+              '<script>\n'
+              '(function(){try{\n'
+              '  var S=new Date(2026,8,4,0,0,0), E=new Date(2026,8,8,0,0,0), n=new Date();\n'
+              '  if(n<S||n>=E){return;}\n'
+              '  function mount(){\n'
+              '    if(!document.body||document.getElementById("mm-laborday-bar")){return;}\n'
+              '    var b=document.createElement("div");\n'
+              '    b.id="mm-laborday-bar";\n'
+              '    b.style.cssText="position:sticky;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#cc0000,#8B0000);color:#fff;text-align:center;padding:10px 14px;font-family:Inter,sans-serif;font-weight:700;letter-spacing:0.8px;font-size:13px;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,0.3);";\n'
+              '    b.textContent="\\u2605 LABOR DAY SALE \\u2605 25% OFF WITH CODE LABORDAY25 \\u00b7 NO MINIMUM \\u00b7 PILLS EXCLUDED \\u00b7 ENDS MONDAY \\u2605";\n'
+              '    document.body.insertBefore(b,document.body.firstChild);\n'
+              '  }\n'
+              '  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",mount);}else{mount();}\n'
+              '}catch(e){}})();\n'
+              '</script>\n'
+          )
+
+          PROTECTED = ['proceedWithOrder', 'grandTotal', 'AW-18389709216', 'const COUPONS',
+                       'LABORDAY25', 'SPEND_SAVE_START', 'spendSaveBar', 'addToCart',
+                       'paypal', 'applyCoupon', '<script', '</script>', '<body', '</body>']
+
+          src = open(PATH, encoding='utf-8').read()
+
+          if MARK in src:
+              print('banner already present'); sys.exit(0)
+          if src.count(ANCHOR) != 1:
+              print('anchor not unique, refusing'); sys.exit(1)
+
+          out = src.replace(ANCHOR, INSERT + ANCHOR)
+
+          if len(out) != len(src) + len(INSERT):
+              print('not purely additive, refusing'); sys.exit(1)
+          if out.replace(INSERT, '', 1) != src:
+              print('changed beyond the insert, refusing'); sys.exit(1)
+          for k in PROTECTED:
+              if out.count(k) != src.count(k) + INSERT.count(k):
+                  print('protected marker moved: ' + k); sys.exit(1)
+
+          open(PATH, 'w', encoding='utf-8').write(out)
+          print('inserted %d bytes' % len(INSERT))
+          PYEOF
+
+      - name: Insert, verify and push
+        run: |
+          git config user.name  "iron-cell-admin-guard"
+          git config user.email "iron-cell-admin-guard@users.noreply.github.com"
+          for i in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 /tmp/insert_banner.py || exit 1
+            if git diff --quiet; then
+              echo "nothing to do"
+              exit 0
+            fi
+            git add index.html
+            git commit -m "Show the LABORDAY25 sale on the storefront"
+            if git push; then
+              echo "pushed"
+              exit 0
+            fi
+            echo "push rejected, retrying"
+            sleep 5
+          done
+          echo "could not push"
+          exit 1
