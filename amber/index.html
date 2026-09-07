@@ -4662,7 +4662,9 @@
         '&name=' + encodeURIComponent(name) +
         '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +
         '&coupon=' + encodeURIComponent(effectiveCoupon || '') +
-        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | '));
+        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | ')) +
+        '&state=' + encodeURIComponent(state) +
+        '&zip=' + encodeURIComponent(zip);
     } catch (e) {}
 
   }
