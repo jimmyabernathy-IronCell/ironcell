@@ -114,7 +114,7 @@ jobs:
           # loop below, not in a call that names a single file.
           STOREFRONT_PAGES = ['index.html', 'mvp.html', 'truetransformation.html',
                               'amber/index.html', 'billy/index.html', 'carlos/index.html',
-                              'chel/index.html', 'davu/index.html', 'dupree/index.html',
+                              'chel/index.html', 'davu/index.html', 'dro/index.html', 'dupree/index.html',
                               'merv/index.html', 'ray/index.html']
 
           HEAD_ANCHOR = ('<html lang="en"><head><meta http-equiv="Content-Type" '
