@@ -56,7 +56,7 @@ name: Keep admin entry
 # changes no checkout logic, no ordering, no totals, no coupon or promotion
 # maths and no payment handling.
 #
-# EXTENDED 2026-09-08: PAID SOCIAL IS GUARDED TOO.
+# EXTENDED 2026-09-08 (a): PAID SOCIAL IS GUARDED TOO.
 # The Meta Pixel (1628346322011957, 0d4e340) and the TikTok Pixel
 # (DAG4D4RC77UES974PFB0, 7442d47) were installed on the storefronts this day and
 # were not known to this job, so the next whole-file paste would have removed
@@ -64,6 +64,49 @@ name: Keep admin entry
 # page still rendering and the campaigns still spending. They are head-level
 # base codes, they touch no checkout logic at all, and they are now restored
 # under the same additive proof as everything else.
+#
+# EXTENDED 2026-09-08 (b): THE CONVERSION EVENTS, THE POPUP, AND THE AD LANDING
+# PAGE. Later the same day the two pixels stopped being PageView-only (0ac7a8e,
+# 6039cb0): Meta Purchase and TikTok CompletePayment were added directly beneath
+# the Google Ads purchase conversion, Meta Lead and TikTok SubmitForm beneath the
+# newsletter conversion, and a shared first-visit newsletter popup - which also
+# repairs mistyped e-mail addresses at checkout - was added immediately before
+# </body>. None of it was known to this job, so the next whole-file paste would
+# have deleted all of it with nothing to put it back: the 08-23 failure again,
+# one layer deeper, and just as silent.
+#
+# WHILE ADDING THEM, ONE EXISTING GUARD WAS FOUND ALREADY BLIND. The popup fires
+# the same newsletter signup conversion, so 'jCpBCKnUsOIcEKDj8sBE' now appears
+# TWICE on every storefront, and the newsletter-conversion entry was keyed on
+# that bare id. With the popup present the marker matched even when the
+# conversion had been deleted out of subscribeNewsletter(), so the guard would
+# have reported "nothing to do" while Google Ads received no signups at all. It
+# is now keyed on the id in its own closing context, which the popup's copy does
+# not match. A marker has to be unique to the place it guards, not merely present
+# somewhere in the file.
+#
+# THE SIGNUP EVENTS ARE ONE ENTRY, NOT TWO, FOR THE SAME REASON. The popup ships
+# a byte-identical copy of the TikTok SubmitForm block, so once()'s own "already
+# in the file" check would have refused to restore it forever. Bound to the Meta
+# Lead block above it - which the popup formats differently - the pair is unique
+# and restorable. The purchase events have no such twin and stay separate.
+#
+# research-supplies/index.html IS NOW GUARDED TOO, on its own page list. It is
+# the page every paid ad lands on, it takes real orders, and it was guarded by
+# nothing whatsoever. It cannot simply join STOREFRONT_PAGES: its <head> is
+# written differently (no HEAD_ANCHOR, and no <meta name="color-scheme"> for
+# PIXEL_ANCHOR to find), and its order code uses the locals grand/num where the
+# storefronts use grandTotal/orderNum, so its anchors and its inserts are its
+# own. Its inline script measures 28,787 bytes, comfortably above the 10,000
+# byte floor scripts_parse() refuses to trust below; an earlier commit message
+# claimed that floor was the obstacle and was simply wrong.
+#
+# THE POPUP IS RECOVERED FROM HISTORY RATHER THAN HARDCODED. It is 13,949 bytes
+# of markup and script, byte-identical on all thirteen pages, and it carries
+# regular expressions with backslashes. Transcribing that into a Python literal
+# inside a YAML block scalar is exactly how this file was broken once before, so
+# it is recovered the way the ItemList and the per-agent robots.txt fence
+# already are - which also means this job can never invent site content.
 
 on:
   push:
@@ -125,6 +168,15 @@ jobs:
                               'amber/index.html', 'billy/index.html', 'carlos/index.html',
                               'chel/index.html', 'davu/index.html', 'dro/index.html', 'dupree/index.html',
                               'merv/index.html', 'ray/index.html']
+
+          # The ad landing page. Separate from the twelve above because it is a
+          # different document: a hand-written head with no HEAD_ANCHOR and no
+          # <meta name="color-scheme">, and an order path (window.placeOrder) whose
+          # locals are grand/num rather than grandTotal/orderNum. It takes real
+          # orders and it is where every paid click lands, so it needs the same
+          # protection - it just needs its own anchors and its own inserts, listed
+          # in SUPPLIES_MEASUREMENT below. Do NOT fold it into STOREFRONT_PAGES.
+          SUPPLIES_PAGES = ['research-supplies/index.html']
 
           HEAD_ANCHOR = ('<html lang="en"><head><meta http-equiv="Content-Type" '
                          'content="text/html; charset=UTF-8">\n\n')
@@ -212,6 +264,42 @@ jobs:
               '      }\n'
               '    } catch (e) {}\n')
 
+          # NOT the bare conversion id. The newsletter popup added 2026-09-08 fires
+          # the same signup conversion, so the id appears TWICE on every storefront
+          # and a bare-id marker matched even when the conversion had been deleted
+          # out of subscribeNewsletter() - the repair would never have run. This is
+          # the id plus the two lines that close its own try/catch and the blank
+          # line after them, which is the shape only this copy has: the popup's
+          # closes straight into another try with no blank line between.
+          # One known limit, stated rather than hidden: NL_CONV is anchored on the
+          # line BELOW it, so if it is the only thing missing while the pixel block
+          # below it survives, it comes back under that block instead of above it.
+          # Same code, same single fire, additive proof still satisfied - only the
+          # order of two adjacent tracking calls differs. A whole-file paste, which
+          # is what this job exists for, takes both and restores both in order.
+          NL_CONV_MARK = ("jCpBCKnUsOIcEKDj8sBE' });\n"
+                          '      }\n'
+                          '    } catch (e) {}\n\n')
+
+          # The Meta and TikTok signup events, added 2026-09-08 (0ac7a8e) directly
+          # below the newsletter conversion. ONE insert covering both, deliberately:
+          # the popup carries a byte-identical copy of the TikTok block on its own,
+          # so once() would see it "already in the file" and refuse the repair for
+          # ever. Together with the Meta Lead block above it - which the popup
+          # writes on a single line instead - the pair is unique and restorable.
+          # Anchored on NL_CONV so it always lands directly under the Google Ads
+          # conversion it mirrors, whatever else in the function is missing.
+          NL_PIXELS = (
+              '\n    /* The signup equivalent of the purchase events above. Lead / SubmitForm is what\n'
+              '       lets Meta and TikTok optimise toward subscribers, which is the cheaper of the\n'
+              '       two objectives for this account and the one the newsletter push depends on. */\n'
+              '    try {\n'
+              "      if (typeof fbq === 'function') { fbq('track', 'Lead'); }\n"
+              '    } catch (e) {}\n'
+              '    try {\n'
+              "      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') { ttq.track('SubmitForm'); }\n"
+              '    } catch (e) {}\n')
+
           # The purchase conversion. Anchored on the line that writes the grand total
           # onto the confirmation screen, inside proceedWithOrder(), BELOW the
           # _submittedOrders duplicate guard, so grandTotal and orderNum are both in
@@ -235,6 +323,44 @@ jobs:
               '\n      }'
               '\n    } catch (e) {}')
 
+          # The Meta and TikTok purchase events, added 2026-09-08 (0ac7a8e) directly
+          # below the Google Ads purchase conversion, in the same order-success path
+          # and under the same typeof guard and try/catch. Two entries, not one:
+          # unlike the signup pair above, neither block has a twin anywhere else in
+          # the document, so each can be restored on its own.
+          #
+          # Meta hangs off the end of PURCHASE_CONV and TikTok off the front of the
+          # itemsList line that follows, so each lands in its shipped position no
+          # matter which of the two is the one missing. Both add a tracking call and
+          # nothing else: no checkout logic, no ordering, no totals, no coupon or
+          # promotion maths, no payment handling.
+          PURCHASE_META = (
+              '\n\n    /* Meta and TikTok purchase events. Both pixels were installed 2026-09-08 but\n'
+              '       fired ONLY PageView, so paid social had no conversion signal at all and no\n'
+              '       purchase- or value-optimised campaign could be run against them. Same shape\n'
+              '       as the Google Ads conversion above: typeof-guarded and wrapped in its own\n'
+              '       try/catch, because measurement must never be able to break a checkout. */\n'
+              '    try {\n'
+              "      if (typeof fbq === 'function') {\n"
+              "        fbq('track', 'Purchase', {\n"
+              '          value: Number(grandTotal.toFixed(2)),\n'
+              "          currency: 'USD',\n"
+              "          content_type: 'product'\n"
+              '        });\n'
+              '      }\n'
+              '    } catch (e) {}')
+
+          ITEMS_ANCHOR = '\n\n    const itemsList = cart.map(item =>'
+          PURCHASE_TTQ = (
+              '\n    try {\n'
+              "      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') {\n"
+              "        ttq.track('CompletePayment', {\n"
+              '          value: Number(grandTotal.toFixed(2)),\n'
+              "          currency: 'USD'\n"
+              '        });\n'
+              '      }\n'
+              '    } catch (e) {}')
+
           SUB_ANCHOR = ("trackImg.src = 'https://script.google.com/macros/s/"
                         "AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw"
                         "/exec?type=newsletter&email=' + encodeURIComponent(email);")
@@ -254,6 +380,76 @@ jobs:
 
 
           HEAD_CLOSE = '\n</head>'
+
+          # ------------------------------------------------ the ad landing page
+          # research-supplies/index.html. Same losses, different document, so the
+          # anchors are its own.
+          #
+          # HEAD. It has neither HEAD_ANCHOR nor <meta name="color-scheme">, so the
+          # storefront anchors find nothing there - which is why it was left out
+          # when the pixels were installed and why it ended up guarded by nothing.
+          # The three head blocks themselves ARE byte-identical to the storefronts'
+          # (verified 2026-09-08), so the constants are reused and only the anchors
+          # differ: the Google tag hangs off the viewport meta, Meta off the end of
+          # the Google tag, and TikTok off the front of the INDEXABLE comment, so
+          # each lands in its shipped position whichever of the three is missing.
+          RS_HEAD_ANCHOR = ('<meta name="viewport" content="width=device-width, '
+                            'initial-scale=1.0">\n')
+          RS_INDEXABLE = '\n<!-- INDEXABLE (Julien, Aug 12 2026'
+
+          # ORDER. window.placeOrder(), not proceedWithOrder(): the totals are the
+          # locals grand and num, so PURCHASE_CONV/PURCHASE_META/PURCHASE_TTQ would
+          # reference variables that do not exist here. Anchored on the line that
+          # builds the item list above it, and on the admin order mirror below it.
+          RS_ORDER_ANCHOR = ("    var items = cart.map(function(l){ return l.qty + "
+                             "'x ' + l.name; }).join(', ');")
+          RS_MIRROR_ANCHOR = '\n\n    /* Mirror to the IronCell admin dashboard.'
+
+          RS_PURCHASE_CONV = (
+              '\n\n    /* CONVERSIONS FOR THE PAGE THE ADS ACTUALLY LAND ON.\n'
+              '       This page carries only the Google Ads BASE tag - no conversion event of any\n'
+              '       kind - even though it takes real orders. Every sale driven here by paid\n'
+              '       search reported as zero conversions, so Google Ads had no value signal and\n'
+              '       smart bidding had nothing to optimise against. Measured 2026-09-08: three\n'
+              '       AW- references on this page against seven on every storefront.\n'
+              '       Fire-and-forget and individually isolated, exactly like the order mirror\n'
+              '       below, so a tracking failure can never block an order. */\n'
+              '    try {\n'
+              "      if (typeof gtag === 'function') {\n"
+              "        gtag('event', 'conversion', {\n"
+              "          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',\n"
+              "          'value': Number(grand.toFixed(2)),\n"
+              "          'currency': 'USD',\n"
+              "          'transaction_id': num\n"
+              '        });\n'
+              '      }\n'
+              '    } catch (e) {}')
+
+          RS_PURCHASE_META = (
+              '\n    try {\n'
+              "      if (typeof fbq === 'function') {\n"
+              "        fbq('track', 'Purchase', { value: Number(grand.toFixed(2)), currency: 'USD', content_type: 'product' });\n"
+              '      }\n'
+              '    } catch (e) {}')
+
+          RS_PURCHASE_TTQ = (
+              '\n    try {\n'
+              "      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') {\n"
+              "        ttq.track('CompletePayment', { value: Number(grand.toFixed(2)), currency: 'USD' });\n"
+              '      }\n'
+              '    } catch (e) {}')
+
+          # ------------------------------------------------------------- the popup
+          # The first-visit newsletter capture + e-mail repair block, added
+          # 2026-09-08 (6039cb0) immediately before </body> on all thirteen pages,
+          # byte-identical on every one of them. It is not hardcoded here: 13,949
+          # bytes of markup and script, carrying backslash regular expressions, is
+          # exactly the kind of literal that has broken this file before. It is
+          # recovered from git history instead, like the ItemList and the per-agent
+          # robots.txt fence, so this job can never invent site content.
+          POPUP_MARK = 'ic-newsletter-popup'
+          POPUP_OPEN = '\n\n<!--'
+          BODY_CLOSE = '\n</body>'
 
           # Nothing below may move. Checkout, cart, payment and the age gate are read
           # only to this job: if any of these counts changes the edit is thrown away.
@@ -364,6 +560,33 @@ jobs:
               return None, None
 
 
+          def popup_from_history():
+              """The first-visit newsletter popup + e-mail repair block, recovered
+              from history rather than hardcoded. Bounded by the blank line and the
+              comment that open it and by </body> that closes it, so the recovered
+              text is the shipped block byte for byte. Byte-identical on all
+              thirteen pages, so the first page whose history still carries it
+              serves every page - which is what the block's own comment says it is
+              for ('one shared block so all thirteen pages behave identically')."""
+              for path in STOREFRONT_PAGES + SUPPLIES_PAGES:
+                  for sha in git('log', '--format=%H', '--', path).stdout.decode().split():
+                      b = git('show', '%s:%s' % (sha, path))
+                      if b.returncode:
+                          continue
+                      t = b.stdout.decode('utf-8', 'replace')
+                      k = t.find(POPUP_MARK)
+                      if k == -1:
+                          continue
+                      i = t.rfind(POPUP_OPEN, 0, k)
+                      if i == -1:
+                          continue
+                      j = t.find(BODY_CLOSE, k)
+                      if j == -1:
+                          continue
+                      return t[i:j], sha
+              return None, None
+
+
           def run():
               # 1. Files that must exist and must still be the real thing.
               for path, markers in GUARDED.items():
@@ -469,13 +692,17 @@ jobs:
 
               # 4. Measurement, on EVERY storefront page rather than just the homepage.
               #
-              #    Seven inserts, each keyed on the marker it installs rather than on the
+              #    Ten inserts, each keyed on the marker it installs rather than on the
               #    full text, so a reworded block can never be added twice and
-              #    double-count an order or a signup. Three sit in <head>, two in
-              #    subscribeNewsletter(), and two inside proceedWithOrder() - the
-              #    purchase conversion and the order mirror. Both of those only add a
-              #    tracking call: they touch no checkout logic, ordering, totals, coupon
-              #    or promotion maths and no payment handling. Nothing here touches the
+              #    double-count an order or a signup. A marker has to be unique to the
+              #    place it guards: two of them below carry extra context for exactly
+              #    that reason, because the newsletter popup fires the same signup
+              #    events and a bare marker matched its copy instead. Three sit in
+              #    <head>, three in subscribeNewsletter(), and four inside
+              #    proceedWithOrder() - the purchase conversion, its two pixel
+              #    equivalents and the order mirror. All of those only add a tracking
+              #    call: they touch no checkout logic, ordering, totals, coupon or
+              #    promotion maths and no payment handling. Nothing here touches the
               #    cart, PayPal/Venmo/Zelle or the age gate, and the additive proof above
               #    throws the edit away if anything else moves by a single byte.
               #
@@ -486,7 +713,7 @@ jobs:
                    HEAD_ANCHOR, HEAD_TAG, True),
                   ('Google Ads purchase conversion', 'BVXmCJiwnuIcEKDj8sBE',
                    PURCHASE_ANCHOR, PURCHASE_CONV, True),
-                  ('Google Ads newsletter-signup conversion', 'jCpBCKnUsOIcEKDj8sBE',
+                  ('Google Ads newsletter-signup conversion', NL_CONV_MARK,
                    NL_ANCHOR, NL_CONV, False),
                   ('order mirror (ironcell-ingest?t=order)', 'ironcell-ingest?t=order',
                    ORDER_ANCHOR, ORDER_MIRROR, True),
@@ -496,15 +723,56 @@ jobs:
                    PIXEL_ANCHOR, META_PIXEL, False),
                   ('TikTok Pixel DAG4D4RC77UES974PFB0', 'DAG4D4RC77UES974PFB0',
                    PIXEL_ANCHOR, TIKTOK_PIXEL, False),
+                  ('Meta Purchase event', "fbq('track', 'Purchase'",
+                   PURCHASE_CONV, PURCHASE_META, True),
+                  ('TikTok CompletePayment event', "ttq.track('CompletePayment'",
+                   ITEMS_ANCHOR, PURCHASE_TTQ, False),
+                  ('Meta Lead + TikTok SubmitForm signup events',
+                   "{ fbq('track', 'Lead'); }\n", NL_CONV, NL_PIXELS, True),
               ]
 
-              for p in STOREFRONT_PAGES:
-                  for why, marker, anchor, insert, after in MEASUREMENT:
+              # The ad landing page's own table. Same five-tuple shape, same additive
+              # proof, different anchors and different inserts - see SUPPLIES_PAGES.
+              SUPPLIES_MEASUREMENT = [
+                  ('Google tag AW-18389709216', 'gtag/js?id=AW-18389709216',
+                   RS_HEAD_ANCHOR, HEAD_TAG, True),
+                  ('Meta Pixel 1628346322011957', '1628346322011957',
+                   HEAD_TAG, META_PIXEL, True),
+                  ('TikTok Pixel DAG4D4RC77UES974PFB0', 'DAG4D4RC77UES974PFB0',
+                   RS_INDEXABLE, TIKTOK_PIXEL, False),
+                  ('Google Ads purchase conversion', 'BVXmCJiwnuIcEKDj8sBE',
+                   RS_ORDER_ANCHOR, RS_PURCHASE_CONV, True),
+                  ('Meta Purchase event', "fbq('track', 'Purchase'",
+                   RS_PURCHASE_CONV, RS_PURCHASE_META, True),
+                  ('TikTok CompletePayment event', "ttq.track('CompletePayment'",
+                   RS_MIRROR_ANCHOR, RS_PURCHASE_TTQ, False),
+              ]
+
+              for p, table in ([(x, MEASUREMENT) for x in STOREFRONT_PAGES] +
+                               [(x, SUPPLIES_MEASUREMENT) for x in SUPPLIES_PAGES]):
+                  for why, marker, anchor, insert, after in table:
                       # Bind the loop variables per iteration - a bare closure would
                       # read whatever the last iteration left behind.
                       def add(t, _m=marker, _a=anchor, _i=insert, _af=after):
                           return None if _m in t else once(t, _a, _i, after_anchor=_af)
                       edit(p, why, add)
+
+              # The first-visit newsletter popup and e-mail repair block, on all
+              # thirteen pages. Recovered from history rather than hardcoded, so it
+              # gets its own pass instead of a row in the tables above - and it is
+              # only looked up when a page is actually missing it.
+              def add_popup(t):
+                  if POPUP_MARK in t or t.count(BODY_CLOSE) != 1:
+                      return None
+                  block, sha = popup_from_history()
+                  if block is None:
+                      print('no newsletter popup block found in history')
+                      return None
+                  print('newsletter popup recovered from %s' % sha[:8])
+                  return t.replace(BODY_CLOSE, block + BODY_CLOSE, 1), block
+
+              for p in STOREFRONT_PAGES + SUPPLIES_PAGES:
+                  edit(p, 'first-visit newsletter popup and e-mail repair', add_popup)
 
               # The 45-product ItemList is homepage-only on purpose. The clones are
               # near-identical storefronts, so copying it onto all eleven would publish
