@@ -5165,5 +5165,281 @@ ttq.page();
 
 
 
+
+<!-- ============================================================================
+     FIRST-VISIT NEWSLETTER CAPTURE + EMAIL REPAIR                ic-newsletter-popup
+     Added 2026-09-08. Two jobs, deliberately in one shared block so all thirteen
+     pages behave identically and there is one place to change it.
+
+     1. THE POPUP. Paid ads land on /research-supplies/, which sells supplies and
+        is the only page that names no compound - so it is the compliant landing
+        page, but it converted nothing toward the newsletter. This shows the offer
+        once per visitor, five seconds in, on ANY page they arrive at.
+        It waits for the age gate: that gate is not persisted and is dismissed by a
+        class, so opening a popup over it would stack two modals on a first visit.
+        Pages without an age gate (the supplies page) simply do not wait.
+
+     2. EMAIL REPAIR. Two addresses already on the list can never receive mail
+        because nothing checked at the point of entry: one was typed "gmail.con",
+        and one arrived as "carmenorona03icloud.com" with no "@" at all - that one
+        never reached the subscriber list, which is what "orders are not syncing"
+        actually was. Repair runs on blur for every email field on the page,
+        checkout included, so it is fixed while the person is still there to see
+        it. It never silently swallows a change: the field is corrected AND a
+        visible note says what happened, so a genuine address can be typed back.
+
+     Compliance: commercial copy only. No compound, dose, protocol or human-use
+     wording appears anywhere in this block, so it is safe on the ad landing page.
+     ========================================================================= -->
+<script>
+(function () {
+  var STORE_KEY = 'ic_nl_popup_v1';
+  var INGEST = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest';
+  var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';
+
+  /* localStorage throws outright in some privacy modes, so every access is
+     guarded and falls back to a per-page variable. A visitor we cannot remember
+     sees the popup once per page load rather than never - and never twice. */
+  var memory = null;
+  function seen() {
+    try { return localStorage.getItem(STORE_KEY); } catch (e) { return memory; }
+  }
+  function remember(v) {
+    try { localStorage.setItem(STORE_KEY, v); } catch (e) { memory = v; }
+  }
+
+  /* ---------------------------------------------------------------- repair */
+  var PROVIDERS = ['gmail.com','yahoo.com','icloud.com','hotmail.com','outlook.com',
+    'aol.com','comcast.net','live.com','msn.com','me.com','protonmail.com',
+    'ymail.com','sbcglobal.net','verizon.net','att.net','bellsouth.net','mac.com'];
+
+  var DOMAIN_TYPOS = {
+    'gmail.con':'gmail.com','gmail.co':'gmail.com','gmail.cm':'gmail.com',
+    'gmial.com':'gmail.com','gmai.com':'gmail.com','gmaill.com':'gmail.com',
+    'gnail.com':'gmail.com','gamil.com':'gmail.com',
+    'yahoo.con':'yahoo.com','yaho.com':'yahoo.com','yahoo.co':'yahoo.com',
+    'yahooo.com':'yahoo.com','yahoo.com':'yahoo.com',
+    'hotmail.con':'hotmail.com','hotmial.com':'hotmail.com','hotmai.com':'hotmail.com',
+    'outlook.con':'outlook.com','outlok.com':'outlook.com',
+    'icloud.con':'icloud.com','iclould.com':'icloud.com','icloud.co':'icloud.com',
+    'aol.con':'aol.com','comcast.ent':'comcast.net'
+  };
+
+  /* Returns { email, changed, note }. Pure - it decides nothing about the UI. */
+  function repair(raw) {
+    var v = String(raw == null ? '' : raw).replace(/\s+/g, '').trim();
+    if (!v) return { email: '', changed: false, note: '' };
+    var before = v;
+    v = v.replace(/^[.,;:]+/, '').replace(/[.,;:]+$/, '');
+    v = v.replace(/\.{2,}/g, '.');
+
+    var at = v.indexOf('@');
+
+    /* NO "@" AT ALL. This is the carmenorona03icloud.com case. Only repaired when
+       the string ends in a provider domain we recognise, so we never invent an
+       address by guessing where the "@" belonged. */
+    if (at < 0) {
+      var lower = v.toLowerCase();
+      for (var i = 0; i < PROVIDERS.length; i++) {
+        var p = PROVIDERS[i];
+        if (lower.length > p.length && lower.slice(-p.length) === p) {
+          var local = v.slice(0, v.length - p.length);
+          if (local.length) {
+            v = local + '@' + p;
+            return { email: v, changed: true, note: 'Added the missing @ - we read this as ' + v };
+          }
+        }
+      }
+      return { email: v, changed: false, note: '' };
+    }
+
+    if (v.indexOf('@', at + 1) > -1) return { email: v, changed: false, note: '' };
+
+    var localPart = v.slice(0, at);
+    var domain = v.slice(at + 1).toLowerCase();
+    if (DOMAIN_TYPOS[domain]) {
+      v = localPart + '@' + DOMAIN_TYPOS[domain];
+      return { email: v, changed: true, note: 'Corrected to ' + v };
+    }
+    v = localPart + '@' + domain;
+    return { email: v, changed: v !== before, note: '' };
+  }
+
+  function valid(e) {
+    var at = e.indexOf('@');
+    return at > 0 && e.indexOf('.', at) > at + 1 && !/\s/.test(e) && e.length > 5;
+  }
+
+  /* Repair every email field on blur, checkout fields included. Delegated in the
+     capture phase because blur does not bubble. */
+  document.addEventListener('blur', function (ev) {
+    var el = ev.target;
+    if (!el || el.tagName !== 'INPUT') return;
+    var isEmail = (el.type === 'email') ||
+      /email/i.test(el.id || '') || /email/i.test(el.name || '');
+    if (!isEmail || !el.value) return;
+
+    var r = repair(el.value);
+    if (!r.changed) return;
+    el.value = r.email;
+    if (!r.note) return;
+
+    var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.setAttribute('data-ic-emailhint', '1');
+      hint.style.cssText = 'font-size:.78rem;margin-top:5px;color:var(--red-glow,#e52533);line-height:1.35';
+      if (el.parentNode) el.parentNode.insertBefore(hint, el.nextSibling);
+    }
+    hint.textContent = r.note + '. Edit it if that is wrong.';
+  }, true);
+
+  /* ----------------------------------------------------------------- popup */
+  function submit(email) {
+    try {
+      var t = new Image(); t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);
+      var m = new Image(); m.src = INGEST + '?t=sub&email=' + encodeURIComponent(email);
+    } catch (e) {}
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
+      }
+    } catch (e) {}
+    try { if (typeof fbq === 'function') { fbq('track', 'Lead'); } } catch (e) {}
+    try {
+      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') { ttq.track('SubmitForm'); }
+    } catch (e) {}
+  }
+
+  function build() {
+    var wrap = document.createElement('div');
+    wrap.id = 'icNlPop';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.setAttribute('aria-label', 'Newsletter signup');
+    /* Every colour below is Iron Cell's own token with the literal as a fallback,
+       so the popup inherits the site's palette on any page and still renders
+       correctly if a page is missing a variable. Palette: --bg-card #161616 on
+       --bg-primary #0a0a0a, --red-primary #c41e2a with --red-glow #e52533 on
+       hover, --text-primary #f0f0f0, --border-red rgba(196,30,42,.3). */
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:999998;display:flex;align-items:center;' +
+      'justify-content:center;padding:20px;background:rgba(10,10,10,.88);opacity:0;transition:opacity .25s ease';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'position:relative;max-width:440px;width:100%;' +
+      'background:var(--bg-card,#161616);color:var(--text-primary,#f0f0f0);' +
+      'border:1px solid var(--border-red,rgba(196,30,42,0.3));border-top:3px solid var(--red-primary,#c41e2a);' +
+      'border-radius:14px;padding:28px;text-align:center;font-family:inherit;' +
+      'box-shadow:0 24px 70px rgba(0,0,0,.7);transform:translateY(10px);transition:transform .25s ease';
+
+    box.innerHTML =
+      '<button type="button" aria-label="Close" data-ic-close style="position:absolute;top:10px;right:12px;' +
+        'background:none;border:0;color:var(--silver-dark,#6a6a6a);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px">&times;</button>' +
+      '<img src="/p-ironcell-logo-trim.webp" alt="IronCell Research" width="111" height="78" ' +
+        'style="height:78px;width:auto;object-fit:contain;margin:0 auto 18px;display:block" ' +
+        'onerror="this.style.display=\'none\'">' +
+      '<h2 style="margin:0 0 10px;font-size:1.5rem;line-height:1.2;font-weight:700">' +
+        'Get <span style="color:var(--red-primary,#c41e2a)">20% off</span> your first order</h2>' +
+      '<p style="margin:0 0 18px;color:var(--text-secondary,#999);font-size:.94rem;line-height:1.5">' +
+        'Join the list for code <strong style="color:var(--text-primary,#f0f0f0)">WELCOME20</strong>, plus restock notices and ' +
+        'subscriber-only offers. One use per customer.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<input data-ic-input type="email" autocomplete="email" placeholder="Enter your email address" ' +
+          'style="flex:1;min-width:190px;padding:12px 14px;border-radius:6px;' +
+          'border:1px solid var(--border-subtle,rgba(255,255,255,0.06));' +
+          'background:var(--bg-primary,#0a0a0a);color:var(--text-primary,#f0f0f0);font:inherit">' +
+        '<button type="button" data-ic-go style="padding:12px 22px;border-radius:6px;border:0;cursor:pointer;' +
+          'background:var(--red-primary,#c41e2a);color:#fff;font:inherit;font-weight:700;transition:background .3s">Subscribe</button>' +
+      '</div>' +
+      '<p data-ic-msg style="margin:12px 0 0;min-height:1.2em;font-size:.85rem;color:var(--red-glow,#e52533)"></p>' +
+      '<button type="button" data-ic-close style="margin-top:14px;background:none;border:0;color:var(--text-muted,#555);' +
+        'font-size:.82rem;cursor:pointer;text-decoration:underline;font-family:inherit">No thanks</button>';
+
+    wrap.appendChild(box);
+    document.body.appendChild(wrap);
+    requestAnimationFrame(function () { wrap.style.opacity = '1'; box.style.transform = 'translateY(0)'; });
+
+    var input = box.querySelector('[data-ic-input]');
+    var msg = box.querySelector('[data-ic-msg]');
+
+    function close(reason) {
+      remember(reason);
+      wrap.style.opacity = '0';
+      setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 250);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close('dismissed'); }
+
+    Array.prototype.forEach.call(box.querySelectorAll('[data-ic-close]'), function (b) {
+      b.addEventListener('click', function () { close('dismissed'); });
+    });
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close('dismissed'); });
+    document.addEventListener('keydown', onKey);
+
+    function go() {
+      var r = repair(input.value);
+      input.value = r.email;
+      if (!valid(r.email)) {
+        msg.textContent = r.note ? (r.note + '. Check it and press Subscribe.') : 'Please enter a valid email address.';
+        input.focus();
+        return;
+      }
+      /* One confirmation step when we changed what they typed, so a corrected
+         address is never submitted without the person seeing it. */
+      if (r.changed && r.note && msg.getAttribute('data-confirming') !== '1') {
+        msg.setAttribute('data-confirming', '1');
+        msg.textContent = r.note + '. Press Subscribe again to confirm.';
+        return;
+      }
+      submit(r.email);
+      remember('subscribed');
+      box.innerHTML =
+        '<img src="/p-ironcell-logo-trim.webp" alt="IronCell Research" width="111" height="78" ' +
+          'style="height:78px;width:auto;object-fit:contain;margin:0 auto 18px;display:block" ' +
+          'onerror="this.style.display=\'none\'">' +
+        '<h2 style="margin:0 0 10px;font-size:1.4rem;font-weight:700">You are on the list</h2>' +
+        '<p style="margin:0;color:var(--text-secondary,#999);line-height:1.55">Use code ' +
+        '<strong style="color:var(--red-primary,#c41e2a);letter-spacing:.04em">WELCOME20</strong> ' +
+        'for 20% off your first order.</p>';
+      setTimeout(function () { close('subscribed'); }, 3600);
+    }
+
+    var goBtn = box.querySelector('[data-ic-go]');
+    goBtn.addEventListener('mouseenter', function () { goBtn.style.background = 'var(--red-glow,#e52533)'; });
+    goBtn.addEventListener('mouseleave', function () { goBtn.style.background = 'var(--red-primary,#c41e2a)'; });
+    goBtn.addEventListener('click', go);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+    setTimeout(function () { try { input.focus(); } catch (e) {} }, 260);
+  }
+
+  /* The age gate is a full-screen modal that is dismissed by adding .hidden and is
+     NOT remembered between visits, so on a first visit it is always up. Opening
+     over it would stack two modals. Wait for it; pages without one never wait. */
+  function ageGateUp() {
+    var g = document.getElementById('ageGate');
+    return !!(g && !/(^|\s)hidden(\s|$)/.test(g.className) && g.offsetParent !== null);
+  }
+
+  function arm() {
+    if (seen()) return;
+    var waited = 0;
+    var timer = setInterval(function () {
+      waited += 400;
+      if (seen()) { clearInterval(timer); return; }
+      if (ageGateUp()) { if (waited > 300000) clearInterval(timer); return; }
+      clearInterval(timer);
+      build();
+    }, 400);
+  }
+
+  function start() { setTimeout(arm, 5000); }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
 </body>
 </html>
