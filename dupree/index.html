@@ -4671,6 +4671,29 @@ ttq.page();
       }
     } catch (e) {}
 
+    /* Meta and TikTok purchase events. Both pixels were installed 2026-09-08 but
+       fired ONLY PageView, so paid social had no conversion signal at all and no
+       purchase- or value-optimised campaign could be run against them. Same shape
+       as the Google Ads conversion above: typeof-guarded and wrapped in its own
+       try/catch, because measurement must never be able to break a checkout. */
+    try {
+      if (typeof fbq === 'function') {
+        fbq('track', 'Purchase', {
+          value: Number(grandTotal.toFixed(2)),
+          currency: 'USD',
+          content_type: 'product'
+        });
+      }
+    } catch (e) {}
+    try {
+      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') {
+        ttq.track('CompletePayment', {
+          value: Number(grandTotal.toFixed(2)),
+          currency: 'USD'
+        });
+      }
+    } catch (e) {}
+
     const itemsList = cart.map(item =>
       `${item.name}${item.strength ? ' (' + item.strength + ')' : ''} x${item.qty} - $${(item.price * item.qty).toFixed(2)}`
     ).join('\n');
@@ -4759,6 +4782,16 @@ ttq.page();
       if (typeof gtag === 'function') {
         gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
       }
+    } catch (e) {}
+
+    /* The signup equivalent of the purchase events above. Lead / SubmitForm is what
+       lets Meta and TikTok optimise toward subscribers, which is the cheaper of the
+       two objectives for this account and the one the newsletter push depends on. */
+    try {
+      if (typeof fbq === 'function') { fbq('track', 'Lead'); }
+    } catch (e) {}
+    try {
+      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') { ttq.track('SubmitForm'); }
     } catch (e) {}
 
     // Immediate optimistic UI feedback so customers see confirmation

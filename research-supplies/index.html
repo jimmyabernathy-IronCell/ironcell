@@ -511,6 +511,35 @@ footer{border-top:1px solid var(--border-subtle);padding:36px 0;margin-top:24px}
     var num = orderNumber();
     var items = cart.map(function(l){ return l.qty + 'x ' + l.name; }).join(', ');
 
+    /* CONVERSIONS FOR THE PAGE THE ADS ACTUALLY LAND ON.
+       This page carries only the Google Ads BASE tag - no conversion event of any
+       kind - even though it takes real orders. Every sale driven here by paid
+       search reported as zero conversions, so Google Ads had no value signal and
+       smart bidding had nothing to optimise against. Measured 2026-09-08: three
+       AW- references on this page against seven on every storefront.
+       Fire-and-forget and individually isolated, exactly like the order mirror
+       below, so a tracking failure can never block an order. */
+    try {
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-18389709216/BVXmCJiwnuIcEKDj8sBE',
+          'value': Number(grand.toFixed(2)),
+          'currency': 'USD',
+          'transaction_id': num
+        });
+      }
+    } catch (e) {}
+    try {
+      if (typeof fbq === 'function') {
+        fbq('track', 'Purchase', { value: Number(grand.toFixed(2)), currency: 'USD', content_type: 'product' });
+      }
+    } catch (e) {}
+    try {
+      if (typeof ttq !== 'undefined' && ttq && typeof ttq.track === 'function') {
+        ttq.track('CompletePayment', { value: Number(grand.toFixed(2)), currency: 'USD' });
+      }
+    } catch (e) {}
+
     /* Mirror to the IronCell admin dashboard. Fire-and-forget and isolated, exactly
        as the storefront does it, so a tracking failure can never block an order. */
     try {
