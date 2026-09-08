@@ -55,6 +55,15 @@ name: Keep admin entry
 # must still parse. It adds a tracking call below the duplicate-order guard and
 # changes no checkout logic, no ordering, no totals, no coupon or promotion
 # maths and no payment handling.
+#
+# EXTENDED 2026-09-08: PAID SOCIAL IS GUARDED TOO.
+# The Meta Pixel (1628346322011957, 0d4e340) and the TikTok Pixel
+# (DAG4D4RC77UES974PFB0, 7442d47) were installed on the storefronts this day and
+# were not known to this job, so the next whole-file paste would have removed
+# them the same way the 08-23 paste removed the Google tag - silently, with the
+# page still rendering and the campaigns still spending. They are head-level
+# base codes, they touch no checkout logic at all, and they are now restored
+# under the same additive proof as everything else.
 
 on:
   push:
@@ -128,6 +137,68 @@ jobs:
               "  gtag('js', new Date());\n"
               "  gtag('config', 'AW-18389709216');\n"
               '</script>\n\n')
+
+          # ------------------------------------------------------------ paid social
+          # The Meta and TikTok base pixels, installed 2026-09-08 (0d4e340 and
+          # 7442d47). They are head-level PageView tags and they fail exactly the
+          # way the Google tag fails: the page still renders, checkout still works,
+          # nothing throws, and the only symptom is that Meta and TikTok stop
+          # receiving traffic while the campaigns carry on spending against them.
+          # That is the whole reason this job exists, so they are guarded here.
+          #
+          # Anchored on <meta name="color-scheme">, not on HEAD_ANCHOR. Both blocks
+          # must land BELOW the Google tag's closing </script>, and that meta is the
+          # unique line sitting immediately after them on all twelve storefronts, so
+          # inserting ahead of it reproduces the shipped layout byte for byte.
+          # HEAD_ANCHOR would put them above the Google tag instead, and the pixels
+          # were deliberately not anchored there when they were installed:
+          # research-supplies/index.html has a different head and does not contain it.
+          #
+          # The two blocks are anchored independently rather than TikTok hanging off
+          # the Meta end comment, so a Meta block that could not be restored can
+          # never silently suppress the TikTok repair as well.
+          PIXEL_ANCHOR = '<meta name="color-scheme" content="dark">'
+
+          META_PIXEL = (
+              '<!-- Meta Pixel Code - Iron Cell Research (1628346322011957) -->\n'
+              '<!-- Paid social measurement. Added 2026-09-08: the ad account had NO data\n'
+              '     source at all, so Meta and TikTok spend was completely unmeasurable.\n'
+              '     Sits directly under the Google tag so both measurement layers live in\n'
+              '     one place and the keep-admin-entry guard can restore them together. -->\n'
+              '<script>\n'
+              '!function(f,b,e,v,n,t,s)\n'
+              '{if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n'
+              'n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n'
+              "if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n"
+              'n.queue=[];t=b.createElement(e);t.async=!0;\n'
+              't.src=v;s=b.getElementsByTagName(e)[0];\n'
+              "s.parentNode.insertBefore(t,s)}(window, document,'script',\n"
+              "'https://connect.facebook.net/en_US/fbevents.js');\n"
+              "fbq('init', '1628346322011957');\n"
+              "fbq('track', 'PageView');\n"
+              '</script>\n'
+              '<noscript><img height="1" width="1" style="display:none"\n'
+              'src="https://www.facebook.com/tr?id=1628346322011957&ev=PageView&noscript=1"\n'
+              '/></noscript>\n'
+              '<!-- End Meta Pixel Code -->\n\n')
+
+          TIKTOK_PIXEL = (
+              '<!-- TikTok Pixel Code Start - Iron Cell Research (DAG4D4RC77UES974PFB0) -->\n'
+              '<!-- Browser-side pixel, not the Events API: this site is a static GitHub\n'
+              '     Pages build with no server to send server-side events from. Added\n'
+              '     2026-09-08 alongside the Meta pixel, because the TikTok ad account had\n'
+              '     no data source at all and paid social spend was unmeasurable. -->\n'
+              '<script>\n'
+              '!function (w, d, t) {\n'
+              'w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(\n'
+              'var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")\n'
+              ';n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};\n'
+              '\n'
+              "ttq.load('DAG4D4RC77UES974PFB0');\n"
+              'ttq.page();\n'
+              "}(window, document, 'ttq');\n"
+              '</script>\n'
+              '<!-- TikTok Pixel Code End -->\n\n')
 
           NL_ANCHOR = '\n    // Immediate optimistic UI feedback so customers see confirmation'
           NL_CONV = (
@@ -398,9 +469,9 @@ jobs:
 
               # 4. Measurement, on EVERY storefront page rather than just the homepage.
               #
-              #    Five inserts, each keyed on the marker it installs rather than on the
+              #    Seven inserts, each keyed on the marker it installs rather than on the
               #    full text, so a reworded block can never be added twice and
-              #    double-count an order or a signup. Two sit in <head>, two in
+              #    double-count an order or a signup. Three sit in <head>, two in
               #    subscribeNewsletter(), and two inside proceedWithOrder() - the
               #    purchase conversion and the order mirror. Both of those only add a
               #    tracking call: they touch no checkout logic, ordering, totals, coupon
@@ -421,6 +492,10 @@ jobs:
                    ORDER_ANCHOR, ORDER_MIRROR, True),
                   ('subscriber mirror (ironcell-ingest?t=sub)', 'ironcell-ingest?t=sub',
                    SUB_ANCHOR, SUB_MIRROR, True),
+                  ('Meta Pixel 1628346322011957', '1628346322011957',
+                   PIXEL_ANCHOR, META_PIXEL, False),
+                  ('TikTok Pixel DAG4D4RC77UES974PFB0', 'DAG4D4RC77UES974PFB0',
+                   PIXEL_ANCHOR, TIKTOK_PIXEL, False),
               ]
 
               for p in STOREFRONT_PAGES:
