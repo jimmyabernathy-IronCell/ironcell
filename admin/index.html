@@ -660,14 +660,63 @@
     var payload = { subject: subject, html: buildEmail(), wrapped: true, blocks: captureDoc() };
     if (testOnly) payload.testTo = sess.user.email;
     banner($('nlBanner'), 'warn', testOnly ? 'Sending test...' : 'Sending to your list...');
-    var res = await fetch(SB_URL + '/functions/v1/ironcell-send-newsletter', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + sess.access_token, apikey: SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    var out = await res.json().catch(function () { return {}; });
+    /* NEVER CLAIM A SEND FAILED UNLESS THE SERVER SAID SO.
+       This fetch had no try/catch and no res.ok check. A dropped connection or a
+       gateway timeout AFTER the mail had already gone out left the browser with no
+       JSON, so `out` fell through to {} and the client was told "Send failed." on a
+       campaign that reached every subscriber. The honest answer when we lose contact
+       is that we do not know, so go and look at what was actually recorded instead of
+       guessing - and above all do not invite a re-send, which would double-mail the
+       whole list. */
+    var res = null, out = {}, transportError = null;
+    try {
+      res = await fetch(SB_URL + '/functions/v1/ironcell-send-newsletter', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + sess.access_token, apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      out = await res.json().catch(function () { return {}; });
+    } catch (e) {
+      transportError = e && e.message ? e.message : 'connection lost';
+    }
+
+    if (transportError || (res && !res.ok && !out.error)) {
+      if (testOnly) {
+        banner($('nlBanner'), 'warn', 'Lost contact while sending the test (' + esc(transportError || ('HTTP ' + res.status)) + '). The test may still arrive.');
+        return;
+      }
+      /* Ask the database what really happened rather than asserting either outcome. */
+      var chk = await sb.from('ironcell_campaigns')
+        .select('subject,status,sent_count,total_count,sent_at')
+        .order('sent_at', { ascending: false }).limit(1);
+      var last = (chk.data || [])[0];
+      if (last && last.subject === subject) {
+        banner($('nlBanner'), last.sent_count >= last.total_count ? 'ok' : 'warn',
+          'Connection dropped, but the send was recorded: ' + last.sent_count + ' of ' + last.total_count +
+          ' subscribers (' + esc(last.status || '') + '). Do NOT send again - check History & stats.');
+      } else {
+        banner($('nlBanner'), 'warn',
+          'Lost contact with the sender (' + esc(transportError || ('HTTP ' + res.status)) + '). ' +
+          'The send may still be running. Open History & stats in a minute to confirm before doing anything else - do NOT send again yet.');
+      }
+      refreshScheduled();
+      return;
+    }
+
     if (out.needs_config) banner($('nlBanner'), 'warn', 'Sending is not switched on yet (' + out.recipient_count + ' subscribers ready). Move Marketing is finishing the email sender setup - meanwhile use Export list on the Email list tab.');
-    else if (out.ok) banner($('nlBanner'), 'ok', out.test ? 'Test sent to ' + sess.user.email + '.' : 'Sent to ' + out.sent + ' of ' + out.total + ' subscribers.');
+    else if (out.ok && out.test) banner($('nlBanner'), 'ok', 'Test sent to ' + sess.user.email + '.');
+    else if (out.ok) {
+      /* A SHORTFALL IS NOT A SUCCESS. A partial send used to paint the same green
+         banner as a complete one, just with a smaller number - which reads as
+         "it isn't sending to everyone" with no explanation and no way to recover. */
+      var short = (typeof out.sent === 'number' && typeof out.total === 'number') && out.sent < out.total;
+      var firstErr = (out.errors && out.errors.length) ? String(out.errors[0].error || out.errors[0]) : '';
+      banner($('nlBanner'), short || firstErr ? 'warn' : 'ok',
+        'Sent to ' + out.sent + ' of ' + out.total + ' subscribers.' +
+        (short ? ' ' + (out.total - out.sent) + ' did not go out.' : '') +
+        (firstErr ? ' First error: ' + esc(firstErr.slice(0, 200)) : '') +
+        (short ? ' Check History & stats before re-sending - a full re-send would duplicate the ones that already arrived.' : ''));
+    }
     else banner($('nlBanner'), 'err', out.error || 'Send failed.');
   }
   $('nlTest').addEventListener('click', function () { send(true); });
@@ -716,14 +765,35 @@
     var box = $('nlSchedList');
     if (!box) return;
     try {
+      /* 'failed' is included on purpose. A scheduled send that fails is written back
+         as status='failed' with the reason in `error`, and this list used to show
+         only pending/sending - so a failed newsletter simply VANISHED from the queue
+         at its scheduled time and looked exactly like one that had gone out fine. */
       var r = await sb.from('ironcell_scheduled_newsletters')
-        .select('id, subject, scheduled_for, status')
-        .in('status', ['pending', 'sending'])
+        .select('id, subject, scheduled_for, status, error')
+        .in('status', ['pending', 'sending', 'failed'])
         .order('scheduled_for');
+
+      /* An error here used to be swallowed: the code read r.data, got undefined on a
+         failure, and rendered an empty box - identical to "nothing is scheduled". The
+         whole feature was in fact 403-ing on every load because the table had an RLS
+         policy but no GRANT, and this silence is why that went unnoticed. */
+      if (r.error) {
+        box.innerHTML = '<div class="note" style="color:var(--red-primary)">Could not load scheduled sends: ' +
+          esc(r.error.message || 'unknown error') + '</div>';
+        return;
+      }
+
       var rows = r.data || [];
       if (!rows.length) { box.innerHTML = ''; return; }
       box.innerHTML = rows.map(function (row) {
         var when = new Date(row.scheduled_for).toLocaleString();
+        if (row.status === 'failed') {
+          return '<div class="note" style="color:var(--red-primary)">' +
+            '&#9888; "' + esc(row.subject || '') + '" was scheduled for ' + when +
+            ' and did NOT send.' + (row.error ? ' Reason: ' + esc(String(row.error).slice(0, 300)) : '') +
+            '</div>';
+        }
         return '<div class="note" style="display:flex;gap:8px;align-items:center">' +
           '<span>&#8986; "' + row.subject.replace(/</g, '&lt;') + '" - ' + when +
           (row.status === 'sending' ? ' (sending now)' : '') + '</span>' +
@@ -926,22 +996,58 @@
     var m = (e && e.message) ? e.message : 'Unknown error';
     var c = (e && e.code) ? (' [' + e.code + ']') : '';
     var d = (e && e.details) ? (' - ' + e.details) : '';
-    var diag = location.search.indexOf('diag=1') > -1;
+    /* This message is about a FAILED READ, so it must not say anything about the
+       send. It used to read "Nothing was sent and nothing was changed." That is a
+       statement about the read, but on the History screen - whose entire job is
+       answering "did my newsletter go out?" - it reads as a statement about the
+       campaign, and it is displayed next to a "Campaigns sent ?" chip. A newsletter
+       that delivered to every subscriber could be reported to the client as never
+       having been sent, which also invites a re-send that would double-mail the list.
+       The error detail used to be hidden behind ?diag=1, which nothing in the UI
+       mentions and which the magic-link handler strips from the URL anyway, so
+       nobody ever saw it. It is shown inline now. */
     return '<div style="border:1px solid #2a2a2a;background:#141414;border-radius:8px;padding:14px 16px;font-size:.82rem;color:#b9b9b9">' +
-      'Your campaign history will be back shortly. Nothing was sent and nothing was changed.' +
-      (diag ? '<br><span style="color:#d9a2a2;font-size:.74rem">' + esc(m + c + d) + '</span>' : '') + '</div>';
+      '<b style="color:#fff">Could not load your campaign history just now.</b><br>' +
+      'This is a display problem only. It does not mean a newsletter failed to send - ' +
+      'nothing here has been changed. Try again in a moment.' +
+      '<br><a href="#" data-hist-retry="1" style="color:var(--red-primary);display:inline-block;margin-top:8px">Retry</a>' +
+      '<br><span style="color:#8a8a8a;font-size:.72rem">' + esc(m + c + d) + '</span></div>';
   }
+  /* Delegated so it survives the pane being re-rendered. Without this there is no way
+     back from a failed history read except re-clicking the tab: boot() never calls
+     loadHistory(), so even a successful token refresh leaves the error on screen. */
+  document.addEventListener('click', function (ev) {
+    var a = ev.target && ev.target.closest ? ev.target.closest('[data-hist-retry]') : null;
+    if (!a) return;
+    ev.preventDefault();
+    $('histTable').innerHTML = '<p class="note">Loading...</p>';
+    loadHistory();
+  });
+
   var histCache = {};
   var histOpenId = null;
   async function loadHistory() {
-    var subs = await sb.from('ironcell_subscribers').select('id,unsubscribed_at,bounced_at');
-    var act = 0, uns = 0, bnc = 0; (subs.data || []).forEach(function (x) {
-      if (x.bounced_at) { bnc++; } else if (x.unsubscribed_at) { uns++; } else { act++; }
-    });
+    /* COUNT, do not scan. This used to pull every subscriber row and tally them in
+       the browser with no limit, and PostgREST silently caps an unbounded select at
+       1,000 rows - so past 1,000 subscribers all three chips would quietly start
+       under-reporting, on the very screen the client uses to check his list size.
+       head:true asks the database for the count and transfers no rows. */
+    var cAct = await sb.from('ironcell_subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null).is('bounced_at', null);
+    var cUns = await sb.from('ironcell_subscribers').select('id', { count: 'exact', head: true }).not('unsubscribed_at', 'is', null);
+    var cBnc = await sb.from('ironcell_subscribers').select('id', { count: 'exact', head: true }).not('bounced_at', 'is', null);
+    var subsErr = cAct.error || cUns.error || cBnc.error;
+
     var r = await sb.from('ironcell_campaigns').select('id,subject,sent_at,sent_by,sent_count,total_count,status,opens,clicks,unsubscribes,bounces,delivered').order('sent_at', { ascending: false }).limit(50);
     var rows = r.data || []; histCache = {};
-    $('histChips').innerHTML = chipHtml('Active subscribers', subs.error ? '?' : act) + chipHtml('Unsubscribed', subs.error ? '?' : uns) + chipHtml('Bounced', subs.error ? '?' : bnc) + chipHtml('Campaigns sent', r.error ? '?' : rows.length);
-    if (r.error || subs.error) { console.error('loadHistory failed', r.error || subs.error); $('histTable').innerHTML = histErrHtml(r.error || subs.error); return; }
+    $('histChips').innerHTML = chipHtml('Active subscribers', subsErr ? '?' : cAct.count) + chipHtml('Unsubscribed', subsErr ? '?' : cUns.count) + chipHtml('Bounced', subsErr ? '?' : cBnc.count) + chipHtml('Campaigns sent', r.error ? '?' : rows.length);
+
+    /* Only the CAMPAIGNS read decides whether the history table can render. This
+       used to be `if (r.error || subs.error)`, which meant a failure of the entirely
+       separate subscriber query threw away a campaigns result that had already come
+       back successfully, and painted an error over a complete, correct history. The
+       subscriber counts are a chip, and the chips above already degrade to "?" on
+       their own. */
+    if (r.error) { console.error('loadHistory failed', r.error); $('histTable').innerHTML = histErrHtml(r.error); return; }
     if (!rows.length) { $('histTable').innerHTML = '<p class="note">Nothing sent yet. Your first campaign will appear here with its delivery and engagement numbers.</p>'; return; }
     var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
       '<tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:.68rem;letter-spacing:1px">' +
