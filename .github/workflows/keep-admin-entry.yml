@@ -102,11 +102,34 @@ name: Keep admin entry
 # claimed that floor was the obstacle and was simply wrong.
 #
 # THE POPUP IS RECOVERED FROM HISTORY RATHER THAN HARDCODED. It is 13,949 bytes
-# of markup and script, byte-identical on all thirteen pages, and it carries
+# of markup and script, byte-identical on all fourteen pages, and it carries
 # regular expressions with backslashes. Transcribing that into a Python literal
 # inside a YAML block scalar is exactly how this file was broken once before, so
 # it is recovered the way the ItemList and the per-agent robots.txt fence
 # already are - which also means this job can never invent site content.
+#
+# EXTENDED 2026-09-08 (c): THE PEPTIDE CALCULATOR, THE FOURTEENTH PAGE.
+# peptidecalculator/index.html is indexed, sits in sitemap.xml and takes real
+# traffic, and it carried no measurement of any kind until 548265a and 6cce616
+# gave it the Google tag, both pixels and the popup a few hours after (b) landed.
+# It was in neither page list here, so the next whole-file paste onto it would
+# have removed all four with nothing to put them back - the 08-23 failure a third
+# time, on a page nobody would think to check. It gets its own list for the same
+# reason research-supplies has one: its head is hand-written and carries neither
+# HEAD_ANCHOR nor <meta name="color-scheme">, so its anchors have to be its own.
+# The three head blocks themselves ARE byte-identical to the constants already
+# here (verified 2026-09-08, exactly one occurrence of each), so they are reused
+# and only the anchors are new.
+#
+# IT DELIBERATELY GETS NOTHING ELSE. It has no cart, no checkout and no sign-up
+# form of its own: proceedWithOrder, subscribeNewsletter, grandTotal, addToCart
+# and <form all occur ZERO times on it. The purchase conversion, the newsletter
+# conversion, the order and subscriber mirrors and the Meta/TikTok Purchase and
+# Lead events are therefore absent by design rather than missing, and guarding
+# them would anchor on code that does not exist. The only signup calls the page
+# makes are the popup's own, and those come back with the popup. Its inline
+# script measures 29,862 bytes, comfortably above the 10,000 byte floor
+# scripts_parse() refuses to trust below.
 
 on:
   push:
@@ -177,6 +200,18 @@ jobs:
           # protection - it just needs its own anchors and its own inserts, listed
           # in SUPPLIES_MEASUREMENT below. Do NOT fold it into STOREFRONT_PAGES.
           SUPPLIES_PAGES = ['research-supplies/index.html']
+
+          # The peptide calculator, guarded from 2026-09-08. A third document
+          # shape and therefore a third list: it is not a storefront (no cart, no
+          # checkout, no sign-up form of its own) and it is not the ad landing
+          # page either. It gets the three head blocks and the popup and nothing
+          # else - see CALC_MEASUREMENT below. Its head is hand-written and
+          # contains neither HEAD_ANCHOR nor <meta name="color-scheme">, so it
+          # cannot be folded into either list above. Do NOT add order or signup
+          # entries here: there is no order path and no form on this page for
+          # them to anchor to, and an entry that anchors on nothing heals nothing
+          # while still reporting success.
+          CALC_PAGES = ['peptidecalculator/index.html']
 
           HEAD_ANCHOR = ('<html lang="en"><head><meta http-equiv="Content-Type" '
                          'content="text/html; charset=UTF-8">\n\n')
@@ -439,10 +474,39 @@ jobs:
               '      }\n'
               '    } catch (e) {}')
 
+          # --------------------------------------------- the peptide calculator
+          # peptidecalculator/index.html. Head blocks only. HEAD_TAG, META_PIXEL
+          # and TIKTOK_PIXEL are byte-identical on this page (verified 2026-09-08,
+          # one occurrence of each), so the constants are reused unchanged and
+          # only the anchors below are new.
+          #
+          # Its head opens <meta charset="UTF-8">, then a blank line, then the
+          # three blocks, then the viewport meta.
+          #
+          # THE BLANK LINE TRAVELS WITH THE INSERT, AND THAT IS THE POINT. Before
+          # the tracking landed there was no blank line there at all - charset ran
+          # straight into the viewport meta (548265a^) - and a whole-file paste
+          # reverting to that is precisely the loss this job exists to repair. An
+          # anchor of charset-plus-blank-line would have matched nothing after such
+          # a paste, so nothing would have been restored and nothing would have
+          # said so. The anchor is the charset LINE, and the blank line below it is
+          # part of CALC_HEAD_TAG, which heals both that revert and the loss of the
+          # Google tag on its own, byte-identically in each case.
+          #
+          # Meta then hangs off the end of HEAD_TAG and TikTok off the front of the
+          # viewport meta, so each of the three lands in its shipped position no
+          # matter which of them is the one missing.
+          CALC_CHARSET_ANCHOR = '<meta charset="UTF-8">\n'
+          CALC_VIEWPORT_ANCHOR = ('<meta name="viewport" content="width=device-width, '
+                                  'initial-scale=1.0">')
+          CALC_HEAD_TAG = '\n' + HEAD_TAG
+
           # ------------------------------------------------------------- the popup
           # The first-visit newsletter capture + e-mail repair block, added
-          # 2026-09-08 (6039cb0) immediately before </body> on all thirteen pages,
-          # byte-identical on every one of them. It is not hardcoded here: 13,949
+          # 2026-09-08 (6039cb0, and 548265a for the calculator) immediately before
+          # </body> on all fourteen pages, byte-identical on every one of them -
+          # verified 2026-09-08, the calculator's copy matches the block recovered
+          # from history to the byte. It is not hardcoded here: 13,949
           # bytes of markup and script, carrying backslash regular expressions, is
           # exactly the kind of literal that has broken this file before. It is
           # recovered from git history instead, like the ItemList and the per-agent
@@ -565,10 +629,13 @@ jobs:
               from history rather than hardcoded. Bounded by the blank line and the
               comment that open it and by </body> that closes it, so the recovered
               text is the shipped block byte for byte. Byte-identical on all
-              thirteen pages, so the first page whose history still carries it
+              fourteen pages, so the first page whose history still carries it
               serves every page - which is what the block's own comment says it is
-              for ('one shared block so all thirteen pages behave identically')."""
-              for path in STOREFRONT_PAGES + SUPPLIES_PAGES:
+              for ('one shared block so all thirteen pages behave identically'; it
+              still says thirteen because it predates the calculator by a few hours
+              and is deliberately not reworded per page, which is what keeps every
+              copy identical and this recovery safe)."""
+              for path in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
                   for sha in git('log', '--format=%H', '--', path).stdout.decode().split():
                       b = git('show', '%s:%s' % (sha, path))
                       if b.returncode:
@@ -748,8 +815,30 @@ jobs:
                    RS_MIRROR_ANCHOR, RS_PURCHASE_TTQ, False),
               ]
 
+              # The calculator's own table: the three head blocks and nothing else.
+              # Same five-tuple shape and the same additive proof as the two tables
+              # above; the inserts are the shared constants, because they are
+              # byte-identical on this page, and only the anchors differ.
+              #
+              # There is deliberately no purchase conversion, no newsletter
+              # conversion, no order or subscriber mirror and no Meta/TikTok
+              # Purchase or Lead event here. This page has no cart, no checkout and
+              # no form, so none of those exist on it to be lost, and an entry
+              # anchored on code that is not there would never fire. The signup
+              # calls the page does make belong to the popup and are restored with
+              # it in the pass below.
+              CALC_MEASUREMENT = [
+                  ('Google tag AW-18389709216', 'gtag/js?id=AW-18389709216',
+                   CALC_CHARSET_ANCHOR, CALC_HEAD_TAG, True),
+                  ('Meta Pixel 1628346322011957', '1628346322011957',
+                   HEAD_TAG, META_PIXEL, True),
+                  ('TikTok Pixel DAG4D4RC77UES974PFB0', 'DAG4D4RC77UES974PFB0',
+                   CALC_VIEWPORT_ANCHOR, TIKTOK_PIXEL, False),
+              ]
+
               for p, table in ([(x, MEASUREMENT) for x in STOREFRONT_PAGES] +
-                               [(x, SUPPLIES_MEASUREMENT) for x in SUPPLIES_PAGES]):
+                               [(x, SUPPLIES_MEASUREMENT) for x in SUPPLIES_PAGES] +
+                               [(x, CALC_MEASUREMENT) for x in CALC_PAGES]):
                   for why, marker, anchor, insert, after in table:
                       # Bind the loop variables per iteration - a bare closure would
                       # read whatever the last iteration left behind.
@@ -758,7 +847,7 @@ jobs:
                       edit(p, why, add)
 
               # The first-visit newsletter popup and e-mail repair block, on all
-              # thirteen pages. Recovered from history rather than hardcoded, so it
+              # fourteen pages. Recovered from history rather than hardcoded, so it
               # gets its own pass instead of a row in the tables above - and it is
               # only looked up when a page is actually missing it.
               def add_popup(t):
@@ -771,7 +860,7 @@ jobs:
                   print('newsletter popup recovered from %s' % sha[:8])
                   return t.replace(BODY_CLOSE, block + BODY_CLOSE, 1), block
 
-              for p in STOREFRONT_PAGES + SUPPLIES_PAGES:
+              for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
                   edit(p, 'first-visit newsletter popup and e-mail repair', add_popup)
 
               # The 45-product ItemList is homepage-only on purpose. The clones are
