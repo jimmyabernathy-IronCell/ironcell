@@ -97,6 +97,22 @@ will silently drift out of repair coverage.
 
 ## 4. `/research-supplies/` is the ad landing page. Keep it clean.
 
+> ### READ THIS BEFORE THE REST OF THIS SECTION
+>
+> **The compound names on the main store are deliberate and must never be
+> removed. They are the product catalogue.** The homepage and every rep page name
+> compounds throughout because that is what the business sells. Removing them
+> would destroy the store.
+>
+> **The rule below applies to ONE page only: `/research-supplies/`.** It is not a
+> site-wide instruction, and it is not a cleanup task to apply anywhere else.
+>
+> **Do not remove products from `/research-supplies/` either.** The bacteriostatic
+> water, the syringes and the needles listed there are the client's real
+> inventory. Product names, prices and stock are the owner's decisions, never an
+> assistant's. If you believe a listing creates an advertising problem, say so and
+> let a human decide. Do not delete it.
+
 This page exists so paid ads have somewhere compliant to land, and it is the only
 page on the domain that names no compound at all.
 
@@ -165,7 +181,7 @@ DNS change at the registrar. DMARC is currently monitor-only.
 
 ## 7. Compliance rules that override everything else
 
-This is a research-use-only supplier. The following must never appear in site
+This is a research-use-only supplier. The following must never be ADDED to site
 copy, meta tags, structured data, or ad creative:
 
 - Dosing, protocols, reconstitution maths, or anything implying human use
@@ -174,6 +190,14 @@ copy, meta tags, structured data, or ad creative:
 - Invented certifications, ratings or review counts
 
 If you cannot point to the source of a claim, do not publish it.
+
+**This is a rule about what you may add, not a licence to delete the catalogue.**
+Compound names, product listings, prices and stock are the business, and they
+are the owner's decisions. Never remove a product or a compound name to "make the
+site compliant". If you think something on the site creates a real risk, raise it
+and let a human decide. The only page with a naming restriction is
+`/research-supplies/`, and that restriction is about not ADDING compound names to
+a page that deliberately has none.
 
 "Research use only" and "not for human consumption" wording that is already on
 the site is load-bearing. Leave it.
