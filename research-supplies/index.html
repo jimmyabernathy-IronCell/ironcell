@@ -760,7 +760,11 @@ function subscribeNewsletter() {
     } catch (e) {}
 
     try {
-      var sheetUrl = SHEET + '?' +
+      /* The literal URL, not the SHEET const: that is declared inside the
+         newsletter popup's own IIFE further down this file, so referencing it
+         here threw a ReferenceError that the surrounding try/catch swallowed -
+         the beacon silently did nothing while the order email beside it worked. */
+      var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' +
         'orderNumber=' + encodeURIComponent(num) +
         '&date=' + encodeURIComponent(new Date().toLocaleDateString()) +
         '&customerName=' + encodeURIComponent(name) +
