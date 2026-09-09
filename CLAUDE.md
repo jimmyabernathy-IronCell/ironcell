@@ -24,6 +24,16 @@ immediately, so the habits below are worth the thirty seconds they cost.
 
 ## 1. The habit that prevents almost every incident here
 
+**Before that, one standing rule that outranks everything else in this file: Jimmy's order
+pipeline is not ours to change.** His Google Sheet, his order emails to `orders@`, and the order
+numbers in them are how he tracks, confirms, fulfils and ships physical product to real
+customers. Do not add a writer to the sheet, a second sender on the Web3Forms key, a second
+order-number format, or a renamed parameter - and do not edit or delete rows. See 2.1b. If
+something there looks broken or missing, say so and hand the decision to Julien; a well-meant fix
+in a live fulfilment queue can double-ship an order or stop his notifications entirely, and both
+have already happened once.
+
+
 **Pull the current `main`, edit that exact content in place, and commit only the lines you meant
 to change.**
 
@@ -84,52 +94,93 @@ purpose, so that a blocked or missing tag can never break checkout. Keep that sh
 move them. The cost of that safety is that when the tag disappears, checkout keeps working
 perfectly and throws no error - purchases simply stop being reported.
 
-### 2.1b Where an order goes, and the three places it must land
+### 2.1b Jimmy's order pipeline. Do not change it.
 
-An order has to reach **three** destinations. They are independent, and losing one is silent -
-checkout still completes and the customer sees the same confirmation.
+**HARD RULE, from Julien, 2026-09-09, after this was got wrong:**
 
-| Destination | How | Who reads it |
-|---|---|---|
-| **Jimmy's Google Sheet** | `Image` pixel GET to the Apps Script `/exec` | Jimmy works from this daily |
-| **Order email** | `fetch` POST to web3forms, to `orders@ironcellresearch.com` | the notification he acts on |
-| **Admin dashboard** | `Image` pixel to `ironcell-ingest?t=order` | `/admin/`, and `ironcell_orders` |
+> "all of his systems should never be touched... you weren't supposed to change any of the
+> systems in place for how he tracks confirms fulfils and ships orders."
 
-**Both order-taking paths must fire all three.** There are two, and they are separate code:
+Jimmy tracks, confirms, fulfils and ships from **his Google Sheet** and **the order emails to
+`orders@ironcellresearch.com`**. Those two, plus the order numbers in them, are HIS operational
+system. They are not ours to improve.
 
-- `index.html` (and the rep clones) - `proceedWithOrder(method, name, email, ...)`. Note the
-  payment method is the FIRST ARGUMENT, not read from the DOM.
-- `research-supplies/index.html` - its own `window.placeOrder(method)`. Different file,
-  different closure, different variable names. **An edit to one does not reach the other.**
+**Never, without Julien relaying Jimmy's explicit go-ahead:**
 
-This was found the hard way on 2026-09-09: `/research-supplies/` had been mirroring to the admin
-dashboard only, and had never sent the sheet row or the order email in any revision of the file.
-It went unnoticed because the page was low traffic - and became urgent the moment both paid
-campaigns started landing on it, so the ad-driven orders were exactly the ones going missing.
+- add a new writer to his sheet, from any page
+- introduce a second order-number FORMAT into it
+- add a second sender on the Web3Forms key, or change a subject line
+- rename, add or reorder the sheet parameters
+- edit, reorder or delete rows in the sheet
 
-**The sheet parameter names must stay byte-identical across both pages** (`orderNumber, date,
-customerName, email, phone, paymentMethod, productPrice, tax, shipping, coupon, address, notes`).
-They are the sheet's column mapping. A renamed parameter starts a second row shape rather than
-erroring.
+This is not a style preference. It is a live fulfilment queue for physical product going to real
+customers. A duplicate row can mean a double shipment; a changed subject line can silently break
+a filter he forwards on; a second numbering scheme breaks the lookups he does by hand.
+
+**What happened, so it is not repeated.** On 2026-09-08 the `/research-supplies/` page was found
+to mirror only to the admin dashboard - it had never written his sheet row or sent his order
+email, in any revision. Both paid campaigns land on that page, so ad-driven orders were the ones
+missing. The fix applied was to add a sheet writer and an order email to that page. That was the
+wrong call, and it was reverted on 2026-09-09:
+
+- The new sender used the **same Web3Forms access key** as the storefront. That key is a SHARED
+  QUOTA. Putting a second sender on the highest-traffic page meant storefront order emails and
+  landing-page order emails competed for one allowance, and Jimmy stopped receiving order emails
+  he had always received. Nothing errors when a quota is exhausted - delivery just stops.
+- The new sheet rows carried `IC-########` order numbers while the storefront mints its own
+  format. Two numbering schemes in one fulfilment sheet broke how he works it.
+
+**Current, intended state:** `/research-supplies/` mirrors to the admin dashboard ONLY. Orders
+placed there are visible in `/admin/` and in `ironcell_orders`, and they do NOT reach his sheet
+or his inbox. That gap is known and accepted. Closing it is Jimmy's decision to make, and the
+right shape is almost certainly a SEPARATE key and a numbering scheme he chooses - not a second
+writer bolted onto what already works.
+
+| Destination | How | Storefront + clones | `/research-supplies/` |
+|---|---|---|---|
+| **Jimmy's Google Sheet** | `Image` GET to the Apps Script `/exec` | yes - do not touch | NO, by decision |
+| **Order email** | `fetch` POST to web3forms -> `orders@` | yes - do not touch | NO, by decision |
+| **Admin dashboard** | `Image` to `ironcell-ingest?t=order` | yes | yes |
+
+Only the third column is ours. `ironcell-ingest` is MM's mirror on Supabase, so parameters may be
+added there freely - that is where `&src=` (ad attribution) goes, and it never reaches his
+Apps Script.
+
+**If an order is genuinely missing from his sheet**, backfill it through the same Apps Script
+with the SAME parameter names, and put a marker in `notes` so he can see what happened and audit
+it - e.g. `BACKFILLED BY MM <date> - placed on <page>, which was not connected to this sheet.
+Please confirm status before actioning.` **Never state or imply whether it shipped**: we do not
+know, and guessing either way costs him money. Say what we know and hand him the decision.
+
+**The sheet parameter names are the column mapping** and must stay byte-identical wherever they
+are sent: `orderNumber, date, customerName, email, phone, paymentMethod, productPrice, tax,
+shipping, coupon, address, notes`. A renamed parameter starts a second row shape rather than
+erroring. Leave a value BLANK when it is unknown - never invent a payment method or a tax figure
+to fill a column.
+
+**Two order-taking paths, separate code.** An edit to one does not reach the other:
+
+- `index.html` and the rep clones - `proceedWithOrder(method, name, email, ...)`. The payment
+  method is the FIRST ARGUMENT, not read from the DOM.
+- `research-supplies/index.html` - its own `window.placeOrder(method)`. Different file, closure
+  and variable names.
 
 **The closure trap.** `research-supplies/index.html` declares `SHEET` inside the newsletter
-popup's own IIFE, near the bottom of the file. `placeOrder` lives in a **different** closure and
-cannot see it. Referencing `SHEET` there throws a ReferenceError that the surrounding
-`try/catch` swallows, so the beacon silently does nothing while the email beside it works. Use
-the literal Apps Script URL in that function. The same applies to anything else that looks
-"global" in this file - check which IIFE declares it before reusing it.
+popup's IIFE near the bottom of the file. `placeOrder` is in a DIFFERENT closure and cannot see
+it; referencing it throws a ReferenceError the surrounding `try/catch` swallows, so a beacon
+silently does nothing while the code beside it works. Check which IIFE declares anything that
+looks global before reusing it.
 
-**How to verify an order path without sending anything.** Do not place a test order: it puts a
-real row in Jimmy's live sheet and emails `orders@`. Instead, on the live page, replace `Image`
-and `fetch` with capturing stubs, stub `gtag`/`fbq`/`ttq`, then call the order function and
-read back which URLs *would* have fired. Two traps when you do:
+**How to verify an order path without sending anything.** Do not place a test order - it puts a
+real row in his live sheet and emails `orders@`. On the live page, replace `Image` and `fetch`
+with capturing stubs, stub `gtag`/`fbq`/`ttq`, call the order function, and read back which URLs
+would have fired. Two traps:
 
 - `proceedWithOrder` needs its arguments. Calling it bare throws on
-  `method.charAt(0).toUpperCase()`, which looks exactly like a production crash and is not one.
+  `method.charAt(0).toUpperCase()`, which looks like a production crash and is not one.
 - Both paths latch against duplicates - `window._submittedOrders[orderNum]` on the storefront
-  (keyed off the DOM order number, so run `openCheckout()` first to mint one) and
-  `window._icOrderPlaced` on the supplies page. A second run returns early and fires nothing,
-  which reads as a broken beacon.
+  (keyed off the DOM order number, so run `openCheckout()` first) and `window._icOrderPlaced` on
+  the supplies page. A second run returns early and fires nothing, which reads as a dead beacon.
 
 ### 2.2 The newsletter admin, and the way into it
 
@@ -281,3 +332,4 @@ GitHub API, not `raw`.
 | Leaving `.github/workflows/` alone | Removing the two workflow files |
 | Letting `iron-cell-admin-guard` commits stand | Reverting or discarding them |
 | Verifying the live domain after a publish | Assuming a green push means a good page |
+| Leaving Jimmy's sheet, order emails and order numbers exactly as they are | Adding a writer, a sender or a new number format to his fulfilment system |
