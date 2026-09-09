@@ -4729,6 +4729,17 @@ ttq.page();
         '&zip=' + encodeURIComponent(zip);
     } catch (e) {}
 
+
+    /* EMPTY THE CART. This is the real duplicate-order guard.
+       The _submittedOrders check above is keyed on the order number, but
+       openCheckout() regenerates that number every time it runs (and clears
+       appliedCoupon), so reopening checkout with a full cart walks straight
+       past it and fires Google Purchase, fbq Purchase and ttq CompletePayment
+       a SECOND time - at full undiscounted value. transaction_id changes too,
+       so Google-side dedupe cannot catch it either. Emptying the cart is what
+       actually closes that path. Runs last, so every figure above is still
+       computed from the real order. */
+    try { cart = []; updateCartUI(); } catch (e) {}
   }
 
   function subscribeNewsletter() {

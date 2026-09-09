@@ -595,6 +595,17 @@ function subscribeNewsletter() {
     }
     $('coMsg').innerHTML = '';
 
+    /* SUBMIT LOCK. This page had NO duplicate guard of any kind - not even the
+       order-number check the storefronts use. It was protected only incidentally,
+       because the Done button calls location.reload(). Anything that dismissed
+       that modal without reloading would let a second Place Order fire Google
+       Purchase, fbq Purchase and ttq CompletePayment all over again. Latches on
+       the first accepted submission, and is deliberately NOT keyed on the order
+       number - orderNumber() mints a fresh one on every call, which is exactly
+       how the storefront guard was being defeated. */
+    if (window._icOrderPlaced) return;
+    window._icOrderPlaced = true;
+
     var grand = renderSummary();
     var num = orderNumber();
     var items = cart.map(function(l){ return l.qty + 'x ' + l.name; }).join(', ');
@@ -646,6 +657,8 @@ function subscribeNewsletter() {
     $('okHandle').textContent = PAY_HANDLES[method];
     closeCheckout();
     $('done').classList.add('active');
+    /* Empty the cart so a dismissed confirmation cannot re-submit the same order. */
+    try { cart = []; paint(); } catch (e) {}
   };
 
   document.addEventListener('keydown', function(e){
