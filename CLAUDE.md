@@ -84,6 +84,53 @@ purpose, so that a blocked or missing tag can never break checkout. Keep that sh
 move them. The cost of that safety is that when the tag disappears, checkout keeps working
 perfectly and throws no error - purchases simply stop being reported.
 
+### 2.1b Where an order goes, and the three places it must land
+
+An order has to reach **three** destinations. They are independent, and losing one is silent -
+checkout still completes and the customer sees the same confirmation.
+
+| Destination | How | Who reads it |
+|---|---|---|
+| **Jimmy's Google Sheet** | `Image` pixel GET to the Apps Script `/exec` | Jimmy works from this daily |
+| **Order email** | `fetch` POST to web3forms, to `orders@ironcellresearch.com` | the notification he acts on |
+| **Admin dashboard** | `Image` pixel to `ironcell-ingest?t=order` | `/admin/`, and `ironcell_orders` |
+
+**Both order-taking paths must fire all three.** There are two, and they are separate code:
+
+- `index.html` (and the rep clones) - `proceedWithOrder(method, name, email, ...)`. Note the
+  payment method is the FIRST ARGUMENT, not read from the DOM.
+- `research-supplies/index.html` - its own `window.placeOrder(method)`. Different file,
+  different closure, different variable names. **An edit to one does not reach the other.**
+
+This was found the hard way on 2026-09-09: `/research-supplies/` had been mirroring to the admin
+dashboard only, and had never sent the sheet row or the order email in any revision of the file.
+It went unnoticed because the page was low traffic - and became urgent the moment both paid
+campaigns started landing on it, so the ad-driven orders were exactly the ones going missing.
+
+**The sheet parameter names must stay byte-identical across both pages** (`orderNumber, date,
+customerName, email, phone, paymentMethod, productPrice, tax, shipping, coupon, address, notes`).
+They are the sheet's column mapping. A renamed parameter starts a second row shape rather than
+erroring.
+
+**The closure trap.** `research-supplies/index.html` declares `SHEET` inside the newsletter
+popup's own IIFE, near the bottom of the file. `placeOrder` lives in a **different** closure and
+cannot see it. Referencing `SHEET` there throws a ReferenceError that the surrounding
+`try/catch` swallows, so the beacon silently does nothing while the email beside it works. Use
+the literal Apps Script URL in that function. The same applies to anything else that looks
+"global" in this file - check which IIFE declares it before reusing it.
+
+**How to verify an order path without sending anything.** Do not place a test order: it puts a
+real row in Jimmy's live sheet and emails `orders@`. Instead, on the live page, replace `Image`
+and `fetch` with capturing stubs, stub `gtag`/`fbq`/`ttq`, then call the order function and
+read back which URLs *would* have fired. Two traps when you do:
+
+- `proceedWithOrder` needs its arguments. Calling it bare throws on
+  `method.charAt(0).toUpperCase()`, which looks exactly like a production crash and is not one.
+- Both paths latch against duplicates - `window._submittedOrders[orderNum]` on the storefront
+  (keyed off the DOM order number, so run `openCheckout()` first to mint one) and
+  `window._icOrderPlaced` on the supplies page. A second run returns early and fires nothing,
+  which reads as a broken beacon.
+
 ### 2.2 The newsletter admin, and the way into it
 
 - `admin/index.html` - the whole file. It is a self-contained newsletter composer and sender. It is
