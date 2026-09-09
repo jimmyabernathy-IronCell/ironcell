@@ -5407,7 +5407,17 @@ ttq.page();
      over it would stack two modals. Wait for it; pages without one never wait. */
   function ageGateUp() {
     var g = document.getElementById('ageGate');
-    return !!(g && !/(^|\s)hidden(\s|$)/.test(g.className) && g.offsetParent !== null);
+    if (!g || /(^|\s)hidden(\s|$)/.test(g.className)) return false;
+    /* NOT offsetParent. The age gate is position:fixed, and a fixed element
+       ALWAYS reports offsetParent === null, so this test was permanently false:
+       the popup never waited for the gate and painted its 20%-off panel
+       (z-index 999998) straight over the 21+ / research-use-only notice
+       (z-index 10000) and over its buttons. Confirmed on the live site before
+       this fix - elementFromPoint at the centre of the gate returned the
+       popup's own markup. getBoundingClientRect works for fixed elements. */
+    var cs = window.getComputedStyle(g);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    return g.getBoundingClientRect().height > 0;
   }
 
   function arm() {
