@@ -269,6 +269,77 @@ ttq.page();
   }
   .site-footer a { color: #e63232; text-decoration: none; }
 </style>
+<!-- =====================================================================
+     AD ATTRIBUTION - remembers how a visitor first reached the site so an
+     order can be credited to the campaign that actually earned it.
+
+     Why this exists: Google, Meta and TikTok each report their own
+     conversions, but none of them can see an order that completes in a later
+     session, and none of them will ever tell Jimmy "these three orders came
+     from the TikTok flight". The order mirror already writes every query
+     parameter it receives into ironcell_orders.raw, so one extra parameter
+     makes /admin/ able to answer that with no schema change at all.
+
+     FIRST touch wins, not last. These flights are prospecting - they target
+     people who do not know Iron Cell yet - so the ad that introduced someone
+     is what earned the sale, not the branded search they used to come back.
+
+     THIRTY DAY EXPIRY. Without one a first touch never expires, and a click
+     from months ago goes on claiming credit for organic orders forever, which
+     quietly inflates whichever campaign happened to be first. Thirty days is
+     deliberately shorter than Google's 90-day click window: these are two-week
+     flights, so an order a month after the click is far more likely to be a
+     returning customer than an ad conversion.
+
+     Cannot affect the store. localStorage throws outright in some privacy
+     modes, so every access is wrapped and icAttr() returns '' on any failure.
+     Callers additionally guard on typeof, so even a parse error here can never
+     stop an order beacon from firing.
+     ===================================================================== -->
+<script>
+(function () {
+  var KEY = 'ic_attr_v1';
+  var TTL = 30 * 24 * 60 * 60 * 1000;   /* 30 days - see the note above */
+
+  function read() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!o || !o.t) return null;
+      if ((Date.now() - o.t) > TTL) { localStorage.removeItem(KEY); return null; }
+      return o;
+    } catch (e) { return null; }
+  }
+
+  try {
+    var q = new URLSearchParams(location.search);
+    var s = q.get('utm_source') || '';
+    var m = q.get('utm_medium') || '';
+    var c = q.get('utm_campaign') || '';
+    /* A click id identifies the platform even when the utm tags are missing,
+       which is the normal case for Meta and TikTok auto-tagging. */
+    if (!s) {
+      if (q.get('gclid'))       { s = 'google'; m = m || 'cpc'; }
+      else if (q.get('fbclid')) { s = 'meta';   m = m || 'paid_social'; }
+      else if (q.get('ttclid')) { s = 'tiktok'; m = m || 'paid_social'; }
+    }
+    /* No campaign markers at all means organic, direct, or a returning
+       visitor - leave any stored first touch exactly as it is. */
+    if ((s || m || c) && !read()) {
+      localStorage.setItem(KEY, JSON.stringify({
+        s: s.slice(0, 40), m: m.slice(0, 40), c: c.slice(0, 60), t: Date.now()
+      }));
+    }
+  } catch (e) {}
+
+  /* Returns '' when there is nothing to report, so the beacon parameter is
+     simply empty rather than absent and no caller has to branch. */
+  window.icAttr = function () {
+    var o = read();
+    if (!o) return '';
+    return [o.s, o.m, o.c].filter(Boolean).join(' / ');
+  };
+})();
+</script>
 </head>
 <body>
 
