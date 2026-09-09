@@ -710,6 +710,73 @@ function subscribeNewsletter() {
       }
     } catch (e) {}
 
+    /* ORDER EMAIL + GOOGLE SHEET. The storefront has sent both on every order
+       since launch; this page sent neither, in any revision - it only mirrored to
+       the admin dashboard. That gap stopped being cosmetic the moment the ads
+       started pointing here: both live campaigns land on this page, so the sales
+       they produce were the ONLY ones missing from the sheet Jimmy works from,
+       and nobody was emailed about them.
+
+       Same access key, recipient, sheet and parameter NAMES as the storefront, so
+       rows land in the existing columns instead of starting a second shape. Order
+       numbers here are IC-######## and the storefront mints its own format, so the
+       two sources stay tellable apart in the sheet.
+
+       Totals are recomputed from the same helpers that drew the summary the
+       customer just agreed to (subtotal/shipping/taxRate), so what is reported
+       cannot disagree with what was charged. Both calls are fire-and-forget and
+       individually isolated: a tracking failure must never block an order. */
+    var itemsDetailed = cart.map(function (l) {
+      return l.name + ' x' + l.qty + ' - $' + (l.price * l.qty).toFixed(2);
+    }).join(' | ');
+    var _sub = subtotal(), _ship = shipping(), _rate = taxRate(), _tax = _sub * _rate;
+
+    try {
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: '603b0822-9385-4831-ba22-13f82778ebab',
+          to: 'orders@ironcellresearch.com',
+          subject: 'New Order #' + num + ' - IronCell Research (Research Supplies)',
+          from_name: 'IronCell Research Orders',
+          name: name,
+          email: email,
+          message:
+            'NEW ORDER RECEIVED (research supplies page)\n\nOrder #: ' + num +
+            '\nPayment Method: ' + String(method).toUpperCase() +
+            '\n\nCUSTOMER INFO:\nName: ' + name +
+            '\nEmail: ' + email +
+            '\nPhone: ' + (phone || 'N/A') +
+            '\nAddress: ' + addr + ', ' + city + ', ' + state + ' ' + zip +
+            '\n\nITEMS:\n' + itemsDetailed.split(' | ').join('\n') +
+            '\n\nSubtotal: $' + _sub.toFixed(2) +
+            '\nShipping: $' + _ship.toFixed(2) +
+            '\nTax: $' + _tax.toFixed(2) + (state ? ' (' + state + ' ' + (_rate * 100).toFixed(2) + '%)' : '') +
+            '\nTOTAL: $' + grand.toFixed(2)
+        }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+
+    try {
+      var sheetUrl = SHEET + '?' +
+        'orderNumber=' + encodeURIComponent(num) +
+        '&date=' + encodeURIComponent(new Date().toLocaleDateString()) +
+        '&customerName=' + encodeURIComponent(name) +
+        '&email=' + encodeURIComponent(email) +
+        '&phone=' + encodeURIComponent(phone) +
+        '&paymentMethod=' + encodeURIComponent(PAY_NAMES[method] || method) +
+        '&productPrice=' + encodeURIComponent(grand.toFixed(2)) +
+        '&tax=' + encodeURIComponent(_tax.toFixed(2)) +
+        '&shipping=' + encodeURIComponent(_ship.toFixed(2)) +
+        '&coupon=' +
+        '&address=' + encodeURIComponent(addr + ', ' + city + ', ' + state + ' ' + zip) +
+        '&notes=' + encodeURIComponent('Research supplies page | ' + itemsDetailed);
+      var sheetImg = new Image();
+      sheetImg.src = sheetUrl;
+    } catch (e) {}
+
     /* Mirror to the IronCell admin dashboard. Fire-and-forget and isolated, exactly
        as the storefront does it, so a tracking failure can never block an order. */
     try {
