@@ -47,7 +47,10 @@
   .age-gate {
     position: fixed;
     inset: 0;
-    z-index: 10000;
+    z-index: 1000000; /* ABOVE the newsletter popup (999998). A compliance
+       gate must never be paintable-over: the popup builds itself dynamically
+       and any timing gap used to put a 20%-off panel on top of the 21+ notice
+       and its buttons. Layer order, not timing, is what guarantees this. */
     background: rgba(0,0,0,0.92);
     backdrop-filter: blur(20px);
     display: flex;
