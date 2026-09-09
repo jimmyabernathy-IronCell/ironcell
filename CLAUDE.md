@@ -64,8 +64,12 @@ it goes.
 - The Google tag in the `<head>`: `googletagmanager.com/gtag/js?id=AW-18389709216` and the
   `gtag('config', 'AW-18389709216')` block under it.
 - The **purchase** conversion, `AW-18389709216/BVXmCJiwnuIcEKDj8sBE`, inside `proceedWithOrder()`.
-- The **newsletter signup** conversion, `AW-18389709216/jCpBCKnUsOIcEKDj8sBE`, inside
-  `subscribeNewsletter()`.
+- The **newsletter signup** conversion, `AW-18389709216/jCpBCKnUsOIcEKDj8sBE`. It appears
+  **twice**, and both are load-bearing: once in `subscribeNewsletter()` for the footer form, and
+  once in the first-visit popup's own private `submit()`. These are two independent signup
+  journeys with separate inputs and separate buttons - the popup never calls
+  `subscribeNewsletter()`. Two occurrences is correct; one means a signup path lost its
+  conversion. The same is true of `fbq('track','Lead')` and `ttq.track('SubmitForm')`.
 - All three `<script type="application/ld+json">` blocks: `Organization`, `WebSite`, and the
   `ItemList` named `Research Peptides and Compounds` carrying 45 products. That third block is what
   makes the products eligible for rich results in search.
@@ -180,7 +184,7 @@ Run this against your working copy. Every line should print the number next to i
 ```bash
 grep -c 'gtag/js?id=AW-18389709216'        index.html   # 1
 grep -c 'BVXmCJiwnuIcEKDj8sBE'             index.html   # 1  purchase conversion
-grep -c 'jCpBCKnUsOIcEKDj8sBE'             index.html   # 1  newsletter conversion
+grep -c 'jCpBCKnUsOIcEKDj8sBE'             index.html   # 2  newsletter conversion (see note)
 grep -c 'application/ld+json'              index.html   # 3
 grep -c '"@type":"ItemList"'               index.html   # 1  (minified, no space after the colon)
 grep -c 'href="/admin/"'                   index.html   # 1
