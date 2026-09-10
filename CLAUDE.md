@@ -84,8 +84,11 @@ it goes.
   `ItemList` named `Research Peptides and Compounds` carrying 45 products. That third block is what
   makes the products eligible for rich results in search.
 - The subscriber capture `ironcell-ingest?t=sub` on every page that has a sign-up form: `index.html`,
-  `mvp.html`, `truetransformation.html`, and `amber/`, `billy/`, `carlos/`, `chel/`, `davu/`,
-  `dupree/`, `merv/`, `ray/`.
+  `mvp.html`, `truetransformation.html`, `amber/`, `billy/`, `carlos/`, `chel/`, `davu/`, `dro/`,
+  `dupree/`, `merv/`, `ray/`, `research-supplies/` (its own form), and the first-visit popup on all
+  of those plus `peptidecalculator/`. Every one of them also sends Jimmy's "New Newsletter
+  Subscriber" email - see RECOVERY.md section 2c for why the popup and supplies form were missing it
+  until 2026-09-10.
 - `research-supplies/index.html` carries its own copy of the Google tag. It is a separate file, so
   an edit to the homepage should never touch it.
 
@@ -116,6 +119,12 @@ system. They are not ours to improve.
 - add a second sender on the Web3Forms key, or change a subject line
 - rename, add or reorder the sheet parameters
 - edit, reorder or delete rows in the sheet
+
+**One sanctioned addition, 2026-09-10 (`6432302`):** the first-visit popup and the supplies-page
+form now send the SAME "New Newsletter Subscriber" Web3Forms email the storefront footer form has
+always sent - same key, subject, from_name and body, copied per page. They had never sent it, so
+signups there reached his sheet but not his inbox. That copies his path; it is not a new one. Any
+further change of this kind still needs Julien.
 
 This is not a style preference. It is a live fulfilment queue for physical product going to real
 customers. A duplicate row can mean a double shipment; a changed subject line can silently break
