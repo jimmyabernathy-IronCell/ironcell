@@ -25,7 +25,13 @@ name: Admin entry live check
 # false alarm without weakening the real one: if the loss is genuine it survives
 # both cycles and the job still goes red and still emails.
 #
-# Every marker below was verified present on the live site on 2026-08-24.
+# EXTENDED 2026-09-10: /welcome/ IS PROBED TOO (check 6). It is the landing page
+# of the Meta WELCOME20 ad, and keep-admin-entry deliberately never edits it
+# (it must never get the popup), so without this probe nothing checked it at all.
+# Presence only: this job reports and re-publishes, it never edits the page.
+#
+# Every marker below was verified present on the live site on 2026-08-24, and
+# the /welcome/ markers on 2026-09-10.
 # If one of these ever fails, something real broke - it is not a flaky check.
 
 on:
@@ -78,11 +84,26 @@ jobs:
           curl -sS "$BASE/robots.txt?cb=$CB" -o /tmp/robots.txt
           grep -qF 'Disallow: /admin/' /tmp/robots.txt || note "robots.txt no longer fences /admin/"
 
+          # 6. /welcome/, the landing page of the Meta WELCOME20 ad (2026-09-10).
+          #    Presence only. keep-admin-entry deliberately never edits this page
+          #    (it must never get the popup), so this probe is its only guard.
+          #    The subscriber marker is 'ironcell-ingest?t=sub&email=', which
+          #    matches only the beacon call. The bare 'ironcell-ingest?t=sub' also
+          #    matches a comment on the page, so it would pass with the beacon gone.
+          code=$(curl -sS -o /tmp/welcome.html -w '%{http_code}' "$BASE/welcome/?cb=$CB")
+          [ "$code" = "200" ] || note "/welcome/ returned HTTP $code"
+          for marker in 'ironcell-ingest?t=sub&email=' 'jCpBCKnUsOIcEKDj8sBE' "fbq('track', 'Lead')" \
+                        'gtag/js?id=AW-18389709216' '1628346322011957' 'DAG4D4RC77UES974PFB0' \
+                        'exec?type=newsletter&email=' 'api.web3forms.com/submit'; do
+            grep -qF "$marker" /tmp/welcome.html || note "/welcome/ is missing: $marker"
+          done
+          grep -qF 'ic-newsletter-popup' /tmp/welcome.html && note "/welcome/ gained the newsletter popup"
+
           if [ "$fails" -ne 0 ]; then
             echo "$fails check(s) failed."
             exit 1
           fi
-          echo "All checks passed. The newsletter admin entry is intact and reachable."
+          echo "All checks passed. The newsletter admin entry is intact and reachable, and /welcome/ is intact."
           SH
           chmod +x /tmp/probe.sh
 
