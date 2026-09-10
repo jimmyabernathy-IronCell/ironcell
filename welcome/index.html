@@ -56,6 +56,11 @@ ttq.page();
 <meta property="og:description" content="Join the newsletter for 20% off your first order.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ironcellresearch.com/welcome/">
+<meta property="og:site_name" content="Iron Cell Research">
+<meta property="og:image" content="https://ironcellresearch.com/email-logo.jpg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="398">
+<meta property="og:image:alt" content="Iron Cell Research logo">
 
 <link rel="icon" href="../p-ironcell-logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +84,7 @@ h1,h2{font-family:'Space Grotesk',sans-serif}
 a{color:inherit}
 header{border-bottom:1px solid var(--border-subtle)}
 header .in{max-width:720px;margin:0 auto;padding:16px 24px;display:flex;justify-content:center}
-.logo{height:42px;width:auto;display:block}
+.logo{display:block;width:236px;max-width:100%;height:60px;object-fit:cover;object-position:50% 45%}
 main{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 20px}
 .card{width:min(560px,100%);background:var(--bg-secondary);border:1px solid var(--border-red);border-radius:14px;padding:40px 32px;text-align:center;box-shadow:0 0 60px rgba(196,30,42,0.12)}
 .eyebrow{color:var(--red-primary);font-size:0.74rem;letter-spacing:3px;text-transform:uppercase;font-weight:700}
@@ -99,6 +104,10 @@ input:focus{outline:none;border-color:var(--border-red)}
 #nlMsg a{color:var(--red-glow)}
 .fine{color:var(--text-muted);font-size:0.78rem;margin-top:18px}
 footer{border-top:1px solid var(--border-subtle);padding:26px 20px;text-align:center}
+.fine a{color:var(--silver-mid)}
+.privacy{color:var(--text-secondary);font-size:.78rem;line-height:1.6;max-width:640px;margin:14px auto 0;text-align:left}
+.privacy summary{cursor:pointer;text-align:center;color:var(--silver-mid)}
+.privacy p{margin-top:8px}
 .ruo{color:var(--text-muted);font-size:0.74rem;max-width:640px;margin:0 auto;line-height:1.7}
 .contact{color:var(--silver-dark);font-size:0.78rem;margin-top:10px}
 @media (max-width:480px){.card{padding:32px 20px}.btn{width:100%}}
@@ -180,7 +189,7 @@ footer{border-top:1px solid var(--border-subtle);padding:26px 20px;text-align:ce
       <button class="btn" type="submit">Join the newsletter</button>
     </form>
     <p id="nlMsg" role="status" aria-live="polite"></p>
-    <p class="fine">One use per customer.</p>
+    <p class="fine">One use per customer. Exclusions apply. By joining you agree to receive emails from Iron Cell Research; unsubscribe anytime. <a href="#privacy" onclick="document.getElementById('privacy').open=true">Privacy Policy</a></p>
   </section>
 </main>
 
@@ -201,7 +210,9 @@ function subscribeNewsletter() {
   if (window._icWelcomeSent && (!email || window._icWelcomeSent === email)) return;
 
   var at = email.indexOf('@');
-  if (!email || at < 1 || email.indexOf('.', at) < 0 || /\s/.test(email)) {
+  /* Same shape ironcell-ingest accepts; looser input fired every call and then
+     the mirror dropped the row, so the code email never went out. */
+  if (!/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,24}$/.test(email)) {
     msg.textContent = 'Please enter a valid email address.';
     msg.style.color = 'var(--red-glow,#e52533)';
     el.focus();
@@ -266,6 +277,17 @@ function subscribeNewsletter() {
 <footer>
   <p class="ruo">Iron Cell Research supplies products for laboratory research use only. Not for human or veterinary consumption.</p>
   <p class="contact">Questions: <a href="mailto:orders@ironcellresearch.com">orders@ironcellresearch.com</a></p>
+  <!-- The storefront's own privacy policy, word for word (index.html privacyModal). -->
+  <details class="privacy" id="privacy">
+    <summary>Privacy Policy</summary>
+    <p><strong>Introduction &amp; Consent</strong> At Iron Cell Research, we value your privacy. By using our website, you consent to our privacy policy and agree to its terms.</p>
+    <p><strong>Information We Collect</strong> We collect personal information you voluntarily provide, such as name, email, and contact details, as well as automatically collected data like IP addresses and browser information.</p>
+    <p><strong>How We Use Your Information</strong> We use the information to enhance our services, process transactions, send periodic emails, and improve website functionality.</p>
+    <p><strong>Cookies &amp; Tracking</strong> Our website uses "cookies" to enhance user experience, track visitor preferences, and analyze site traffic.</p>
+    <p><strong>Third-Party Disclosure</strong> We do not sell or trade your personal information to outside parties, except to trusted partners who assist us in operating our website, so long as they keep this information confidential.</p>
+    <p><strong>User Rights &amp; Data Retention</strong> You have the right to access, correct, or delete your personal data. We retain data only as long as necessary to fulfill the purposes outlined in this policy.</p>
+    <p><strong>Contact Us</strong> If you have any questions regarding this privacy policy, you may contact us at <a href="mailto:orders@ironcellresearch.com">orders@ironcellresearch.com</a>.</p>
+  </details>
 </footer>
 </body>
 </html>

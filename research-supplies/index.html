@@ -385,7 +385,9 @@ function subscribeNewsletter() {
      had no "@" at all. Catching it here is the only moment the person is still
      present to correct it. */
   var at = email.indexOf('@');
-  if (!email || at < 1 || email.indexOf('.', at) < 0 || /\s/.test(email)) {
+  /* Same shape ironcell-ingest accepts; looser input fired every call and then
+     the mirror dropped the row, so the code email never went out. */
+  if (!/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,24}$/.test(email)) {
     msg.textContent = 'Please enter a valid email address.';
     msg.style.color = 'var(--red-glow,#e52533)';
     el.focus();
@@ -464,6 +466,17 @@ function subscribeNewsletter() {
       <a href="/">Main store</a>
       <a href="mailto:orders@ironcellresearch.com">orders@ironcellresearch.com</a>
     </div>
+    <!-- The storefront's own privacy policy, word for word (index.html privacyModal). -->
+    <details class="privacy" id="privacy" style="color:var(--text-secondary);font-size:.78rem;line-height:1.6;max-width:820px;margin-top:14px">
+      <summary style="cursor:pointer;color:var(--silver-mid)">Privacy Policy</summary>
+      <p style="margin-top:8px"><strong>Introduction &amp; Consent</strong> At Iron Cell Research, we value your privacy. By using our website, you consent to our privacy policy and agree to its terms.</p>
+      <p style="margin-top:8px"><strong>Information We Collect</strong> We collect personal information you voluntarily provide, such as name, email, and contact details, as well as automatically collected data like IP addresses and browser information.</p>
+      <p style="margin-top:8px"><strong>How We Use Your Information</strong> We use the information to enhance our services, process transactions, send periodic emails, and improve website functionality.</p>
+      <p style="margin-top:8px"><strong>Cookies &amp; Tracking</strong> Our website uses "cookies" to enhance user experience, track visitor preferences, and analyze site traffic.</p>
+      <p style="margin-top:8px"><strong>Third-Party Disclosure</strong> We do not sell or trade your personal information to outside parties, except to trusted partners who assist us in operating our website, so long as they keep this information confidential.</p>
+      <p style="margin-top:8px"><strong>User Rights &amp; Data Retention</strong> You have the right to access, correct, or delete your personal data. We retain data only as long as necessary to fulfill the purposes outlined in this policy.</p>
+      <p style="margin-top:8px"><strong>Contact Us</strong> If you have any questions regarding this privacy policy, you may contact us at <a href="mailto:orders@ironcellresearch.com">orders@ironcellresearch.com</a>.</p>
+    </details>
   </div>
 </footer>
 
@@ -527,8 +540,10 @@ function subscribeNewsletter() {
     <!-- Closes the confirmation instead of reloading (2026-09-10). A reload in the
          first instant after Place Order could cancel the sheet, mirror or Google
          hits still in flight. The cart is already empty and the SUBMIT LOCK in
-         placeOrder stops a second submission, so nothing needs the reload. -->
-    <button class="btn full" style="margin-top:16px" onclick="document.getElementById('done').classList.remove('active')">Done</button>
+         placeOrder stops a second submission, so nothing needs the reload.
+         add() releases that lock, so the click right after Done is swallowed for
+         600 ms: a double-tap must not land on an "Add to cart" under the button. -->
+    <button class="btn full" style="margin-top:16px" onclick="var d=document.getElementById('done');d.classList.remove('active');var s=function(e){e.stopPropagation();e.preventDefault();};document.addEventListener('click',s,true);setTimeout(function(){document.removeEventListener('click',s,true);},600);">Done</button>
   </div>
 </div>
 

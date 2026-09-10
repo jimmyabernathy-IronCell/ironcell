@@ -1,0 +1,7 @@
+# Internal notes and tooling: not part of the published site.
+exclude:
+  - AGENTS.md
+  - CLAUDE.md
+  - RECOVERY.md
+  - HANDOFF-FOR-JIMMYS-AI.md
+  - ops/
