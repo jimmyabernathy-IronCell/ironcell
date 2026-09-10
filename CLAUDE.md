@@ -96,6 +96,10 @@ perfectly and throws no error - purchases simply stop being reported.
 
 ### 2.1b Jimmy's order pipeline. Do not change it.
 
+**Full system map, verification recipes and recovery routes: [RECOVERY.md](RECOVERY.md). Read it first after any incident.**
+
+
+
 **HARD RULE, from Julien, 2026-09-09, after this was got wrong:**
 
 > "all of his systems should never be touched... you weren't supposed to change any of the
