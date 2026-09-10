@@ -116,8 +116,11 @@ shipped. When his system and an instruction collide, surface the collision.
   First touch within 30 days wins. Rows before that carry the old
   `source / medium / campaign` string, whose empty fields were dropped, so a
   two-part old value is ambiguous. Orders before Sep 10 have no number in
-  the mirror. Phone and street address are deliberately not mirrored (the
-  supplies page's `items` string still carries them). `?t=sub` mirrors signups
+  the mirror. **Since `a5c999a` (Sep 10) every order page also sends `&phone=`**
+  (Julien: customer emails and phones are shared with MM, never with TikTok), read
+  it as `raw->>'phone'`. Street address is still deliberately not mirrored (the
+  supplies page's `items` string carries it). TikTok's Automatic Advanced Matching
+  is OFF on purpose and must stay off. `?t=sub` mirrors signups
   into `ironcell_subscribers`; since ingest **v10** (Sep 10) the signup's
   first-touch attribution is kept in `ironcell_subscribers.src` (it used to be
   discarded, so no signup could be tied to an ad). `GET ?t=watchdog` returns
