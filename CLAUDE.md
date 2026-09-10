@@ -120,27 +120,48 @@ a filter he forwards on; a second numbering scheme breaks the lookups he does by
 **What happened, so it is not repeated.** On 2026-09-08 the `/research-supplies/` page was found
 to mirror only to the admin dashboard - it had never written his sheet row or sent his order
 email, in any revision. Both paid campaigns land on that page, so ad-driven orders were the ones
-missing. The fix applied was to add a sheet writer and an order email to that page. That was the
-wrong call, and it was reverted on 2026-09-09:
+missing (four of them: Aug 16, Aug 17, Aug 28 and Sep 6 2026, all invisible to his fulfilment).
+The first fix, on 2026-09-08, got two things wrong and was reverted on 2026-09-09:
 
-- The new sender used the **same Web3Forms access key** as the storefront. That key is a SHARED
-  QUOTA. Putting a second sender on the highest-traffic page meant storefront order emails and
-  landing-page order emails competed for one allowance, and Jimmy stopped receiving order emails
-  he had always received. Nothing errors when a quota is exhausted - delivery just stops.
-- The new sheet rows carried `IC-########` order numbers while the storefront mints its own
-  format. Two numbering schemes in one fulfilment sheet broke how he works it.
+- It minted `IC-########` order numbers while the storefront mints six digits (plus a rep
+  prefix on the clones). Two numbering schemes in one fulfilment sheet broke the lookups he
+  does by hand against his order emails.
+- Its sheet beacon referenced a const from another closure and silently never fired (see "the
+  closure trap" below), so it looked connected and was not.
+- The missing orders were then backfilled TWICE into a sheet nobody here could read back, which
+  put duplicate, misaligned rows into his live queue. **Never write to a system you cannot read
+  back.** The sheet CAN be read now - see "Reading his sheet" below.
 
-**Current, intended state:** `/research-supplies/` mirrors to the admin dashboard ONLY. Orders
-placed there are visible in `/admin/` and in `ironcell_orders`, and they do NOT reach his sheet
-or his inbox. That gap is known and accepted. Closing it is Jimmy's decision to make, and the
-right shape is almost certainly a SEPARATE key and a numbering scheme he chooses - not a second
-writer bolted onto what already works.
+The earlier note that a second sender on the shared Web3Forms key "starved" his order emails
+was a theory, not a finding: that block fired once per order (four orders in a month) and the
+eleven storefront files already send on that key. Whether his order emails actually stopped,
+and why, is still unconfirmed; the check is whether the email for his own test order
+136230 (2026-09-09 7:56 PM) arrived at `orders@`.
+
+**Current, intended state (Julien, 2026-09-09 evening: "ensure orders from his website always
+get tracked as he originally developed the site"):** `/research-supplies/` now sends the SAME
+two calls the storefront sends, copied from `proceedWithOrder()` in `index.html` - the Web3Forms
+order email (same key, recipient, subject line and body layout) and the Apps Script beacon (same
+parameter names, date format, payment-method casing, items format) - and mints the main site's
+six-digit order number. A row from the supplies page is indistinguishable from a main-site row,
+which is the point: nothing in his process changes. Live since commit `eea0dea`.
 
 | Destination | How | Storefront + clones | `/research-supplies/` |
 |---|---|---|---|
-| **Jimmy's Google Sheet** | `Image` GET to the Apps Script `/exec` | yes - do not touch | NO, by decision |
-| **Order email** | `fetch` POST to web3forms -> `orders@` | yes - do not touch | NO, by decision |
+| **Jimmy's Google Sheet** | `Image` GET to the Apps Script `/exec` | yes - do not touch | yes, identical - do not touch |
+| **Order email** | `fetch` POST to web3forms -> `orders@` | yes - do not touch | yes, identical - do not touch |
 | **Admin dashboard** | `Image` to `ironcell-ingest?t=order` | yes | yes |
+
+**Reading his sheet.** From a docs.google.com tab signed in as him, the gviz endpoint returns any
+tab as CSV with no download and no Drive scope:
+`/spreadsheets/d/<id>/gviz/tq?tqx=out:csv&headers=0&authuser=<n>&gid=0&tq=select A,B,C limit 700`.
+It drops fully empty rows, so its index is not the sheet row number. His Sheet1 layout is header
+in row 1 and A=Order #, B=Date, C=Customer Name, D=Address, E=Email, F=Payment Method, G=Product
+Price (the grand total), H=Tax, I=Shipping, J=Tracking Number, K=Status, L=Notes (the items
+string), N=Tracking Sent, O=Inv Processed, P=Subtotal (ARRAYFORMULA G-H-I). Raw rows from the
+Apps Script are white; rows he has worked are green with K="paid". The sheet ends at its last
+data row because the script uses appendRow - add rows before typing below it. Rows added by MM
+by hand are highlighted YELLOW with an "ADDED BY MM <date>" note in L so he can audit them.
 
 Only the third column is ours. `ironcell-ingest` is MM's mirror on Supabase, so parameters may be
 added there freely - that is where `&src=` (ad attribution) goes, and it never reaches his
