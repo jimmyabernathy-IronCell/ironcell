@@ -175,7 +175,7 @@ nav{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:ce
 .full{width:100%}
 
 /* checkout */
-.modal{position:fixed;inset:0;z-index:90;display:none;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto}
+.modal{position:fixed;inset:0;z-index:90;display:none;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto;background:rgba(0,0,0,0.72)}
 .modal.active{display:flex}
 .sheet{background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:12px;width:min(560px,100%);padding:26px}
 .sheet h3{font-size:1.2rem;margin-bottom:4px}
@@ -183,6 +183,8 @@ nav{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:ce
 label{display:block;font-size:0.72rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--silver-dark);font-weight:600;margin:14px 0 6px}
 input,select{width:100%;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-primary);padding:11px 13px;border-radius:6px;font-family:'Inter',sans-serif;font-size:0.92rem}
 input:focus,select:focus{outline:none;border-color:var(--border-red)}
+/* 16px on phones: iOS Safari zooms the whole page into any field under 16px. */
+@media (max-width:640px){input,select{font-size:16px}}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .pay{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
 .pay button{padding:13px 8px;border:1px solid var(--border-subtle);background:var(--bg-card);color:var(--text-primary);border-radius:6px;cursor:pointer;font-weight:600;font-size:0.86rem;font-family:'Inter',sans-serif;transition:var(--transition)}
@@ -285,7 +287,7 @@ footer{border-top:1px solid var(--border-subtle);padding:36px 0;margin-top:24px}
       <img src="../p-ironcell-logo.webp" alt="IronCell Research" class="nav-logo-img">
     </a>
     <div class="announcement-bar">US Domestic Shipping 2-4 Days</div>
-    <div class="nav-cart" onclick="toggleCart(true)" role="button" tabindex="0" aria-label="Open cart">
+    <div class="nav-cart" onclick="toggleCart(true)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCart(true);}" role="button" tabindex="0" aria-label="Open cart">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
       <span id="cartTotal">$0.00</span>
       <span class="cart-count" id="cartCount">0</span>
@@ -369,6 +371,15 @@ function subscribeNewsletter() {
     el.focus();
     return;
   }
+  /* The shared blur repair at the bottom of this page may already have fixed a
+     typo - pressing Subscribe is what blurred the field - so the TYPOS check
+     below would no longer see it. Confirm that correction once. */
+  if (el.getAttribute('data-ic-repaired') === '1' && msg.getAttribute('data-confirming') !== '1') {
+    msg.textContent = 'Corrected to ' + email + '. Press Subscribe again to confirm.';
+    msg.style.color = 'var(--red-glow,#e52533)';
+    msg.setAttribute('data-confirming', '1');
+    return;
+  }
   var domain = email.slice(at + 1).toLowerCase();
   var TYPOS = {
     'gmail.con': 'gmail.com', 'gmail.co': 'gmail.com', 'gmial.com': 'gmail.com',
@@ -391,6 +402,19 @@ function subscribeNewsletter() {
     m.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=sub&email=' + encodeURIComponent(email) + '&src=' + encodeURIComponent(typeof icAttr === 'function' ? icAttr() : '');
   } catch (e) {}
 
+  /* Jimmy's "New Newsletter Subscriber" email - byte-for-byte what the main
+     store's footer form sends. This form never sent it, so ad-driven signups
+     reached his sheet but not his inbox. */
+  try {
+    fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+      access_key: '603b0822-9385-4831-ba22-13f82778ebab',
+      subject: 'New Newsletter Subscriber - IronCell Research',
+      from_name: 'IronCell Research Newsletter',
+      subscriber_email: email,
+      message: 'New newsletter subscriber:\n\nEmail: ' + email
+    }), keepalive:true}).catch(function(){});
+  } catch (e) {}
+
   try {
     if (typeof gtag === 'function') {
       gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
@@ -404,8 +428,12 @@ function subscribeNewsletter() {
   } catch (e) {}
 
   el.value = '';
+  el.removeAttribute('data-ic-repaired');
+  msg.removeAttribute('data-confirming');
   msg.innerHTML = 'You are on the list. Use code <strong>WELCOME20</strong> for 20% off your first order at <a href="/">our main store</a>.';
   msg.style.color = '';
+  /* Both markers, so neither the popup nor this form offers the signup again. */
+  try { localStorage.setItem('ic_subscribed_v1', '1'); localStorage.setItem('ic_nl_popup_v1', 'subscribed'); } catch (e) {}
 }
 </script>
 
@@ -561,6 +589,10 @@ function subscribeNewsletter() {
 
   /* ── cart ── */
   function add(key){
+    /* A new item after an order is a new order. Release placeOrder's submit
+       lock, which otherwise swallowed a second order on the same page load
+       with no message at all. */
+    window._icOrderPlaced = false;
     var p = PRODUCTS.filter(function(x){ return x.key === key; })[0];
     if (!p) return;
     var line = cart.filter(function(l){ return l.key === key; })[0];
@@ -754,7 +786,7 @@ function subscribeNewsletter() {
           '\n\nITEMS:\n' + itemsList +
           '\n\nSubtotal: $' + _sub.toFixed(2) +
           '\nShipping: $' + _ship.toFixed(2) +
-          '\nTax: $' + _tax.toFixed(2) + (state && _rate ? ' (' + state + ' ' + (_rate * 100).toFixed(2) + '%)' : '') +
+          '\nTax: $' + _tax.toFixed(2) + (state ? ' (' + state + ' ' + (_rate * 100).toFixed(2) + '%)' : '') +
           '\nTOTAL: $' + grand.toFixed(2)
       }), keepalive:true}).catch(function(){});
     } catch (e) {}
@@ -782,6 +814,9 @@ function subscribeNewsletter() {
     try {
       var px = new Image();
       px.src = INGEST + '?t=order' +
+        '&order=' + encodeURIComponent(num) +
+        '&state=' + encodeURIComponent(state) +
+        '&zip=' + encodeURIComponent(zip) +
         '&email=' + encodeURIComponent(email) +
         '&name='  + encodeURIComponent(name) +
         '&total=' + encodeURIComponent(grand.toFixed(2)) +
@@ -912,7 +947,46 @@ function subscribeNewsletter() {
   }
 
   /* Repair every email field on blur, checkout fields included. Delegated in the
-     capture phase because blur does not bubble. */
+     capture phase because blur does not bubble.
+
+     THE NOTE MUST NEVER MOVE A BUTTON UNDER A PRESS (fixed 2026-09-10). Pressing
+     Subscribe or a pay button is what blurs the email field, and the hint used
+     to be inserted during that blur - so the row reflowed between mousedown and
+     mouseup and the click landed on nothing. The first press after a typo was
+     silently eaten: measured on the storefront footer on phones, the supplies
+     form, and the Zelle / Venmo / PayPal buttons in checkout. The corrected
+     VALUE is still written immediately, so the click handler reads it; only
+     the visible note now waits until the press is over. The popup and the
+     supplies form show the note on their own message line and run their own
+     confirmation step, keyed off data-ic-repaired. */
+  var pressId = 0, pressing = false, pressQueue = [];
+  function pressStart() { pressing = true; pressId++; }
+  function pressEnd(delay) {
+    var id = pressId;
+    setTimeout(function () {
+      if (id !== pressId) return;          /* a new press began meanwhile */
+      pressing = false;
+      var q = pressQueue; pressQueue = [];
+      for (var i = 0; i < q.length; i++) { try { q[i](); } catch (e) {} }
+    }, delay);
+  }
+  ['pointerdown', 'mousedown', 'touchstart'].forEach(function (t) {
+    document.addEventListener(t, pressStart, true);
+  });
+  document.addEventListener('click', function () { pressEnd(30); }, true);
+  ['pointerup', 'mouseup', 'touchend', 'pointercancel', 'touchcancel'].forEach(function (t) {
+    document.addEventListener(t, function () { pressEnd(400); }, true);
+  });
+  function afterPress(fn) { if (pressing) pressQueue.push(fn); else setTimeout(fn, 0); }
+
+  /* The popup and the supplies form have their own message line below the row. */
+  function ownMessage(el) {
+    var pop = el.closest ? el.closest('#icNlPop') : null;
+    if (pop) return pop.querySelector('[data-ic-msg]');
+    if (el.id === 'nlEmail') return document.getElementById('nlMsg');
+    return null;
+  }
+
   document.addEventListener('blur', function (ev) {
     var el = ev.target;
     if (!el || el.tagName !== 'INPUT') return;
@@ -924,15 +998,66 @@ function subscribeNewsletter() {
     if (!r.changed) return;
     el.value = r.email;
     if (!r.note) return;
+    el.setAttribute('data-ic-repaired', '1');
 
-    var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.setAttribute('data-ic-emailhint', '1');
-      hint.style.cssText = 'font-size:.78rem;margin-top:5px;color:var(--red-glow,#e52533);line-height:1.35';
-      if (el.parentNode) el.parentNode.insertBefore(hint, el.nextSibling);
+    var fixed = r.email;
+    afterPress(function () {
+      /* Stale by the time the press ended - the field was cleared by a
+         successful submit, edited again, or its modal closed. Say nothing. */
+      if (el.value !== fixed || !el.getClientRects().length) return;
+      var own = ownMessage(el);
+      if (own) {
+        if (own.getAttribute('data-confirming') === '1') return;   /* the form already asked */
+        own.textContent = r.note + '. Press Subscribe to confirm.';
+        own.style.color = 'var(--red-glow,#e52533)';
+        own.setAttribute('data-confirming', '1');
+        return;
+      }
+      var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.setAttribute('data-ic-emailhint', '1');
+        hint.style.cssText = 'font-size:.78rem;margin-top:5px;color:var(--red-glow,#e52533);line-height:1.35';
+        if (el.parentNode) el.parentNode.insertBefore(hint, el.nextSibling);
+      }
+      hint.textContent = r.note + '. Edit it if that is wrong.';
+    });
+  }, true);
+
+  /* Editing the field retracts the note and any pending confirmation - a stale
+     "Corrected to ..." sitting under a different address was confusing, and a
+     confirmation given for one address must not carry over to the next. */
+  document.addEventListener('input', function (ev) {
+    var el = ev.target;
+    if (!el || el.tagName !== 'INPUT') return;
+    var own = ownMessage(el);
+    if (own && own.getAttribute('data-confirming') === '1') {
+      own.removeAttribute('data-confirming');
+      own.textContent = '';
     }
-    hint.textContent = r.note + '. Edit it if that is wrong.';
+    if (el.hasAttribute('data-ic-repaired')) {
+      el.removeAttribute('data-ic-repaired');
+      var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
+      if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+    }
+  }, true);
+
+  /* Enter submits. The storefront footer and the supplies form are bare inputs
+     beside a button with no <form>, so Enter - and a phone keyboard's Go key -
+     did nothing at all. Run the same repair a blur would, then the page's own
+     subscribe function, unchanged. */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter') return;
+    var el = ev.target;
+    if (!el || (el.id !== 'newsletterEmail' && el.id !== 'nlEmail')) return;
+    if (typeof window.subscribeNewsletter !== 'function') return;
+    ev.preventDefault();
+    var r = repair(el.value);
+    if (r.changed) {
+      el.value = r.email;
+      if (r.note) el.setAttribute('data-ic-repaired', '1');
+    }
+    window.subscribeNewsletter();
   }, true);
 
   /* ----------------------------------------------------------------- popup */
@@ -941,6 +1066,22 @@ function subscribeNewsletter() {
       var t = new Image(); t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);
       var m = new Image(); m.src = INGEST + '?t=sub&email=' + encodeURIComponent(email) + '&src=' + encodeURIComponent(typeof icAttr === 'function' ? icAttr() : '');
     } catch (e) {}
+    /* Jimmy's "New Newsletter Subscriber" email - byte-for-byte the call this
+       page's own footer form makes (same key, subject, from_name and body).
+       Without it everyone who joined through this popup, the main signup path
+       since Sep 8 2026, reached his sheet but never his inbox - which is what
+       "Jimmy isn't getting signup emails" was. */
+    try {
+      fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        access_key: '603b0822-9385-4831-ba22-13f82778ebab',
+        subject: 'New Newsletter Subscriber - IronCell Research',
+        from_name: 'IronCell Research Newsletter',
+        subscriber_email: email,
+        message: 'New newsletter subscriber:\n\nEmail: ' + email
+      }), keepalive:true}).catch(function(){});
+    } catch (e) {}
+    /* The footer form's marker, so no signup form offers 20% off again. */
+    try { localStorage.setItem('ic_subscribed_v1', '1'); } catch (e) {}
     try {
       if (typeof gtag === 'function') {
         gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
@@ -1007,17 +1148,24 @@ function subscribeNewsletter() {
       remember(reason);
       wrap.style.opacity = '0';
       setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 250);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey, true);
     }
-    function onKey(e) { if (e.key === 'Escape') close('dismissed'); }
+    /* Capture + stop, so Escape closes only this popup and not whatever the
+       page's own Escape handler would also close. */
+    function onKey(e) { if (e.key === 'Escape') { e.stopImmediatePropagation(); close('dismissed'); } }
 
     Array.prototype.forEach.call(box.querySelectorAll('[data-ic-close]'), function (b) {
       b.addEventListener('click', function () { close('dismissed'); });
     });
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close('dismissed'); });
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey, true);
 
     function go() {
+      /* The blur repair may already have corrected the field - pressing this
+         button is what blurred it - so the typo is gone from input.value by the
+         time we read it. data-ic-repaired carries that forward, so the
+         confirmation step below still happens. */
+      var pre = input.getAttribute('data-ic-repaired') === '1';
       var r = repair(input.value);
       input.value = r.email;
       if (!valid(r.email)) {
@@ -1027,11 +1175,12 @@ function subscribeNewsletter() {
       }
       /* One confirmation step when we changed what they typed, so a corrected
          address is never submitted without the person seeing it. */
-      if (r.changed && r.note && msg.getAttribute('data-confirming') !== '1') {
+      if (((r.changed && r.note) || pre) && msg.getAttribute('data-confirming') !== '1') {
         msg.setAttribute('data-confirming', '1');
-        msg.textContent = r.note + '. Press Subscribe again to confirm.';
+        msg.textContent = (r.note || ('Corrected to ' + r.email)) + '. Press Subscribe again to confirm.';
         return;
       }
+      input.removeAttribute('data-ic-repaired');
       submit(r.email);
       remember('subscribed');
       box.innerHTML =
@@ -1071,13 +1220,34 @@ function subscribeNewsletter() {
     return g.getBoundingClientRect().height > 0;
   }
 
+  /* Already subscribed through the footer or the supplies form - those set
+     ic_subscribed_v1, not this popup's own key, so the popup kept offering
+     20% off to people who had just signed up. */
+  function alreadySubscribed() {
+    try { return !!localStorage.getItem('ic_subscribed_v1'); } catch (e) { return false; }
+  }
+
+  /* Never interrupt someone mid-purchase or mid-typing. The popup used to open
+     five seconds in regardless: over an open checkout it stole focus from the
+     form, and Escape then closed the checkout as well. */
+  function busy() {
+    var a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+    var open = ['#checkout.active', '#done.active', '#drawer.active',
+                '#checkoutModal.active', '#cartSidebar.open', '#productModal.active'];
+    for (var i = 0; i < open.length; i++) {
+      try { if (document.querySelector(open[i])) return true; } catch (e) {}
+    }
+    return false;
+  }
+
   function arm() {
-    if (seen()) return;
+    if (seen() || alreadySubscribed()) return;
     var waited = 0;
     var timer = setInterval(function () {
       waited += 400;
-      if (seen()) { clearInterval(timer); return; }
-      if (ageGateUp()) { if (waited > 300000) clearInterval(timer); return; }
+      if (seen() || alreadySubscribed()) { clearInterval(timer); return; }
+      if (ageGateUp() || busy()) { if (waited > 300000) clearInterval(timer); return; }
       clearInterval(timer);
       build();
     }, 400);

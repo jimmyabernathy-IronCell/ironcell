@@ -4885,6 +4885,7 @@ ttq.page();
     try {
       var mmOrderImg = new Image();
       mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +
+        '&order=' + encodeURIComponent(orderNum) +
         '&email=' + encodeURIComponent(email) +
         '&name=' + encodeURIComponent(name) +
         '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +
@@ -5426,7 +5427,46 @@ ttq.page();
   }
 
   /* Repair every email field on blur, checkout fields included. Delegated in the
-     capture phase because blur does not bubble. */
+     capture phase because blur does not bubble.
+
+     THE NOTE MUST NEVER MOVE A BUTTON UNDER A PRESS (fixed 2026-09-10). Pressing
+     Subscribe or a pay button is what blurs the email field, and the hint used
+     to be inserted during that blur - so the row reflowed between mousedown and
+     mouseup and the click landed on nothing. The first press after a typo was
+     silently eaten: measured on the storefront footer on phones, the supplies
+     form, and the Zelle / Venmo / PayPal buttons in checkout. The corrected
+     VALUE is still written immediately, so the click handler reads it; only
+     the visible note now waits until the press is over. The popup and the
+     supplies form show the note on their own message line and run their own
+     confirmation step, keyed off data-ic-repaired. */
+  var pressId = 0, pressing = false, pressQueue = [];
+  function pressStart() { pressing = true; pressId++; }
+  function pressEnd(delay) {
+    var id = pressId;
+    setTimeout(function () {
+      if (id !== pressId) return;          /* a new press began meanwhile */
+      pressing = false;
+      var q = pressQueue; pressQueue = [];
+      for (var i = 0; i < q.length; i++) { try { q[i](); } catch (e) {} }
+    }, delay);
+  }
+  ['pointerdown', 'mousedown', 'touchstart'].forEach(function (t) {
+    document.addEventListener(t, pressStart, true);
+  });
+  document.addEventListener('click', function () { pressEnd(30); }, true);
+  ['pointerup', 'mouseup', 'touchend', 'pointercancel', 'touchcancel'].forEach(function (t) {
+    document.addEventListener(t, function () { pressEnd(400); }, true);
+  });
+  function afterPress(fn) { if (pressing) pressQueue.push(fn); else setTimeout(fn, 0); }
+
+  /* The popup and the supplies form have their own message line below the row. */
+  function ownMessage(el) {
+    var pop = el.closest ? el.closest('#icNlPop') : null;
+    if (pop) return pop.querySelector('[data-ic-msg]');
+    if (el.id === 'nlEmail') return document.getElementById('nlMsg');
+    return null;
+  }
+
   document.addEventListener('blur', function (ev) {
     var el = ev.target;
     if (!el || el.tagName !== 'INPUT') return;
@@ -5438,23 +5478,90 @@ ttq.page();
     if (!r.changed) return;
     el.value = r.email;
     if (!r.note) return;
+    el.setAttribute('data-ic-repaired', '1');
 
-    var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.setAttribute('data-ic-emailhint', '1');
-      hint.style.cssText = 'font-size:.78rem;margin-top:5px;color:var(--red-glow,#e52533);line-height:1.35';
-      if (el.parentNode) el.parentNode.insertBefore(hint, el.nextSibling);
+    var fixed = r.email;
+    afterPress(function () {
+      /* Stale by the time the press ended - the field was cleared by a
+         successful submit, edited again, or its modal closed. Say nothing. */
+      if (el.value !== fixed || !el.getClientRects().length) return;
+      var own = ownMessage(el);
+      if (own) {
+        if (own.getAttribute('data-confirming') === '1') return;   /* the form already asked */
+        own.textContent = r.note + '. Press Subscribe to confirm.';
+        own.style.color = 'var(--red-glow,#e52533)';
+        own.setAttribute('data-confirming', '1');
+        return;
+      }
+      var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.setAttribute('data-ic-emailhint', '1');
+        hint.style.cssText = 'font-size:.78rem;margin-top:5px;color:var(--red-glow,#e52533);line-height:1.35';
+        if (el.parentNode) el.parentNode.insertBefore(hint, el.nextSibling);
+      }
+      hint.textContent = r.note + '. Edit it if that is wrong.';
+    });
+  }, true);
+
+  /* Editing the field retracts the note and any pending confirmation - a stale
+     "Corrected to ..." sitting under a different address was confusing, and a
+     confirmation given for one address must not carry over to the next. */
+  document.addEventListener('input', function (ev) {
+    var el = ev.target;
+    if (!el || el.tagName !== 'INPUT') return;
+    var own = ownMessage(el);
+    if (own && own.getAttribute('data-confirming') === '1') {
+      own.removeAttribute('data-confirming');
+      own.textContent = '';
     }
-    hint.textContent = r.note + '. Edit it if that is wrong.';
+    if (el.hasAttribute('data-ic-repaired')) {
+      el.removeAttribute('data-ic-repaired');
+      var hint = el.parentNode && el.parentNode.querySelector('[data-ic-emailhint]');
+      if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+    }
+  }, true);
+
+  /* Enter submits. The storefront footer and the supplies form are bare inputs
+     beside a button with no <form>, so Enter - and a phone keyboard's Go key -
+     did nothing at all. Run the same repair a blur would, then the page's own
+     subscribe function, unchanged. */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter') return;
+    var el = ev.target;
+    if (!el || (el.id !== 'newsletterEmail' && el.id !== 'nlEmail')) return;
+    if (typeof window.subscribeNewsletter !== 'function') return;
+    ev.preventDefault();
+    var r = repair(el.value);
+    if (r.changed) {
+      el.value = r.email;
+      if (r.note) el.setAttribute('data-ic-repaired', '1');
+    }
+    window.subscribeNewsletter();
   }, true);
 
   /* ----------------------------------------------------------------- popup */
   function submit(email) {
     try {
       var t = new Image(); t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);
-      var m = new Image(); m.src = INGEST + '?t=sub&email=' + encodeURIComponent(email);
+      var m = new Image(); m.src = INGEST + '?t=sub&email=' + encodeURIComponent(email) + '&src=' + encodeURIComponent(typeof icAttr === 'function' ? icAttr() : '');
     } catch (e) {}
+    /* Jimmy's "New Newsletter Subscriber" email - byte-for-byte the call this
+       page's own footer form makes (same key, subject, from_name and body).
+       Without it everyone who joined through this popup, the main signup path
+       since Sep 8 2026, reached his sheet but never his inbox - which is what
+       "Jimmy isn't getting signup emails" was. */
+    try {
+      fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        access_key: '603b0822-9385-4831-ba22-13f82778ebab',
+        subject: 'New Newsletter Subscriber - IronCell Research',
+        from_name: 'IronCell Research Newsletter',
+        subscriber_email: email,
+        message: 'New newsletter subscriber:\n\nEmail: ' + email
+      }), keepalive:true}).catch(function(){});
+    } catch (e) {}
+    /* The footer form's marker, so no signup form offers 20% off again. */
+    try { localStorage.setItem('ic_subscribed_v1', '1'); } catch (e) {}
     try {
       if (typeof gtag === 'function') {
         gtag('event', 'conversion', { 'send_to': 'AW-18389709216/jCpBCKnUsOIcEKDj8sBE' });
@@ -5521,17 +5628,24 @@ ttq.page();
       remember(reason);
       wrap.style.opacity = '0';
       setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 250);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey, true);
     }
-    function onKey(e) { if (e.key === 'Escape') close('dismissed'); }
+    /* Capture + stop, so Escape closes only this popup and not whatever the
+       page's own Escape handler would also close. */
+    function onKey(e) { if (e.key === 'Escape') { e.stopImmediatePropagation(); close('dismissed'); } }
 
     Array.prototype.forEach.call(box.querySelectorAll('[data-ic-close]'), function (b) {
       b.addEventListener('click', function () { close('dismissed'); });
     });
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close('dismissed'); });
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey, true);
 
     function go() {
+      /* The blur repair may already have corrected the field - pressing this
+         button is what blurred it - so the typo is gone from input.value by the
+         time we read it. data-ic-repaired carries that forward, so the
+         confirmation step below still happens. */
+      var pre = input.getAttribute('data-ic-repaired') === '1';
       var r = repair(input.value);
       input.value = r.email;
       if (!valid(r.email)) {
@@ -5541,11 +5655,12 @@ ttq.page();
       }
       /* One confirmation step when we changed what they typed, so a corrected
          address is never submitted without the person seeing it. */
-      if (r.changed && r.note && msg.getAttribute('data-confirming') !== '1') {
+      if (((r.changed && r.note) || pre) && msg.getAttribute('data-confirming') !== '1') {
         msg.setAttribute('data-confirming', '1');
-        msg.textContent = r.note + '. Press Subscribe again to confirm.';
+        msg.textContent = (r.note || ('Corrected to ' + r.email)) + '. Press Subscribe again to confirm.';
         return;
       }
+      input.removeAttribute('data-ic-repaired');
       submit(r.email);
       remember('subscribed');
       box.innerHTML =
@@ -5585,13 +5700,34 @@ ttq.page();
     return g.getBoundingClientRect().height > 0;
   }
 
+  /* Already subscribed through the footer or the supplies form - those set
+     ic_subscribed_v1, not this popup's own key, so the popup kept offering
+     20% off to people who had just signed up. */
+  function alreadySubscribed() {
+    try { return !!localStorage.getItem('ic_subscribed_v1'); } catch (e) { return false; }
+  }
+
+  /* Never interrupt someone mid-purchase or mid-typing. The popup used to open
+     five seconds in regardless: over an open checkout it stole focus from the
+     form, and Escape then closed the checkout as well. */
+  function busy() {
+    var a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+    var open = ['#checkout.active', '#done.active', '#drawer.active',
+                '#checkoutModal.active', '#cartSidebar.open', '#productModal.active'];
+    for (var i = 0; i < open.length; i++) {
+      try { if (document.querySelector(open[i])) return true; } catch (e) {}
+    }
+    return false;
+  }
+
   function arm() {
-    if (seen()) return;
+    if (seen() || alreadySubscribed()) return;
     var waited = 0;
     var timer = setInterval(function () {
       waited += 400;
-      if (seen()) { clearInterval(timer); return; }
-      if (ageGateUp()) { if (waited > 300000) clearInterval(timer); return; }
+      if (seen() || alreadySubscribed()) { clearInterval(timer); return; }
+      if (ageGateUp() || busy()) { if (waited > 300000) clearInterval(timer); return; }
       clearInterval(timer);
       build();
     }, 400);
