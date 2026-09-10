@@ -85,8 +85,9 @@ it goes.
   makes the products eligible for rich results in search.
 - The subscriber capture `ironcell-ingest?t=sub` on every page that has a sign-up form: `index.html`,
   `mvp.html`, `truetransformation.html`, `amber/`, `billy/`, `carlos/`, `chel/`, `davu/`, `dro/`,
-  `dupree/`, `merv/`, `ray/`, `research-supplies/` (its own form), and the first-visit popup on all
-  of those plus `peptidecalculator/`. Every one of them also sends Jimmy's "New Newsletter
+  `dupree/`, `merv/`, `ray/`, `research-supplies/` (its own form), `welcome/` (its only form, no
+  popup), and the first-visit popup on all of those plus `peptidecalculator/`. Every one of them
+  also sends Jimmy's "New Newsletter
   Subscriber" email - see RECOVERY.md section 2c for why the popup and supplies form were missing it
   until 2026-09-10.
 - `research-supplies/index.html` carries its own copy of the Google tag. It is a separate file, so
@@ -133,6 +134,14 @@ form now send the SAME "New Newsletter Subscriber" Web3Forms email the storefron
 always sent - same key, subject, from_name and body, copied per page. They had never sent it, so
 signups there reached his sheet but not his inbox. That copies his path; it is not a new one. Any
 further change of this kind still needs Julien.
+
+**Second sanctioned addition, 2026-09-10 (Julien: "another meta ad that's pushing to the welcome
+page sign up discount"):** `welcome/index.html` is the Meta ad's landing page. Its one signup form
+sends the same two calls as the supplies-page form, byte for byte (sheet `?type=newsletter` and
+the "New Newsletter Subscriber" email), and nothing else of his. It is in `ops/base-contract.mjs`,
+so those two statements are locked like the rest (15 files, 133 statements; the other 131 did not
+change). The page deliberately has no products, prices, compound names or store links before
+signup, because Meta rejected two website ads from this account for "selling prescription drugs".
 
 This is not a style preference. It is a live fulfilment queue for physical product going to real
 customers. A duplicate row can mean a double shipment; a changed subject line can silently break

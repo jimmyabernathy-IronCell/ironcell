@@ -40,6 +40,7 @@ const FILES = [
   'amber/index.html', 'billy/index.html', 'carlos/index.html', 'chel/index.html',
   'davu/index.html', 'dro/index.html', 'dupree/index.html', 'merv/index.html', 'ray/index.html',
   'research-supplies/index.html', 'peptidecalculator/index.html',
+  'welcome/index.html',
 ];
 
 const EXEC = 'AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';

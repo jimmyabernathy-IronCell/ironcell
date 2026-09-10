@@ -524,7 +524,11 @@ function subscribeNewsletter() {
     <label id="okMethodLabel">Send payment to</label>
     <div class="handle" id="okHandle"></div>
     <p class="ruo" style="margin-top:18px">Once payment is received your order ships within one business day. Questions: orders@ironcellresearch.com</p>
-    <button class="btn full" style="margin-top:16px" onclick="location.reload()">Done</button>
+    <!-- Closes the confirmation instead of reloading (2026-09-10). A reload in the
+         first instant after Place Order could cancel the sheet, mirror or Google
+         hits still in flight. The cart is already empty and the SUBMIT LOCK in
+         placeOrder stops a second submission, so nothing needs the reload. -->
+    <button class="btn full" style="margin-top:16px" onclick="document.getElementById('done').classList.remove('active')">Done</button>
   </div>
 </div>
 
@@ -726,9 +730,10 @@ function subscribeNewsletter() {
 
     /* SUBMIT LOCK. This page had NO duplicate guard of any kind - not even the
        order-number check the storefronts use. It was protected only incidentally,
-       because the Done button calls location.reload(). Anything that dismissed
-       that modal without reloading would let a second Place Order fire Google
-       Purchase, fbq Purchase and ttq CompletePayment all over again. Latches on
+       because the Done button used to call location.reload() (it now just closes
+       the confirmation - this lock is the real protection). Without it a second
+       Place Order would fire Google Purchase, fbq Purchase and ttq CompletePayment
+       all over again. Latches on
        the first accepted submission, and is deliberately NOT keyed on the order
        number - orderNumber() mints a fresh one on every call, which is exactly
        how the storefront guard was being defeated. */
