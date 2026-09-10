@@ -1,0 +1,688 @@
+{
+ "note": "Approved snapshot of Jimmy's base structure. See ops/base-contract.mjs before changing.",
+ "files": {
+  "index.html": [
+   {
+    "kind": "order-number",
+    "line": 3993,
+    "text": "function generateOrderNumber() { return Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4327,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4376,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4872,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', subject: `New Order #${orderNum} - IronCell Research`, from_name: 'IronCell Research Orders', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4883,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4944,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4950,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5396,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5588,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5597,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "mvp.html": [
+   {
+    "kind": "order-number",
+    "line": 3818,
+    "text": "function generateOrderNumber() { return 'MV' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4152,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4201,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4586,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'ballersnutrition@gmail.com', subject: `New Order #${orderNum} - MVP`, from_name: 'MVP Orders', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4598,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4659,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4664,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - MVP', from_name: 'MVP Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5090,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5282,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5291,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - MVP', from_name: 'MVP Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "truetransformation.html": [
+   {
+    "kind": "order-number",
+    "line": 3819,
+    "text": "function generateOrderNumber() { return 'TT' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4153,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4202,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4587,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'josiahdnovak@gmail.com', subject: `New Order #${orderNum} - True Transformation`, from_name: 'True Transformation Orders', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4599,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4660,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4665,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - True Transformation', from_name: 'True Transformation Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5091,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5283,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5292,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - True Transformation', from_name: 'True Transformation Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "amber/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'AH' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4316,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4365,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4849,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'anmhunter1982@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Amber)`, from_name: 'IronCell Research Orders (Amber)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4861,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4922,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4928,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5354,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5546,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5555,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "billy/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3990,
+    "text": "function generateOrderNumber() { return 'BH' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4324,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4373,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4867,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'sliptorius42980@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Billy)`, from_name: 'IronCell Research Orders (Billy)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4879,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4940,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4946,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5376,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5568,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5577,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "carlos/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'CC' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4315,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4364,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4848,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'carloscortezjr@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Carlos)`, from_name: 'IronCell Research Orders (Carlos)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4860,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4921,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4927,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5353,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5545,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5554,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "chel/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'CB' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4317,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4366,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4850,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'CBosak2@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Chel)`, from_name: 'IronCell Research Orders (Chel)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4862,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4923,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4929,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5355,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5547,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5556,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "davu/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'DV' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4316,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4365,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4849,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'Project23vu@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Davu)`, from_name: 'IronCell Research Orders (Davu)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4861,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4922,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4928,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5354,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5546,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5555,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "dro/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'DM' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4315,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4364,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4848,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'pmartins27@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Dro)`, from_name: 'IronCell Research Orders (Dro)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4860,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4921,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4927,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5352,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5544,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5553,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "dupree/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3990,
+    "text": "function generateOrderNumber() { return 'DC' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4324,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4373,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4867,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'dupreecalfee@yahoo.com', subject: `New Order #${orderNum} - IronCell Research (Dupree)`, from_name: 'IronCell Research Orders (Dupree)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4879,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4940,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4946,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5376,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5568,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5577,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "merv/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'MC' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4317,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4366,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4850,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'swngman8@yahoo.com', subject: `New Order #${orderNum} - IronCell Research (Merv)`, from_name: 'IronCell Research Orders (Merv)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4862,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4923,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4929,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5355,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5547,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5556,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "ray/index.html": [
+   {
+    "kind": "order-number",
+    "line": 3984,
+    "text": "function generateOrderNumber() { return 'RS' + Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "sheet",
+    "line": 4317,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=welcomecheck&callback=__welcomeCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "sheet",
+    "line": 4366,
+    "text": "s.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=retacheck&callback=__retaCb&email=' + encodeURIComponent(custEmail) + '&_=' + Date.now();"
+   },
+   {
+    "kind": "email",
+    "line": 4850,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', ccemail: 'khawajarayed@gmail.com', subject: `New Order #${orderNum} - IronCell Research (Ray)`, from_name: 'IronCell Research Orders (Ray)', name: name, email: email, message: `NEW ORDER RECEIVED${(effectiveCoupon && discountAmt > 0) ? '\\nCOUPON: ' + effectiveCoupon + ' (' + (effectiveRate * 100) + '% off, -$' + discountAmt.toFixed(2) + ')' : ''}\\n\\nOrder #: ${orderNum}\\nPayment Method: ${method.toUpperCase()}\\n\\nCUSTOMER INFO:\\nName: ${name}\\nEmail: ${email}\\nPhone: ${phone || 'N/A'}\\nAddress: ${address}, ${city}, ${state} ${zip}\\n\\nITEMS:\\n${itemsList}\\n\\nSubtotal: $${subtotalPrice.toFixed(2)}\\nShipping: $${shipping.toFixed(2)}\\nTax: $${taxAmount.toFixed(2)}${taxState ? ' (' + taxState + ' ' + (taxRate * 100).toFixed(2) + '%)' : ''}\\nTOTAL: $${grandTotal.toFixed(2)}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 4862,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(orderNum) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(method.charAt(0).toUpperCase() + method.slice(1)) + '&productPrice=' + encodeURIComponent(grandTotal.toFixed(2)) + '&tax=' + encodeURIComponent(taxAmount.toFixed(2)) + '&shipping=' + encodeURIComponent(shipping.toFixed(2)) + '&coupon=' + encodeURIComponent(effectiveCoupon || '') + '&address=' + encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | ') + ((effectiveCoupon && discountAmt > 0) ? ' | Coupon: ' + effectiveCoupon + ' (-$' + discountAmt.toFixed(2) + ')' : ''));"
+   },
+   {
+    "kind": "sheet",
+    "line": 4923,
+    "text": "trackImg.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 4929,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: `New newsletter subscriber:\\n\\nEmail: ${email}` }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 5355,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 5547,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 5556,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "research-supplies/index.html": [
+   {
+    "kind": "sheet",
+    "line": 400,
+    "text": "t.src = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 409,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "order-number",
+    "line": 676,
+    "text": "function orderNumber(){ return Math.floor(100000 + Math.random() * 900000).toString(); }"
+   },
+   {
+    "kind": "email",
+    "line": 773,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', to: 'orders@ironcellresearch.com', subject: 'New Order #' + num + ' - IronCell Research', from_name: 'IronCell Research Orders', name: name, email: email, message: 'NEW ORDER RECEIVED\\n\\nOrder #: ' + num + '\\nPayment Method: ' + String(method).toUpperCase() + '\\n\\nCUSTOMER INFO:\\nName: ' + name + '\\nEmail: ' + email + '\\nPhone: ' + (phone || 'N/A') + '\\nAddress: ' + addr + ', ' + city + ', ' + state + ' ' + zip + '\\n\\nITEMS:\\n' + itemsList + '\\n\\nSubtotal: $' + _sub.toFixed(2) + '\\nShipping: $' + _ship.toFixed(2) + '\\nTax: $' + _tax.toFixed(2) + (state ? ' (' + state + ' ' + (_rate * 100).toFixed(2) + '%)' : '') + '\\nTOTAL: $' + grand.toFixed(2) }), keepalive:true}).catch(function(){});"
+   },
+   {
+    "kind": "sheet",
+    "line": 795,
+    "text": "var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' + 'orderNumber=' + encodeURIComponent(num) + '&date=' + encodeURIComponent(new Date().toLocaleDateString()) + '&customerName=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&paymentMethod=' + encodeURIComponent(_payLabel) + '&productPrice=' + encodeURIComponent(grand.toFixed(2)) + '&tax=' + encodeURIComponent(_tax.toFixed(2)) + '&shipping=' + encodeURIComponent(_ship.toFixed(2)) + '&coupon=' + '&address=' + encodeURIComponent(addr + ', ' + city + ', ' + state + ' ' + zip) + '&notes=' + encodeURIComponent(itemsList.replace(/\\n/g, ' | '));"
+   },
+   {
+    "kind": "sheet",
+    "line": 874,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 1066,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 1075,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ],
+  "peptidecalculator/index.html": [
+   {
+    "kind": "sheet",
+    "line": 1048,
+    "text": "var SHEET = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec';"
+   },
+   {
+    "kind": "sheet",
+    "line": 1240,
+    "text": "t.src = SHEET + '?type=newsletter&email=' + encodeURIComponent(email);"
+   },
+   {
+    "kind": "email",
+    "line": 1249,
+    "text": "fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ access_key: '603b0822-9385-4831-ba22-13f82778ebab', subject: 'New Newsletter Subscriber - IronCell Research', from_name: 'IronCell Research Newsletter', subscriber_email: email, message: 'New newsletter subscriber:\\n\\nEmail: ' + email }), keepalive:true}).catch(function(){});"
+   }
+  ]
+ }
+}

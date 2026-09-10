@@ -101,6 +101,14 @@ perfectly and throws no error - purchases simply stop being reported.
 
 **Full system map, verification recipes and recovery routes: [RECOVERY.md](RECOVERY.md). Read it first after any incident.**
 
+**Locked by [`ops/base-contract.mjs`](ops/base-contract.mjs) (2026-09-10).** Every statement that
+feeds his sheet or his inbox - the order-number function, every Apps Script call, every Web3Forms
+email, on all 14 order/signup pages - is snapshotted in `ops/base-contract.json`. Run
+`node ops/base-contract.mjs` before any commit that touches an HTML page; it must print `OK`. The
+`Base contract` workflow runs it on every push and checks the live site every 6 hours. A red
+result means put it back. Re-snapshotting (`--write`) is only for a change Jimmy approved,
+relayed by Julien, and the commit message says so.
+
 
 
 **HARD RULE, from Julien, 2026-09-09, after this was got wrong:**
@@ -322,6 +330,7 @@ grep -c '"@type":"ItemList"'               index.html   # 1  (minified, no space
 grep -c 'href="/admin/"'                   index.html   # 1
 grep -c 'ironcell-ingest?t=sub'            index.html   # 1
 grep -c 'Disallow: /admin/'                robots.txt   # 1
+node ops/base-contract.mjs                              # OK - Jimmy's order/signup plumbing untouched
 git diff --numstat                                      # only the files you meant to touch
 ```
 

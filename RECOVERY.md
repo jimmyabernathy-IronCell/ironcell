@@ -219,6 +219,19 @@ the order email subject, the signup email subject per page, the mirror's
 `&order=`, the conversions, and that nothing is sent before a typo is
 confirmed. Expected: 105/110, the 5 misses listed in 6b.
 
+**Prove Jimmy's base is untouched: [`ops/base-contract.mjs`](ops/base-contract.mjs)** (no
+dependencies, plain Node). It extracts every statement that feeds his systems - the
+order-number function, every Apps Script call (order row, newsletter row, welcome/reta
+lookups, the popup's `SHEET`), every Web3Forms email - from all 14 order/signup pages and
+compares them, whitespace-blind, with the approved snapshot `ops/base-contract.json` (131
+statements, approved 2026-09-10 from `3a889c4`, which the live site matched). `node
+ops/base-contract.mjs` checks the repo, `--live` checks the published site; both print `OK` or
+the exact statement before and after. The `Base contract` GitHub workflow runs it on every push
+and against the live site every 6 hours. It never reverts anything: a red run means put it
+back, by hand, from `git log -p`. Only a change Jimmy approved (relayed by Julien) is
+re-snapshotted, with `--write`, and the commit says whose approval it was. Our own lines
+(`ironcell-ingest`, gtag/fbq/ttq) are outside the contract and can change freely.
+
 ## 6. Recovery routes
 
 - Sheet damaged: Google Sheets File > Version history > restore (the client

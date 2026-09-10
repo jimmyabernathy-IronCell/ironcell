@@ -1,0 +1,40 @@
+name: Base contract (Jimmy's order + signup plumbing)
+
+# Jimmy runs his business from his Google Sheet and his orders@ emails. The statements
+# that feed them (order numbers, every Apps Script call, every Web3Forms email) are
+# snapshotted in ops/base-contract.json. This job fails if any of them change.
+#
+# It does NOT revert anything and does NOT block the publish - GitHub Pages deploys on
+# push regardless. It exists so a change to his plumbing is loud the moment it lands,
+# instead of being found weeks later as missing orders.
+#
+# On push: checks the repo. Every 6 hours and on demand: checks the published site too.
+# A red run here means "put it back", not "re-snapshot". See ops/base-contract.mjs.
+
+on:
+  push:
+    paths:
+      - '**.html'
+      - 'ops/base-contract.*'
+      - '.github/workflows/base-contract.yml'
+  schedule:
+    - cron: '41 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Repo matches the approved base
+        run: node ops/base-contract.mjs
+      - name: Live site matches the approved base
+        if: github.event_name != 'push'
+        run: node ops/base-contract.mjs --live
