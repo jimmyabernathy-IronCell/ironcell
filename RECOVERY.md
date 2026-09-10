@@ -145,31 +145,62 @@ shipped. When his system and an instruction collide, surface the collision.
   `t=order` beacon, mvp/truetransformation included.
 - Meta pixel (`fbq` Purchase) and TikTok pixel (`ttq` CompletePayment) fire on
   the same order event.
+- `/welcome/` (added Sep 10, `6e8df43`) is the Meta WELCOME20 ad's landing page:
+  one signup form, same calls as the supplies form (newsletter conversion, `fbq`
+  Lead, `ttq` SubmitForm, `t=sub` with `&src`), in the base contract.
+- The supplies page confirmation's **Done** button closes the modal instead of
+  reloading (Sep 10), so a fast tap cannot cancel the sheet, mirror or Google
+  hits still in flight. The SUBMIT LOCK in `placeOrder` is what stops a repeat.
+- Verified end to end on the live page Sep 10 with stubbed network (68/68):
+  sheet row, orders@ email, mirror with `&src=s=google|m=cpc|...|gclid=...`,
+  Google Purchase with value/currency/transaction_id, Meta Purchase, TikTok
+  CompletePayment; identical in shape to the main storefront's checkout.
 - Google Ads account: `977-552-6860 Iron Cell Research` under
-  jimmyabernathy@gmail.com (Chrome authuser=2). Campaigns: "IronCell - Research
-  Supplies" (Search, $33/day) and "IronCell - Newsletter Signups (WELCOME20)".
-  No healthcare certification (by decision), enhanced conversions OFF (Jimmy's
-  call), every campaign uses the new-account promo credit, ad spend is on the
-  client's own payment method. The unrelated `979-037-6401 TEMSA Collective
-  Holdings` account under temsagpt@ is paused pending advertiser verification.
+  jimmyabernathy@gmail.com (Chrome authuser=2). Auto-tagging ON. Campaigns:
+  "IronCell - Research Supplies" (Search; from Sep 10 a one-week order test,
+  $12.50/day, ends Sep 17, $100 cap) and "IronCell - Newsletter Signups
+  (WELCOME20)" ($150 total, ends Sep 15). Primary conversions: Purchase (Every)
+  and Newsletter signup (One). No healthcare certification (by decision).
+  Enhanced conversions are documented OFF, but on Sep 10 the Google tag's
+  "Include user-provided data from your website" auto-detection read ON (hits
+  report enhanced conversions enabled; no customer data seen attached in tests) -
+  flagged to Julien, it is an account setting. **Advertiser verification is due
+  Sep 17 2026 or the account pauses** (Jimmy's identity step). Ad spend is on the
+  client's own payment method; the $300 promo credit funds spend first. The
+  unrelated `979-037-6401 TEMSA Collective Holdings` account under temsagpt@ is
+  paused pending advertiser verification.
 
 ## 4b. Ad platforms and creative - what gets accounts banned
 
 **The compliance fence.** Google's Unapproved Substances policy covers the
-compound catalogue with no research-use exemption, and violations can suspend
-the account without warning. So every Google ad points at `/research-supplies/`,
-sells lab supplies only, and every campaign carries campaign-level negatives:
-`retatrutide, tirzepatide, semaglutide, bpc-157, bpc 157, tb-500, tb 500, pt-141,
-mt-2, melanotan, cjc-1295, cjc 1295, ipamorelin, ghk-cu, mots-c, tesamorelin,
-peptide, peptides, sarms, hgh, trt, glp-1, glp1, weight loss, dosage, dose,
-how to inject, for humans`. Never "peptide" in a keyword, headline or
-description. (Do not add `injection for` as a broad negative: it blocks
-"bacteriostatic water for injection", the best-converting term.)
+compound catalogue with no research-use exemption. So every Google ad points at
+`/research-supplies/`, sells lab supplies only, and never says "peptide" or a
+compound name in a keyword, headline or description. That is the fence: what we
+TARGET and what the ad SAYS.
 
-**Sep 10 fix:** the "Newsletter Signups (WELCOME20)" campaign (24233938787) had
-been built with four broad-match peptide keywords, "Research Peptide Supplies"
-headlines, a "for peptide work" description and ZERO negatives. The fence above
-was added, the four keywords paused (not removed), and the ad reworded.
+**Negatives are NOT for his products.** Julien, Aug 29: "we dont have to have
+negative keywords for the clients products please dont waste the ad spend like
+this" - 17 product negatives (peptide, bpc-157, hospira ...) had blocked the
+buyers of bac water ("bac water for bpc 157") and the campaign ran 257 clicks /
+0 conversions. Check any negative against the live catalogue before adding it.
+Current lists (Sep 10): Research Supplies carries 60, all non-product -
+informational (calculator, "what is", vs, expire, "shelf life", storing, diy,
+ndc ...), other products (luer, intramuscular, saline, "sodium chloride"),
+foreign (uk, kopen), retailers (amazon, cvs, walgreens, walmart), and human-use
+or controlled terms (dosage/dose/dosing, "for humans", "how to inject", hgh,
+somatropin, sarms, trt, testosterone, steroid(s), anabolic, hcg, semaglutide,
+ozempic, wegovy, compounded, botox, filler(s), "harm reduction", "needle
+exchange", weight loss ...). NOT b12 (he sells Vitamin B12 and MIC + B12), NOT
+mounjaro/zepbound/tirzepatide/glp (GLP2-Tirz and GLP3-Reta are his). Newsletter
+Signups carries 9: dosage, dose, for humans, how to inject, hgh, sarms,
+semaglutide, trt, weight loss. (Never `injection for` as a broad negative: it
+blocks "bacteriostatic water for injection", the product's legal name.)
+
+**Sep 10:** the "Newsletter Signups (WELCOME20)" campaign (24233938787) had been
+built with four broad-match peptide keywords, "Research Peptide Supplies"
+headlines and a "for peptide work" description: keywords paused (not removed),
+ad reworded. A 28-term compound negative list added that morning was cut back to
+the 9 above the same afternoon under the Aug 29 rule.
 
 **Meta: account classified Drugs & Pharmaceuticals.** Two rejections so far: a
 boosted post (Aug/Sep) and "New Traffic Ad" in the TX-CA policy test
@@ -182,8 +213,20 @@ line. A third rejection risks a disabled ad account, Page and pixel.
 **Rule: no vial or compound imagery in any paid ad on any platform.** Supplies
 imagery (bacteriostatic water, syringes, kits) and text-only offers only.
 Editing a rejected Meta ad auto-resubmits it; Ads Manager's "Review and publish"
-ships the WHOLE draft queue. Meta's uploader is the OS file picker (a human has
-to add creative there).
+ships the WHOLE draft queue. The second rejection's panel says "It looks like
+your ad sells prescription drugs": /research-supplies/ lists Hospira
+bacteriostatic water for injection (Rx-only) and the storefront lists GLP
+compounds, so a website ad pointed at either is likely refused whatever the image.
+
+**Sep 10, Meta ads now live:** (1) a Page-follows ad, $92, Sep 10-14, no website;
+(2) a WELCOME20 "Website visitors" ad, $99.96, Sep 10-17, CA + TX, 21+,
+Facebook-only, landing on the product-free `/welcome/` page with Julien's
+"Welcome to Iron Cell / 20% off / Code WELCOME20" graphic (no vials). Keep
+`/welcome/` free of products, prices, compound names and store links - that is
+what gives this ad a chance at review. Business Suite pre-fills new ads with
+AI copy naming the compounds ("Buy research peptides ... GLP3-Reta, BPC-157"):
+replace every field before publishing. Its "Advantage+ creative" switch cannot
+be turned off in that flow.
 
 **TikTok:** Business Center "Unifirst" / ad account Unifirst0905
 (7618373214120656897), pixel DAG4D4RC77UES974PFB0. Campaign "IC Research
