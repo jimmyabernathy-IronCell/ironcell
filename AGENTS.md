@@ -18,7 +18,7 @@ The short version:
   newsletter capture on any page with a sign-up form; `admin/index.html` and the four root
   `email-*` images; the footer `<a href="/admin/" rel="nofollow noopener">Admin</a>` link;
   `Disallow: /admin/` in `robots.txt`; `CNAME`, `sitemap.xml`, `llms.txt`,
-  `googlea8e08b7d1d3051d2.html`; and either workflow in `.github/workflows/`.
+  `googlea8e08b7d1d3051d2.html`; and the workflows in `.github/workflows/` (keep-admin-entry, admin-live-check, base-contract).
 - **A commit from `iron-cell-admin-guard`** is the automatic repair job putting something back. Do
   not revert it. If your copy disagrees with it, your copy is older - pull and re-apply.
 - **Ask before touching** checkout, the cart, pricing, coupons, the Spend & Save promotion, PayPal,

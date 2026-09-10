@@ -11,13 +11,14 @@ Every fact below was verified by reading the live system back, not inferred.
 - Static GitHub Pages site for ironcellresearch.com. `git push` to `main` IS
   the publish; there is no build step. Verify a deploy by curling the live page
   for a string you just added (`curl -s --compressed URL | grep -c MARKER`).
-- 14 pages take traffic. **12 storefront files share one checkout**
+- 15 pages take traffic. **12 storefront files share one checkout**
   (`proceedWithOrder()`): `index.html`, the nine rep folders `amber/ billy/
   carlos/ chel/ davu/ dro/ dupree/ merv/ ray/`, and `mvp.html` +
   `truetransformation.html` at the root. **`research-supplies/`** is the 13th
   order-taking page, with its own checkout (`window.placeOrder()`): both paid
   Google campaigns land there, it names no compound and has no age gate.
-  **`peptidecalculator/`** takes signups only. `admin/` is the client's
+  **`peptidecalculator/`** takes signups only. **`welcome/`** (Sep 10) takes signups only: the Meta
+WELCOME20 ad's landing page, one form, no popup, no products, noindex. `admin/` is the client's
   newsletter composer, not a storefront. `/IRONCELL/` is a legacy mockup with no
   checkout and no tags (robots-disallowed, unlinked).
 
@@ -76,10 +77,12 @@ Key `603b0822-9385-4831-ba22-13f82778ebab`.
   Sep 8) and the supplies-page form reached his sheet but never his inbox, which
   is what "Jimmy isn't getting signup emails" was. Since `6432302` both send the
   identical call, with each page's own subject.
-- **Quota:** Web3Forms free plan is 250 submissions a month per key. Sep 1-10
-  ran 44 orders + ~10 signups, i.e. ~165/month. A month with ~200 orders plus a
-  signup push would hit 250 and **delivery stops silently** - no error anywhere.
-  If order volume climbs, Jimmy needs a paid Web3Forms plan (his account).
+- **Quota:** Web3Forms free plan is 250 submissions a month per key. Every order email counts, and since `6432302` (Sep 10) so does every
+  signup email. Mirror, Sep 1-10: 47 orders and 14 site signups, 13 of them on Sep 9-10 once the
+  popup became the main path - about 5 orders + 6 signups a day, roughly 330/month, before the
+  paid signup campaigns (Google to Sep 15, Meta to Sep 17). September is likely to reach 250, and
+  at the cap **delivery stops silently** - no error anywhere, order emails included. Jimmy needs a
+  paid Web3Forms plan (his account) now; check usage in his Web3Forms dashboard.
 
 **2d. His order numbers**
 Main site and supplies page: six random digits. Rep clones: rep prefix plus
@@ -110,7 +113,7 @@ shipped. When his system and an instruction collide, surface the collision.
   `&order=<order number>`** (read it as `raw->>'order'`), and all 13 order pages
   also send `&state` and `&zip` (storefronts since `2f7dab8`, Sep 7), so the mirror
   can be matched to his sheet by order number instead of email + total.
-  **`&src=` format (since Sep 10, commit after `75234bd`):** labelled fields,
+  **`&src=` format (since Sep 10, `80b4acd`):** labelled fields,
   `s=<source>|m=<medium>|c=<campaign>|ct=<utm_content>|kw=<utm_term>|<clickid>=<value>`,
   where the click id is `gclid`, `gbraid`, `wbraid` (Google iOS), `fbclid` or `ttclid`.
   First touch within 30 days wins. Rows before that carry the old
@@ -118,8 +121,9 @@ shipped. When his system and an instruction collide, surface the collision.
   two-part old value is ambiguous. Orders before Sep 10 have no number in
   the mirror. **Since `a5c999a` (Sep 10) every order page also sends `&phone=`**
   (Julien: customer emails and phones are shared with MM, never with TikTok), read
-  it as `raw->>'phone'`. Street address is still deliberately not mirrored (the
-  supplies page's `items` string carries it). TikTok's Automatic Advanced Matching
+  it as `raw->>'phone'`. Street address has no field of its own in the mirror: storefront orders do not send it, while
+  supplies-page orders carry it (with the phone) inside the `items` string, so it does reach
+  `ironcell_orders` for those. TikTok's Automatic Advanced Matching
   is OFF on purpose and must stay off. `?t=sub` mirrors signups
   into `ironcell_subscribers`; since ingest **v10** (Sep 10) the signup's
   first-touch attribution is kept in `ironcell_subscribers.src` (it used to be
@@ -138,9 +142,10 @@ shipped. When his system and an instruction collide, surface the collision.
   `BVXmCJiwnuIcEKDj8sBE` fires once per order with `value` = grand total and
   `transaction_id` = order number, on the storefront, every clone and the
   supplies page. The Newsletter-signup conversion `jCpBCKnUsOIcEKDj8sBE` fires
-  on every signup path: storefront footer, the popup on all 14 pages, the
-  supplies form. Healthy `AW-` reference counts (Sep 10): storefront files 8,
-  supplies 6, calculator 4. A clone that lost the tag on paste is the
+  on every signup path: storefront footer, the popup on all 14 popup pages, the
+  supplies form and the welcome/ form. Healthy `AW-` reference counts (Sep 10): storefront files 8,
+  supplies 7 (6 live references plus the count note in the placeOrder comment), calculator 4,
+  welcome 4 (count with grep -o 'AW-18389709216' FILE | wc -l). A clone that lost the tag on paste is the
   historical failure. `&src=` attribution now rides on every `t=sub` and
   `t=order` beacon, mvp/truetransformation included.
 - Meta pixel (`fbq` Purchase) and TikTok pixel (`ttq` CompletePayment) fire on
@@ -150,7 +155,9 @@ shipped. When his system and an instruction collide, surface the collision.
   Lead, `ttq` SubmitForm, `t=sub` with `&src`), in the base contract.
 - The supplies page confirmation's **Done** button closes the modal instead of
   reloading (Sep 10), so a fast tap cannot cancel the sheet, mirror or Google
-  hits still in flight. The SUBMIT LOCK in `placeOrder` is what stops a repeat.
+  hits still in flight. The SUBMIT LOCK in `placeOrder` is what stops a repeat, and
+  because add() releases that lock, Done swallows clicks for 600 ms after closing
+  (`bd5d088`) so a double-tap cannot land on an Add to cart underneath.
 - Verified end to end on the live page Sep 10 with stubbed network (68/68):
   sheet row, orders@ email, mirror with `&src=s=google|m=cpc|...|gclid=...`,
   Google Purchase with value/currency/transaction_id, Meta Purchase, TikTok
@@ -218,11 +225,13 @@ your ad sells prescription drugs": /research-supplies/ lists Hospira
 bacteriostatic water for injection (Rx-only) and the storefront lists GLP
 compounds, so a website ad pointed at either is likely refused whatever the image.
 
-**Sep 10, Meta ads now live:** (1) a Page-follows ad, $92, Sep 10-14, no website;
+**Sep 10, two Meta ads published (both passed review the same day; the guard reports their
+status daily):** (1) a Page-follows ad, $92, Sep 10-14, no website;
 (2) a WELCOME20 "Website visitors" ad, $99.96, Sep 10-17, CA + TX, 21+,
 Facebook-only, landing on the product-free `/welcome/` page with Julien's
 "Welcome to Iron Cell / 20% off / Code WELCOME20" graphic (no vials). Keep
-`/welcome/` free of products, prices, compound names and store links - that is
+`/welcome/` free of products, prices, compound names and store links before signup (the post-signup message
+links to `/`; dropping that link too is Julien's call) - that is
 what gives this ad a chance at review. Business Suite pre-fills new ads with
 AI copy naming the compounds ("Buy research peptides ... GLP3-Reta, BPC-157"):
 replace every field before publishing. Its "Advantage+ creative" switch cannot
@@ -230,10 +239,14 @@ be turned off in that flow.
 
 **TikTok:** Business Center "Unifirst" / ad account Unifirst0905
 (7618373214120656897), pixel DAG4D4RC77UES974PFB0. Campaign "IC Research
-Supplies / Lab Consumables TX-CA" ran Sep 8-15, $20/day. Same creative rule.
+Supplies / Lab Consumables TX-CA" runs Sep 8-15, $20/day on the ad group. Its one live ad
+("IC Supplies Newsletter v1") predates the creative rule and is a known exception, approved by
+Julien on Sep 10; the guard turns it off on a TikTok rejection of THAT ad. Never build a new ad
+from its creative.
 
 The daily guard task `ironcell-ads-500-stop` (on Julien's machine) reads all
-four campaigns every morning and pauses on any cap, date or rejection.
+six every morning (Google Research Supplies and Newsletter Signups, TikTok, Meta TX-CA (off),
+Meta Page-follows, Meta WELCOME20) and pauses or turns off on any cap, date or rejection.
 
 ## 5. How to verify anything without sending anything
 
@@ -264,22 +277,26 @@ confirm status.` appended to column L. Then read it back.
 
 **Or run the whole suite: [`ops/wiring-dry-run.mjs`](ops/wiring-dry-run.mjs).**
 110 checks across the supplies form, the supplies checkout (typo'd email, real
-mouse clicks, second order on one page load), the popup on 6 page types at
+mouse clicks, second order on one page load), the popup on 5 page types (6 runs) at
 desktop and iPhone size, the storefront footer and checkout on desktop and
 iPhone, and a rep clone. It asserts the exact 12 sheet parameters in order,
 the order email subject, the signup email subject per page, the mirror's
 `&order=`, the conversions, and that nothing is sent before a typo is
-confirmed. Expected: 105/110, the 5 misses listed in 6b.
+confirmed. Expected: 105/110, the 5 misses listed in 6b. It does not cover /welcome/ (added later): dry-run
+that page separately and expect exactly one each of sheet ?type=newsletter, "New Newsletter
+Subscriber" email, t=sub with &src, newsletter conversion, fbq Lead, ttq SubmitForm.
 
 **Prove Jimmy's base is untouched: [`ops/base-contract.mjs`](ops/base-contract.mjs)** (no
 dependencies, plain Node). It extracts every statement that feeds his systems - the
 order-number function, every Apps Script call (order row, newsletter row, welcome/reta
-lookups, the popup's `SHEET`), every Web3Forms email - from all 14 order/signup pages and
-compares them, whitespace-blind, with the approved snapshot `ops/base-contract.json` (131
-statements, approved 2026-09-10 from `3a889c4`, which the live site matched). `node
+lookups, the popup's `SHEET`), every Web3Forms email - from all 15 order/signup pages and
+compares them, whitespace-blind, with the approved snapshot `ops/base-contract.json` (133
+statements: 131 approved 2026-09-10 from `3a889c4`, which the live site matched, plus welcome/'s
+two signup statements added in `6e8df43`, the other 131 unchanged). `node
 ops/base-contract.mjs` checks the repo, `--live` checks the published site; both print `OK` or
-the exact statement before and after. The `Base contract` GitHub workflow runs it on every push
-and against the live site every 6 hours. It never reverts anything: a red run means put it
+the exact statement before and after. The `Base contract` GitHub workflow runs it on every push that touches an HTML page or the contract files, re-checks the live site
+about 12 minutes after each such push, and has a 6-hourly live schedule GitHub throttles (best
+effort). It never reverts anything: a red run means put it
 back, by hand, from `git log -p`. Only a change Jimmy approved (relayed by Julien) is
 re-snapshotted, with `--write`, and the commit says whose approval it was. Our own lines
 (`ironcell-ingest`, gtag/fbq/ttq) are outside the contract and can change freely.
@@ -324,8 +341,11 @@ re-snapshotted, with `--write`, and the commit says whose approval it was. Our o
    the email typo repair stopped eating the first press after a typo (it was
    costing signups AND the first tap on Zelle/Venmo/PayPal in checkout); popup
    no longer opens over checkout; order number added to our mirror.
-6. Sep 10: the Meta TX-CA ad's rejection traced to its vial creative (4b), and
-   the Google newsletter campaign brought back inside the compliance fence.
+6. Sep 10: the Meta TX-CA ad was rejected as "sells prescription drugs" - the vial creative AND
+   the landing pages (Rx-only Hospira water on /research-supplies/, GLP compounds on the
+   storefront), so a website ad to either is likely refused whatever the image (4b). Replaced by a
+   Page-follows ad and a WELCOME20 ad to the product-free /welcome/; and the Google newsletter
+   campaign brought back inside the compliance fence.
 
 The rule that would have prevented all of it: **never write to a system you
 cannot read back, and copy the client's path byte-for-byte or not at all.**

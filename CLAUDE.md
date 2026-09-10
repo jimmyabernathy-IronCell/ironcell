@@ -86,7 +86,7 @@ it goes.
 - The subscriber capture `ironcell-ingest?t=sub` on every page that has a sign-up form: `index.html`,
   `mvp.html`, `truetransformation.html`, `amber/`, `billy/`, `carlos/`, `chel/`, `davu/`, `dro/`,
   `dupree/`, `merv/`, `ray/`, `research-supplies/` (its own form), `welcome/` (its only form, no
-  popup), and the first-visit popup on all of those plus `peptidecalculator/`. Every one of them
+  popup), and the first-visit popup on all of those except `welcome/`, plus `peptidecalculator/`. Every one of them
   also sends Jimmy's "New Newsletter
   Subscriber" email - see RECOVERY.md section 2c for why the popup and supplies form were missing it
   until 2026-09-10.
@@ -104,9 +104,11 @@ perfectly and throws no error - purchases simply stop being reported.
 
 **Locked by [`ops/base-contract.mjs`](ops/base-contract.mjs) (2026-09-10).** Every statement that
 feeds his sheet or his inbox - the order-number function, every Apps Script call, every Web3Forms
-email, on all 14 order/signup pages - is snapshotted in `ops/base-contract.json`. Run
+email, on all 15 order/signup pages (welcome/ included since 6e8df43) - is snapshotted in `ops/base-contract.json`. Run
 `node ops/base-contract.mjs` before any commit that touches an HTML page; it must print `OK`. The
-`Base contract` workflow runs it on every push and checks the live site every 6 hours. A red
+`Base contract` workflow runs it on every push that touches an HTML page or the contract files,
+re-checks the live site about 12 minutes after each such push, and also has a 6-hourly live
+schedule that GitHub throttles heavily (treat it as best effort). A red
 result means put it back. Re-snapshotting (`--write`) is only for a change Jimmy approved,
 relayed by Julien, and the commit message says so.
 
@@ -135,8 +137,11 @@ always sent - same key, subject, from_name and body, copied per page. They had n
 signups there reached his sheet but not his inbox. That copies his path; it is not a new one. Any
 further change of this kind still needs Julien.
 
-**Second sanctioned addition, 2026-09-10 (Julien: "another meta ad that's pushing to the welcome
-page sign up discount"):** `welcome/index.html` is the Meta ad's landing page. Its one signup form
+**Second addition, 2026-09-10, on Julien's instruction ("another meta ad that's pushing to the welcome
+page sign up discount"). Jimmy's own go-ahead for a new page writing his newsletter rows is not
+recorded (the 6e8df43 --write cites Julien only): ask Julien to confirm it with Jimmy and record it
+here. Until then leave these two calls in place - removing them would drop every Meta-ad signup
+from his sheet and inbox.** `welcome/index.html` is the Meta ad's landing page. Its one signup form
 sends the same two calls as the supplies-page form, byte for byte (sheet `?type=newsletter` and
 the "New Newsletter Subscriber" email), and nothing else of his. It is in `ops/base-contract.mjs`,
 so those two statements are locked like the rest (15 files, 133 statements; the other 131 did not
@@ -164,7 +169,7 @@ The first fix, on 2026-09-08, got two things wrong and was reverted on 2026-09-0
 
 The earlier note that a second sender on the shared Web3Forms key "starved" his order emails
 was a theory, not a finding: that block fired once per order (four orders in a month) and the
-eleven storefront files already send on that key. Whether his order emails actually stopped,
+twelve storefront files already send on that key. Whether his order emails actually stopped,
 and why, is still unconfirmed; the check is whether the email for his own test order
 136230 (2026-09-09 7:56 PM) arrived at `orders@`.
 
@@ -281,6 +286,7 @@ Verify with `grep -c 'User-agent:' robots.txt` → `14`, and `grep -c 'Disallow:
 ```
 .github/workflows/keep-admin-entry.yml
 .github/workflows/admin-live-check.yml
+.github/workflows/base-contract.yml
 ```
 
 These are not leftovers and should not be tidied up as unrecognised files. They are the automatic
@@ -338,7 +344,8 @@ grep -c 'application/ld+json'              index.html   # 3
 grep -c '"@type":"ItemList"'               index.html   # 1  (minified, no space after the colon)
 grep -c 'href="/admin/"'                   index.html   # 1
 grep -c 'ironcell-ingest?t=sub'            index.html   # 1
-grep -c 'Disallow: /admin/'                robots.txt   # 1
+grep -c 'Disallow: /admin/'                robots.txt   # 14 (one per User-agent group, see 2.3)
+grep -c 'User-agent:'                      robots.txt   # 14
 node ops/base-contract.mjs                              # OK - Jimmy's order/signup plumbing untouched
 git diff --numstat                                      # only the files you meant to touch
 ```
@@ -365,7 +372,7 @@ curl -s "https://ironcellresearch.com/?cb=$RANDOM" \
             -e 'application/ld+json'
 
 curl -s -o /dev/null -w '%{http_code}\n' https://ironcellresearch.com/admin/   # 200
-curl -s https://ironcellresearch.com/robots.txt | grep -c 'Disallow: /admin/'  # 1
+curl -s https://ironcellresearch.com/robots.txt | grep -c 'Disallow: /admin/'  # 14
 ```
 
 A `?cb=` query string does NOT bypass GitHub Pages' CDN (Fastly ignores it; responses carry
@@ -386,7 +393,7 @@ GitHub API, not `raw`.
 | Pull current `main`, then edit in place | Editing an older local or pasted copy |
 | Change only the lines you mean to change | Writing the whole file back |
 | `git diff` before committing | Committing and checking afterwards |
-| Leaving `.github/workflows/` alone | Removing the two workflow files |
+| Leaving `.github/workflows/` alone | Removing the admin-guard or base-contract workflows |
 | Letting `iron-cell-admin-guard` commits stand | Reverting or discarding them |
 | Verifying the live domain after a publish | Assuming a green push means a good page |
 | Leaving Jimmy's sheet, order emails and order numbers exactly as they are | Adding a writer, a sender or a new number format to his fulfilment system |
