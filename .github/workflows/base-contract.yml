@@ -8,8 +8,14 @@ name: Base contract (Jimmy's order + signup plumbing)
 # push regardless. It exists so a change to his plumbing is loud the moment it lands,
 # instead of being found weeks later as missing orders.
 #
-# On push: checks the repo. Every 6 hours and on demand: checks the published site too.
-# A red run here means "put it back", not "re-snapshot". See ops/base-contract.mjs.
+# On push: checks the repo, then (push to main only) checks the published site about
+# 12 minutes later, once Pages has built and the CDN copy (max-age=600) has expired.
+# On a schedule and on demand: checks the repo and the published site. The schedule is
+# best effort only - GitHub throttles schedules heavily on this repo (its first slot,
+# 18:41Z on 2026-09-10, never ran), which is why the after-publish live check exists. Commits pushed by the
+# repair job (GITHUB_TOKEN) start no workflows at all; that job runs the repo check
+# itself before it commits. A red run here means "put it back", not "re-snapshot".
+# See ops/base-contract.mjs.
 
 on:
   push:
@@ -37,4 +43,28 @@ jobs:
         run: node ops/base-contract.mjs
       - name: Live site matches the approved base
         if: github.event_name != 'push'
+        run: node ops/base-contract.mjs --live
+
+  # The live check for every publish. Pushes never ran the step above, and the
+  # 6-hour schedule had not fired once, so no publish had ever been checked live
+  # automatically. Waits out the Pages build and the CDN's max-age=600, then
+  # checks the published site. Skipped when the repo check already failed
+  # (needs: check), and a newer push cancels a waiting run, so a publish storm
+  # ends in one check of the final state. The repo is public, so the wait is free.
+  live-after-publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: base-contract-live
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Wait for the Pages build and the CDN copy to expire
+        run: sleep 720
+      - name: Live site matches the approved base
         run: node ops/base-contract.mjs --live

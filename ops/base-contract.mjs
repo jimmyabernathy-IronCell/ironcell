@@ -35,6 +35,7 @@ const SNAPSHOT = path.join(ROOT, 'ops', 'base-contract.json');
 const LIVE_ORIGIN = 'https://ironcellresearch.com';
 
 // Every page that takes an order or a signup. A new page that takes either belongs here.
+// The repo check fails if any other tracked .html page calls his sheet or Web3Forms.
 const FILES = [
   'index.html', 'mvp.html', 'truetransformation.html',
   'amber/index.html', 'billy/index.html', 'carlos/index.html', 'chel/index.html',
@@ -188,6 +189,25 @@ async function main() {
 
   const snap = JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8')).files;
   const problems = [];
+
+  // FILES is kept by hand, so a sheet or Web3Forms call on a page that is not in it
+  // would pass unseen - and a new writer to Jimmy's sheet "from any page" is exactly
+  // what this file exists to catch. Every .html page in the repo outside FILES must
+  // carry no sheet or email statement at all. order-number blocks alone are allowed:
+  // the IRONCELL/ mockups define a local order-number function and call nothing of his.
+  // Untracked (not ignored) pages count too, so a new page is caught before `git add`.
+  // Repo check only (the published site is read page by page from FILES).
+  if (!live) {
+    const { execSync } = await import('node:child_process');
+    const pages = execSync('git -c core.quotepath=off ls-files -z --cached --others --exclude-standard -- "*.html"', { cwd: ROOT })
+      .toString().split('\0').filter(Boolean);
+    const stray = pages.filter((f) => !FILES.includes(f)
+      && fs.existsSync(path.join(ROOT, f))
+      && extract(fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n'))
+        .some((b) => b.kind !== 'order-number'));
+    if (stray.length) problems.push(`pages that call Jimmy's sheet or Web3Forms but are not in FILES: ${stray.join(', ')}`);
+  }
+
   for (const f of FILES) {
     if (!snap[f]) { problems.push(`${f}: not in the snapshot`); continue; }
     problems.push(...diffFile(f, snap[f], current[f]));

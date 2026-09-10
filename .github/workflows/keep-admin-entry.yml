@@ -101,12 +101,16 @@ name: Keep admin entry
 # byte floor scripts_parse() refuses to trust below; an earlier commit message
 # claimed that floor was the obstacle and was simply wrong.
 #
-# THE POPUP IS RECOVERED FROM HISTORY RATHER THAN HARDCODED. It is 13,949 bytes
-# of markup and script, byte-identical on all fourteen pages, and it carries
-# regular expressions with backslashes. Transcribing that into a Python literal
-# inside a YAML block scalar is exactly how this file was broken once before, so
-# it is recovered the way the ItemList and the per-agent robots.txt fence
-# already are - which also means this job can never invent site content.
+# THE POPUP IS RECOVERED FROM HISTORY RATHER THAN HARDCODED. It is about 21,500
+# bytes of markup and script and it carries regular expressions with
+# backslashes. Transcribing that into a Python literal inside a YAML block
+# scalar is exactly how this file was broken once before, so it is recovered
+# the way the ItemList and the per-agent robots.txt fence already are - which
+# also means this job can never invent site content. It is NOT byte-identical on
+# every page any more: since 6432302 (2026-09-10) mvp.html and
+# truetransformation.html send their own "New Newsletter Subscriber" subject
+# and from_name, so each page is recovered from its OWN history first - see
+# popup_from_history() and EXTENDED 2026-09-10 below.
 #
 # EXTENDED 2026-09-08 (c): THE PEPTIDE CALCULATOR, THE FOURTEENTH PAGE.
 # peptidecalculator/index.html is indexed, sits in sitemap.xml and takes real
@@ -130,6 +134,44 @@ name: Keep admin entry
 # makes are the popup's own, and those come back with the popup. Its inline
 # script measures 29,862 bytes, comfortably above the 10,000 byte floor
 # scripts_parse() refuses to trust below.
+#
+# EXTENDED 2026-09-10: FIVE REPAIRS THAT HAD GONE STALE, AND A CONTRACT CHECK.
+#
+#   * THE POPUP COMES BACK FROM THE PAGE'S OWN HISTORY. Since 6432302 the popup
+#     sends Jimmy's "New Newsletter Subscriber" e-mail, and mvp.html and
+#     truetransformation.html carry their own subject and from_name in it. The
+#     old recovery took the first copy it found, which is always index.html's,
+#     so restoring the popup on those two pages would have changed a subject
+#     line in Jimmy's inbox - reproduced in a scratch clone. Those two pages now
+#     recover ONLY from their own history; every other page tries its own first.
+#
+#   * EVERY REPAIR GETS A BASE CONTRACT RESULT. A commit pushed with
+#     GITHUB_TOKEN starts no push workflows, so the Base contract workflow never
+#     sees a heal commit. `node ops/base-contract.mjs` now runs on the repaired
+#     tree before the commit and raises a ::warning:: if Jimmy's order or signup
+#     plumbing differs from the approved snapshot. Repo only: a --live check
+#     here would race the Pages build and the CDN and go red on most repairs.
+#
+#   * research-supplies' Meta Purchase repair was dead. 80b4acd added three
+#     comment lines inside the Google conversion block, so the anchor built from
+#     that whole block matched nothing and the job reported "intact" with the
+#     event missing. Meta now anchors on the stable END of the conversion
+#     (RS_CONV_TAIL), and RS_PURCHASE_CONV carries the three new lines.
+#
+#   * ORDER_MIRROR and SUB_MIRROR were stale. 5f155cc (&src), 6432302 (&order)
+#     and a5c999a (&phone) changed the shipped mirrors, and a repair would have
+#     put back the old ones without order-number matching, the phone Julien
+#     asked for, or ad attribution. Both constants are the shipped text again.
+#
+#   * THE AD ATTRIBUTION HELPER (window.icAttr, 5f155cc) IS GUARDED. Both
+#     mirrors send &src=icAttr(), but the helper lives in its own <head> script
+#     that nothing restored, so after a paste the mirrors came back and
+#     attribution stayed empty. It is recovered from history like the popup.
+#
+# Editing text INSIDE a guarded block - comments included - can break these
+# anchors without any error. After such an edit, run this job's heal.py in a
+# scratch clone against the page with the block removed and confirm it says
+# "restored".
 
 on:
   push:
@@ -396,6 +438,14 @@ jobs:
               '      }\n'
               '    } catch (e) {}')
 
+          # ORDER_MIRROR and SUB_MIRROR are copies of the SHIPPED mirror code, and
+          # they go stale silently: a repair puts back whatever is written here,
+          # prints "restored" and the contract stays OK, because the mirror is
+          # ours and not part of Jimmy's base. They were stale until 2026-09-10
+          # and a repair would have dropped &order, &phone and &src. UPDATE THEM IN
+          # THE SAME COMMIT AS ANY CHANGE TO THE MIRROR CODE ON THE STOREFRONTS.
+          # Check: the ORDER_MIRROR text must occur exactly once in index.html,
+          # and so must SUB_MIRROR (both identical on all twelve storefronts).
           SUB_ANCHOR = ("trackImg.src = 'https://script.google.com/macros/s/"
                         "AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw"
                         "/exec?type=newsletter&email=' + encodeURIComponent(email);")
@@ -403,7 +453,8 @@ jobs:
               "\n      // Mirror to the IronCell admin list (additive; the Google Sheet above is unchanged)"
               "\n      const mmSubImg = new Image();"
               "\n      mmSubImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/"
-              "ironcell-ingest?t=sub&email=' + encodeURIComponent(email);")
+              "ironcell-ingest?t=sub&email=' + encodeURIComponent(email) + '&src=' + "
+              "encodeURIComponent(typeof icAttr === 'function' ? icAttr() : '');")
 
           # The order mirror. Dropped by a client paste on 08-16 and again on 08-23; the
           # second loss ran two days unnoticed, because losing it breaks nothing visible -
@@ -411,7 +462,7 @@ jobs:
           # reaching /admin/ and stops enrolling the buyer in the newsletter list. It was
           # already a SENTINEL, which only stops it MOVING; nothing put it back. This does.
           ORDER_ANCHOR = '    sheetImg.src = sheetUrl;'
-          ORDER_MIRROR = "\n\n    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;\n    // isolated in its own try/catch so it can never affect checkout). Sits below the\n    // _submittedOrders guard, so it fires at most once per order number. Uses\n    // effectiveCoupon, not appliedCoupon, so an auto-applied Spend & Save tier\n    // (SPEND25/30/35) is recorded here the same way it is in the order email and the\n    // Google Sheet. Deleting this block silently stops orders reaching /admin/.\n    try {\n      var mmOrderImg = new Image();\n      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +\n        '&email=' + encodeURIComponent(email) +\n        '&name=' + encodeURIComponent(name) +\n        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +\n        '&coupon=' + encodeURIComponent(effectiveCoupon || '') +\n        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | ')) +\n        '&state=' + encodeURIComponent(state) +\n        '&zip=' + encodeURIComponent(zip);\n    } catch (e) {}"
+          ORDER_MIRROR = "\n\n    // Mirror the order to the IronCell admin dashboard (additive, fire-and-forget;\n    // isolated in its own try/catch so it can never affect checkout). Sits below the\n    // _submittedOrders guard, so it fires at most once per order number. Uses\n    // effectiveCoupon, not appliedCoupon, so an auto-applied Spend & Save tier\n    // (SPEND25/30/35) is recorded here the same way it is in the order email and the\n    // Google Sheet. Deleting this block silently stops orders reaching /admin/.\n    try {\n      var mmOrderImg = new Image();\n      mmOrderImg.src = 'https://fnodwwpunekaycxxshbb.supabase.co/functions/v1/ironcell-ingest?t=order' +\n        '&order=' + encodeURIComponent(orderNum) +\n        '&email=' + encodeURIComponent(email) +\n        '&phone=' + encodeURIComponent(phone) +\n        '&name=' + encodeURIComponent(name) +\n        '&total=' + encodeURIComponent(grandTotal.toFixed(2)) +\n        '&coupon=' + encodeURIComponent(effectiveCoupon || '') +\n        '&items=' + encodeURIComponent(itemsList.split(String.fromCharCode(10)).join(' | ')) +\n        '&state=' + encodeURIComponent(state) +\n        '&zip=' + encodeURIComponent(zip) + '&src=' + encodeURIComponent(typeof icAttr === 'function' ? icAttr() : '');\n    } catch (e) {}"
 
 
           HEAD_CLOSE = '\n</head>'
@@ -446,7 +497,9 @@ jobs:
               '       kind - even though it takes real orders. Every sale driven here by paid\n'
               '       search reported as zero conversions, so Google Ads had no value signal and\n'
               '       smart bidding had nothing to optimise against. Measured 2026-09-08: three\n'
-              '       AW- references on this page against seven on every storefront.\n'
+              '       AW- references on this page against seven on every storefront. (Since\n'
+              '       2026-09-10 this page has 6 AW-18389709216 references and each storefront\n'
+              '       has 8; RECOVERY.md section 4 is the current count.)\n'
               '       Fire-and-forget and individually isolated, exactly like the order mirror\n'
               '       below, so a tracking failure can never block an order. */\n'
               '    try {\n'
@@ -459,6 +512,20 @@ jobs:
               '        });\n'
               '      }\n'
               '    } catch (e) {}')
+
+          # The Meta Purchase anchor: the closing lines of the Google conversion
+          # above, NOT the whole RS_PURCHASE_CONV block. The whole block includes
+          # its comment, and 80b4acd (2026-09-10) added three lines to that comment
+          # on the page, so an anchor built from the full block matched nothing: a
+          # page that lost only the Meta event was reported "intact". The tail
+          # below is code, occurs exactly once on the page (verified 2026-09-10),
+          # and is also the tail of RS_PURCHASE_CONV, so when all three purchase
+          # events are lost the conversion is restored first and Meta still finds
+          # its anchor in the same run.
+          RS_CONV_TAIL = ("          'transaction_id': num\n"
+                          '        });\n'
+                          '      }\n'
+                          '    } catch (e) {}')
 
           RS_PURCHASE_META = (
               '\n    try {\n'
@@ -504,16 +571,39 @@ jobs:
           # ------------------------------------------------------------- the popup
           # The first-visit newsletter capture + e-mail repair block, added
           # 2026-09-08 (6039cb0, and 548265a for the calculator) immediately before
-          # </body> on all fourteen pages, byte-identical on every one of them -
-          # verified 2026-09-08, the calculator's copy matches the block recovered
-          # from history to the byte. It is not hardcoded here: 13,949
+          # </body> on all fourteen pages. It is not hardcoded here: about 21,500
           # bytes of markup and script, carrying backslash regular expressions, is
           # exactly the kind of literal that has broken this file before. It is
           # recovered from git history instead, like the ItemList and the per-agent
           # robots.txt fence, so this job can never invent site content.
+          #
+          # IT IS NOT THE SAME ON EVERY PAGE. Since 6432302 (2026-09-10) the popup
+          # also sends Jimmy's "New Newsletter Subscriber" e-mail, and mvp.html and
+          # truetransformation.html send it with their own subject and from_name
+          # ('... - MVP' / 'MVP Newsletter', '... - True Transformation' / 'True
+          # Transformation Newsletter'). The other twelve copies are identical to
+          # each other. Those subject lines are Jimmy's base structure, locked by
+          # ops/base-contract.mjs, so a copy from the wrong page is not a repair.
+          # popup_from_history(page) therefore reads the page's OWN history first,
+          # and for mvp.html and truetransformation.html ONLY their own history.
           POPUP_MARK = 'ic-newsletter-popup'
           POPUP_OPEN = '\n\n<!--'
           BODY_CLOSE = '\n</body>'
+
+          # ------------------------------------------------------ ad attribution
+          # The first-touch ad attribution helper, window.icAttr (5f155cc,
+          # 2026-09-09): its own comment and <script> immediately before </head>,
+          # identical on all fourteen pages above (verified 2026-09-10; welcome/
+          # carries a different, shorter copy and is never touched by this job).
+          # Both mirrors send &src=icAttr() behind a typeof guard, so when a paste
+          # drops this script nothing breaks - the mirrors, once restored, just
+          # send an empty &src and ad attribution silently stops. It is recovered
+          # from the page's own history (then the other thirteen pages), bounded
+          # by the comment that opens it and the </script> that closes it, and
+          # inserted with the newline before it directly ahead of </head>, which is
+          # where it ships. On index.html it runs after the ItemList repair so the
+          # ItemList stays above it, as shipped.
+          ATTR_MARK = 'window.icAttr = function'
 
           # Nothing below may move. Checkout, cart, payment and the age gate are read
           # only to this job: if any of these counts changes the edit is thrown away.
@@ -624,18 +714,31 @@ jobs:
               return None, None
 
 
-          def popup_from_history():
+          # The two pages whose popup is their own (see POPUP_MARK above). Their
+          # copy never serves another page, and no other page's copy serves them.
+          OWN_POPUP_PAGES = ('mvp.html', 'truetransformation.html')
+
+
+          def popup_from_history(page):
               """The first-visit newsletter popup + e-mail repair block, recovered
               from history rather than hardcoded. Bounded by the blank line and the
               comment that open it and by </body> that closes it, so the recovered
-              text is the shipped block byte for byte. Byte-identical on all
-              fourteen pages, so the first page whose history still carries it
-              serves every page - which is what the block's own comment says it is
-              for ('one shared block so all thirteen pages behave identically'; it
-              still says thirteen because it predates the calculator by a few hours
-              and is deliberately not reworded per page, which is what keeps every
-              copy identical and this recovery safe)."""
-              for path in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
+              text is the shipped block byte for byte.
+
+              The page's OWN history is read first. Until 2026-09-10 the block was
+              byte-identical on all fourteen pages and the first copy found (always
+              index.html's) served every page; since 6432302 mvp.html and
+              truetransformation.html send Jimmy's signup e-mail with their own
+              subject and from_name, and index.html's copy would have overwritten
+              them - a changed subject line in his inbox. Those two pages are
+              recovered from their own history ONLY. Every other page falls back to
+              the other shared-copy pages, never to those two."""
+              if page in OWN_POPUP_PAGES:
+                  order = [page]
+              else:
+                  order = [page] + [p for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES
+                                    if p != page and p not in OWN_POPUP_PAGES]
+              for path in order:
                   for sha in git('log', '--format=%H', '--', path).stdout.decode().split():
                       b = git('show', '%s:%s' % (sha, path))
                       if b.returncode:
@@ -651,6 +754,37 @@ jobs:
                       if j == -1:
                           continue
                       return t[i:j], sha
+              return None, None
+
+
+          def attr_from_history(page):
+              """The ad attribution helper (window.icAttr), recovered from history:
+              the comment directly above its <script> through that script's
+              </script>, so the recovered text is the shipped block byte for byte.
+              The page's own history first, then the other thirteen pages, whose
+              copies are identical to it. Only a copy that sits in <head> counts."""
+              order = [page] + [p for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES
+                                if p != page]
+              for path in order:
+                  for sha in git('log', '--format=%H', '--', path).stdout.decode().split():
+                      b = git('show', '%s:%s' % (sha, path))
+                      if b.returncode:
+                          continue
+                      t = b.stdout.decode('utf-8', 'replace')
+                      k = t.find(ATTR_MARK)
+                      if k == -1:
+                          continue
+                      i = t.rfind('<script', 0, k)
+                      j = t.find('</script>', k)
+                      h = t.find('</head>', k)
+                      if i == -1 or j == -1 or h == -1 or j > h or '</script>' in t[i:k]:
+                          continue
+                      e = t.rfind('-->', 0, i)
+                      if e != -1 and not t[e + 3:i].strip():
+                          c = t.rfind('<!--', 0, e)
+                          if c != -1:
+                              i = c
+                      return t[i:j + len('</script>')], sha
               return None, None
 
 
@@ -810,7 +944,7 @@ jobs:
                   ('Google Ads purchase conversion', 'BVXmCJiwnuIcEKDj8sBE',
                    RS_ORDER_ANCHOR, RS_PURCHASE_CONV, True),
                   ('Meta Purchase event', "fbq('track', 'Purchase'",
-                   RS_PURCHASE_CONV, RS_PURCHASE_META, True),
+                   RS_CONV_TAIL, RS_PURCHASE_META, True),
                   ('TikTok CompletePayment event', "ttq.track('CompletePayment'",
                    RS_MIRROR_ANCHOR, RS_PURCHASE_TTQ, False),
               ]
@@ -849,19 +983,22 @@ jobs:
               # The first-visit newsletter popup and e-mail repair block, on all
               # fourteen pages. Recovered from history rather than hardcoded, so it
               # gets its own pass instead of a row in the tables above - and it is
-              # only looked up when a page is actually missing it.
-              def add_popup(t):
+              # only looked up when a page is actually missing it. Each page gets
+              # the copy from its OWN history (see popup_from_history), so the page
+              # is passed in and bound per iteration like the table loop above.
+              def add_popup(t, page):
                   if POPUP_MARK in t or t.count(BODY_CLOSE) != 1:
                       return None
-                  block, sha = popup_from_history()
+                  block, sha = popup_from_history(page)
                   if block is None:
-                      print('no newsletter popup block found in history')
+                      print('no newsletter popup block found in history for %s' % page)
                       return None
-                  print('newsletter popup recovered from %s' % sha[:8])
+                  print('newsletter popup recovered from %s (%s)' % (sha[:8], page))
                   return t.replace(BODY_CLOSE, block + BODY_CLOSE, 1), block
 
               for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
-                  edit(p, 'first-visit newsletter popup and e-mail repair', add_popup)
+                  edit(p, 'first-visit newsletter popup and e-mail repair',
+                       lambda t, _p=p: add_popup(t, _p))
 
               # The 45-product ItemList is homepage-only on purpose. The clones are
               # near-identical storefronts, so copying it onto all eleven would publish
@@ -877,6 +1014,25 @@ jobs:
                   return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
 
               edit('index.html', 'ItemList product structured data', add_itemlist)
+
+              # The ad attribution helper, on all fourteen pages. AFTER the ItemList
+              # pass on purpose: both insert directly ahead of </head>, and running
+              # this second keeps the ItemList above the helper, as shipped. The
+              # insert is the block plus the newline in front of it, which is what
+              # sits between the previous </script> or </style> and it on every page.
+              def add_attr(t, page):
+                  if ATTR_MARK in t or t.count(HEAD_CLOSE) != 1:
+                      return None
+                  block, sha = attr_from_history(page)
+                  if block is None:
+                      print('no ad attribution helper found in history for %s' % page)
+                      return None
+                  print('ad attribution helper recovered from %s (%s)' % (sha[:8], page))
+                  return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
+
+              for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
+                  edit(p, 'ad attribution helper (window.icAttr)',
+                       lambda t, _p=p: add_attr(t, _p))
 
               env = os.environ.get('GITHUB_ENV')
               if env:
@@ -907,6 +1063,18 @@ jobs:
               echo "Nothing to do - the admin entry and the measurement layer are intact."
               exit 0
             fi
+
+            # Jimmy's order and signup plumbing, checked on the repaired tree
+            # before anything is committed (2026-09-10). This commit is pushed
+            # with GITHUB_TOKEN, which starts no push workflows, so the Base
+            # contract workflow never runs on it: this is the only contract
+            # result a repair gets. Repo only, deliberately - a --live check here
+            # would race the Pages build and the CDN (max-age=600) and go red on
+            # almost every repair. A difference is raised as a warning on this
+            # run, with the full contract output in the log below it.
+            node ops/base-contract.mjs > /tmp/bc.txt 2>&1 \
+              || echo "::warning::Base contract after repair: $(head -c 1500 /tmp/bc.txt | tr '\n' ' ')"
+            cat /tmp/bc.txt
 
             git add -- $HEALED
             if git diff --cached --quiet; then
