@@ -359,6 +359,11 @@ curl -s -o /dev/null -w '%{http_code}\n' https://ironcellresearch.com/admin/   #
 curl -s https://ironcellresearch.com/robots.txt | grep -c 'Disallow: /admin/'  # 1
 ```
 
+A `?cb=` query string does NOT bypass GitHub Pages' CDN (Fastly ignores it; responses carry
+`Cache-Control: max-age=600`), so a check right after a push can read a copy up to ten minutes
+old. Compare the response's `Last-Modified` with the commit time, or wait ten minutes, before
+concluding a publish failed.
+
 One note on verification: `raw.githubusercontent.com` can serve a cached copy for a while after a
 push, and it has already produced one false "this is missing" reading. Check the live domain or the
 GitHub API, not `raw`.

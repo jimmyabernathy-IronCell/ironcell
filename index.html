@@ -1732,33 +1732,53 @@ ttq.page();
     } catch (e) { return null; }
   }
 
+  /* Paid-click markers. Google auto-tagging sends gclid, or gbraid / wbraid
+     on iOS instead of a gclid; Meta sends fbclid; TikTok sends ttclid. A
+     click id names the platform even when the utm tags are missing. */
+  var CLICK = [['gclid', 'google', 'cpc'], ['gbraid', 'google', 'cpc'], ['wbraid', 'google', 'cpc'],
+               ['fbclid', 'meta', 'paid_social'], ['ttclid', 'tiktok', 'paid_social']];
+
   try {
     var q = new URLSearchParams(location.search);
     var s = q.get('utm_source') || '';
     var m = q.get('utm_medium') || '';
     var c = q.get('utm_campaign') || '';
-    /* A click id identifies the platform even when the utm tags are missing,
-       which is the normal case for Meta and TikTok auto-tagging. */
-    if (!s) {
-      if (q.get('gclid'))       { s = 'google'; m = m || 'cpc'; }
-      else if (q.get('fbclid')) { s = 'meta';   m = m || 'paid_social'; }
-      else if (q.get('ttclid')) { s = 'tiktok'; m = m || 'paid_social'; }
+    var k = '', v = '';
+    for (var i = 0; i < CLICK.length; i++) {
+      var id = q.get(CLICK[i][0]);
+      if (id) {
+        k = CLICK[i][0]; v = id;
+        if (!s) { s = CLICK[i][1]; m = m || CLICK[i][2]; }
+        break;
+      }
     }
     /* No campaign markers at all means organic, direct, or a returning
        visitor - leave any stored first touch exactly as it is. */
-    if ((s || m || c) && !read()) {
+    if ((s || m || c || k) && !read()) {
       localStorage.setItem(KEY, JSON.stringify({
-        s: s.slice(0, 40), m: m.slice(0, 40), c: c.slice(0, 60), t: Date.now()
+        s: s.slice(0, 40), m: m.slice(0, 40), c: c.slice(0, 60),
+        ct: (q.get('utm_content') || '').slice(0, 40), kw: (q.get('utm_term') || '').slice(0, 40),
+        k: k, v: v.slice(0, 100), t: Date.now()
       }));
     }
   } catch (e) {}
 
   /* Returns '' when there is nothing to report, so the beacon parameter is
-     simply empty rather than absent and no caller has to branch. */
+     simply empty rather than absent and no caller has to branch. Labelled
+     fields, so a value with no medium can never read as one with no
+     campaign: "s=google|m=cpc|c=<campaign>|ct=<content>|kw=<term>|gclid=<id>".
+     The click id goes last, so the 200-character cap on
+     ironcell_subscribers.src trims the id, never the source. Before
+     2026-09-10 this returned "source / medium / campaign". */
   window.icAttr = function () {
     var o = read();
     if (!o) return '';
-    return [o.s, o.m, o.c].filter(Boolean).join(' / ');
+    var f = function (x) { return String(x || '').replace(/[|=]/g, '_'); };
+    var out = ['s=' + f(o.s), 'm=' + f(o.m), 'c=' + f(o.c)];
+    if (o.ct) out.push('ct=' + f(o.ct));
+    if (o.kw) out.push('kw=' + f(o.kw));
+    if (o.k) out.push(o.k + '=' + f(o.v));
+    return out.join('|');
   };
 })();
 </script>

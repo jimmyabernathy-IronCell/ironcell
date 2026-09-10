@@ -107,9 +107,15 @@ shipped. When his system and an instruction collide, surface the collision.
   (this is the SnacksFrom org project; Iron Cell shares it). `?t=order` mirrors
   every order into `ironcell_orders` (email, name, total, coupon, items, raw
   jsonb of every query param). **Since `6432302` (Sep 10) every order page sends
-  `&order=<order number>`** (read it as `raw->>'order'`), and the supplies page
-  also sends `&state` and `&zip`, so the mirror can be matched to his sheet by
-  order number instead of email + total. Orders before Sep 10 have no number in
+  `&order=<order number>`** (read it as `raw->>'order'`), and all 13 order pages
+  also send `&state` and `&zip` (storefronts since `2f7dab8`, Sep 7), so the mirror
+  can be matched to his sheet by order number instead of email + total.
+  **`&src=` format (since Sep 10, commit after `75234bd`):** labelled fields,
+  `s=<source>|m=<medium>|c=<campaign>|ct=<utm_content>|kw=<utm_term>|<clickid>=<value>`,
+  where the click id is `gclid`, `gbraid`, `wbraid` (Google iOS), `fbclid` or `ttclid`.
+  First touch within 30 days wins. Rows before that carry the old
+  `source / medium / campaign` string, whose empty fields were dropped, so a
+  two-part old value is ambiguous. Orders before Sep 10 have no number in
   the mirror. Phone and street address are deliberately not mirrored (the
   supplies page's `items` string still carries them). `?t=sub` mirrors signups
   into `ironcell_subscribers`; since ingest **v10** (Sep 10) the signup's
