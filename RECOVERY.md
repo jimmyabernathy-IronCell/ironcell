@@ -230,8 +230,8 @@ status daily):** (1) a Page-follows ad, $92, Sep 10-14, no website;
 (2) a WELCOME20 "Website visitors" ad, $99.96, Sep 10-17, CA + TX, 21+,
 Facebook-only, landing on the product-free `/welcome/` page with Julien's
 "Welcome to Iron Cell / 20% off / Code WELCOME20" graphic (no vials). Keep
-`/welcome/` free of products, prices, compound names and store links before signup (the post-signup message
-links to `/`; dropping that link too is Julien's call) - that is
+`/welcome/` free of products, prices and compound names (it links to the main site from the logo and the
+footer, Julien's call on Sep 10, so the full store stays one tap away) - that is
 what gives this ad a chance at review. Business Suite pre-fills new ads with
 AI copy naming the compounds ("Buy research peptides ... GLP3-Reta, BPC-157"):
 replace every field before publishing. Its "Advantage+ creative" switch cannot

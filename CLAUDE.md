@@ -145,8 +145,10 @@ from his sheet and inbox.** `welcome/index.html` is the Meta ad's landing page. 
 sends the same two calls as the supplies-page form, byte for byte (sheet `?type=newsletter` and
 the "New Newsletter Subscriber" email), and nothing else of his. It is in `ops/base-contract.mjs`,
 so those two statements are locked like the rest (15 files, 133 statements; the other 131 did not
-change). The page deliberately has no products, prices, compound names or store links before
-signup, because Meta rejected two website ads from this account for "selling prescription drugs".
+change). The page deliberately has no products, prices or compound names on it, because Meta rejected two
+website ads from this account for "selling prescription drugs". It does link to the main site (the
+logo and a footer link, Julien 2026-09-10: "from the landing page the full site is still
+accessible"), so visitors can always reach the full store.
 
 This is not a style preference. It is a live fulfilment queue for physical product going to real
 customers. A duplicate row can mean a double shipment; a changed subject line can silently break
