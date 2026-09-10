@@ -112,7 +112,13 @@ shipped. When his system and an instruction collide, surface the collision.
   order number instead of email + total. Orders before Sep 10 have no number in
   the mirror. Phone and street address are deliberately not mirrored (the
   supplies page's `items` string still carries them). `?t=sub` mirrors signups
-  into `ironcell_subscribers`.
+  into `ironcell_subscribers`; since ingest **v10** (Sep 10) the signup's
+  first-touch attribution is kept in `ironcell_subscribers.src` (it used to be
+  discarded, so no signup could be tied to an ad). `GET ?t=watchdog` returns
+  the deployed `fnVersion` - check it after any deploy. Never test `?t=sub` from
+  a page on our domain with a real-looking address: it sends the WELCOME20 mail.
+  Probe with a foreign `Referer` and an `@example.com` address, then delete the
+  row.
 - `/admin/` on the site reads that mirror ("Export orders (CSV)").
 - `&src=` first-touch ad attribution (`icAttr()`, 30-day TTL) rides on both
   ingest calls and nowhere else.
