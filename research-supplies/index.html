@@ -635,8 +635,14 @@ function subscribeNewsletter() {
     return grand;
   };
 
+  /* Same six-digit number the main storefront mints (generateOrderNumber() in
+     /index.html). This page used to mint IC-######## - a second numbering scheme
+     inside Jimmy's one order sheet, which broke the by-hand lookups he does
+     against his order emails. Orders here carry no rep prefix, so his Site
+     Summary counts them under Main Site, which is where an ad-landing-page sale
+     belongs. */
   function orderNumber(){
-    return 'IC-' + String(Date.now()).slice(-8);
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   window.placeOrder = function(method){
@@ -710,6 +716,66 @@ function subscribeNewsletter() {
       }
     } catch (e) {}
 
+
+    /* JIMMY'S ORDER INTAKE. This is a copy of what the storefront's
+       proceedWithOrder() sends on every order (index.html and all ten rep clones
+       do exactly this on the same key): the order email to
+       orders@ironcellresearch.com through Web3Forms, and one row appended to
+       the IronCell Order Tracker through his Apps Script beacon. That sheet and
+       that inbox are the system he tracks, confirms, fulfils and ships from.
+       This page never sent either, so its orders (Aug 16, Aug 17, Aug 28 and
+       Sep 6 2026) were invisible to him until they were found in our mirror.
+
+       Same key, same recipient, same subject line, same parameter names, same
+       date format, same payment-method casing and same items format as the
+       storefront, so a row from here is indistinguishable from a storefront row
+       and nothing in his process changes. Do NOT restyle any of it. Both calls
+       are fire-and-forget and isolated so a tracking failure can never block an
+       order. */
+    var itemsList = cart.map(function (l) {
+      return l.name + ' x' + l.qty + ' - $' + (l.price * l.qty).toFixed(2);
+    }).join('\n');
+    var _sub = subtotal(), _ship = shipping(), _rate = taxRate(), _tax = _sub * _rate;
+    var _payLabel = String(method).charAt(0).toUpperCase() + String(method).slice(1);
+    try {
+      fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        access_key: '603b0822-9385-4831-ba22-13f82778ebab',
+        to: 'orders@ironcellresearch.com',
+        subject: 'New Order #' + num + ' - IronCell Research',
+        from_name: 'IronCell Research Orders',
+        name: name,
+        email: email,
+        message: 'NEW ORDER RECEIVED\n\nOrder #: ' + num +
+          '\nPayment Method: ' + String(method).toUpperCase() +
+          '\n\nCUSTOMER INFO:\nName: ' + name +
+          '\nEmail: ' + email +
+          '\nPhone: ' + (phone || 'N/A') +
+          '\nAddress: ' + addr + ', ' + city + ', ' + state + ' ' + zip +
+          '\n\nITEMS:\n' + itemsList +
+          '\n\nSubtotal: $' + _sub.toFixed(2) +
+          '\nShipping: $' + _ship.toFixed(2) +
+          '\nTax: $' + _tax.toFixed(2) + (state && _rate ? ' (' + state + ' ' + (_rate * 100).toFixed(2) + '%)' : '') +
+          '\nTOTAL: $' + grand.toFixed(2)
+      }), keepalive:true}).catch(function(){});
+    } catch (e) {}
+
+    try {
+      var sheetUrl = 'https://script.google.com/macros/s/AKfycbwha_53kpXJWgZ6X94dM4d9NJcgwaGabxKWPMJpQYaXQqMWmgoTpgcw7RARBu0quJ6BQw/exec?' +
+        'orderNumber=' + encodeURIComponent(num) +
+        '&date=' + encodeURIComponent(new Date().toLocaleDateString()) +
+        '&customerName=' + encodeURIComponent(name) +
+        '&email=' + encodeURIComponent(email) +
+        '&phone=' + encodeURIComponent(phone) +
+        '&paymentMethod=' + encodeURIComponent(_payLabel) +
+        '&productPrice=' + encodeURIComponent(grand.toFixed(2)) +
+        '&tax=' + encodeURIComponent(_tax.toFixed(2)) +
+        '&shipping=' + encodeURIComponent(_ship.toFixed(2)) +
+        '&coupon=' +
+        '&address=' + encodeURIComponent(addr + ', ' + city + ', ' + state + ' ' + zip) +
+        '&notes=' + encodeURIComponent(itemsList.replace(/\n/g, ' | '));
+      var sheetImg = new Image();
+      sheetImg.src = sheetUrl;
+    } catch (e) {}
 
     /* Mirror to the IronCell admin dashboard. Fire-and-forget and isolated, exactly
        as the storefront does it, so a tracking failure can never block an order. */
