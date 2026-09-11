@@ -4482,94 +4482,16 @@ ttq.page();
     }
   }
 
-  /* ==================================================================
-     WELCOME20 AUTO-FILL. Someone who has already handed over their email
-     should not have to remember a code and type it back to us.
-
-     This is the checkout money path, so every constraint below is load
-     bearing:
-
-     - MAIN STOREFRONT ONLY. Rep credit on this site is carried by the
-       COUPON, not by the page: _AFFILIATE_CODE_PREFIX maps RAY20 -> RS_,
-       DAVU20 -> DV_ and so on, and that prefix is how the rep is paid.
-       Pre-filling WELCOME20 on a rep clone would put a 20% code in front
-       of a customer who was about to type the rep's own 20% code, cost
-       that rep the sale credit, and change nothing for the customer.
-       So the clones deliberately do nothing here.
-
-     - ONLY WHEN THE BOX IS EMPTY AND NOTHING IS APPLIED. openCheckout()
-       clears the field on every open, so this cannot overwrite a code a
-       person typed. If they type one after us, theirs wins - we never
-       disable the input.
-
-     - NEVER BYPASSES VALIDATION. We fill the box and then call the SAME
-       applyCoupon() the Apply button calls, so the one-time-per-email
-       check still decides. A code already used on that address comes back
-       refused exactly as it does today. We do not set couponDiscount or
-       any price ourselves.
-
-     - NEEDS THEIR CHECKOUT EMAIL FIRST, because that is what the one-time
-       check is keyed on. So we fill the code immediately and apply it the
-       moment a valid address exists, rather than firing an error at
-       someone who has not reached the email field yet.
-     ================================================================== */
+  /* Newsletter marker. The footer form records a signup here so the
+     first-visit popup stops offering itself to someone who already joined.
+     The Sep 9 WELCOME20 checkout auto-fill that also read this marker was
+     removed on Sep 10: once WELCOME20 applies, the coupon box locks, so it
+     kept subscribers from using a rep code or FAMILY. Subscribers type
+     WELCOME20 themselves, as before. */
   var IC_SUB_KEY = 'ic_subscribed_v1';
 
   function icMarkSubscribed() {
     try { localStorage.setItem(IC_SUB_KEY, '1'); } catch (e) {}
-  }
-
-  /* Two signup paths, two markers. The popup already records 'subscribed'
-     under its own key, so it needs no change; the footer form sets ours. */
-  function icHasSubscribed() {
-    try {
-      if (localStorage.getItem(IC_SUB_KEY)) return true;
-      return localStorage.getItem('ic_nl_popup_v1') === 'subscribed';
-    } catch (e) { return false; }
-  }
-
-  function icIsMainStorefront() {
-    var p = String(location.pathname || '').replace(/\/+$/, '');
-    return p === '' || p === '/index.html';
-  }
-
-  function icWelcomeAutofill() {
-    try {
-      if (!icIsMainStorefront() || !icHasSubscribed()) return;
-      if (COUPONS['WELCOME20'] === undefined) return;
-
-      var input = document.getElementById('couponCode');
-      var msg = document.getElementById('couponMsg');
-      if (!input || appliedCoupon || (input.value || '').trim()) return;
-
-      input.value = 'WELCOME20';
-      if (msg) {
-        msg.textContent = 'WELCOME20 ready. It applies once you enter your email below.';
-        msg.className = 'coupon-msg';
-      }
-
-      var emailEl = document.getElementById('custEmail');
-      if (!emailEl) return;
-
-      var tried = false;
-      function tryApply() {
-        if (tried) return;
-        var v = (emailEl.value || '').trim();
-        if (!v || v.indexOf('@') < 0) return;   // not an address yet, wait
-        tried = true;
-        // Anything may have changed while we waited - a typed rep code, a
-        // coupon applied by hand. Only proceed if the field is still ours.
-        if (appliedCoupon) return;
-        if ((input.value || '').trim().toUpperCase() !== 'WELCOME20') return;
-        try { applyCoupon(); } catch (e) {}
-      }
-
-      emailEl.addEventListener('blur', tryApply);
-      emailEl.addEventListener('change', tryApply);
-      tryApply();   // their address may already be filled in
-    } catch (e) {
-      // Never let a convenience feature block a checkout.
-    }
   }
 
   function openCheckout() {
@@ -4582,7 +4504,6 @@ ttq.page();
     const couponMsg = document.getElementById('couponMsg');
     if (couponInput) { couponInput.value = ''; couponInput.disabled = false; }
     if (couponMsg) { couponMsg.textContent = ''; couponMsg.className = 'coupon-msg'; }
-    icWelcomeAutofill();   // fills WELCOME20 only into the box we just cleared
     toggleCart(); // close cart
 
     const modal = document.getElementById('checkoutModal');
