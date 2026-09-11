@@ -55,7 +55,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     concurrency:
       group: base-contract-live
       cancel-in-progress: true
@@ -67,4 +67,14 @@ jobs:
       - name: Wait for the Pages build and the CDN copy to expire
         run: sleep 720
       - name: Live site matches the approved base
-        run: node ops/base-contract.mjs --live
+        run: |
+          # Three looks, five minutes apart. A Pages build still queued or
+          # cancelled by the next commit, a later paste the repair job has not
+          # put back yet, or one failed fetch all clear on their own. A real
+          # change to Jimmy's plumbing survives all three and fails the job.
+          for i in 1 2; do
+            if node ops/base-contract.mjs --live; then exit 0; fi
+            echo "Live check $i of 3 did not pass. Checking again in 5 minutes."
+            sleep 300
+          done
+          node ops/base-contract.mjs --live

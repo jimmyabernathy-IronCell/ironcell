@@ -753,8 +753,8 @@ jobs:
                       j = t.find(BODY_CLOSE, k)
                       if j == -1:
                           continue
-                      return t[i:j], sha
-              return None, None
+                      return t[i:j], sha, path
+              return None, None, None
 
 
           def attr_from_history(page):
@@ -784,8 +784,8 @@ jobs:
                           c = t.rfind('<!--', 0, e)
                           if c != -1:
                               i = c
-                      return t[i:j + len('</script>')], sha
-              return None, None
+                      return t[i:j + len('</script>')], sha, path
+              return None, None, None
 
 
           def run():
@@ -946,7 +946,7 @@ jobs:
                   ('Meta Purchase event', "fbq('track', 'Purchase'",
                    RS_CONV_TAIL, RS_PURCHASE_META, True),
                   ('TikTok CompletePayment event', "ttq.track('CompletePayment'",
-                   RS_MIRROR_ANCHOR, RS_PURCHASE_TTQ, False),
+                   RS_PURCHASE_META, RS_PURCHASE_TTQ, True),
               ]
 
               # The calculator's own table: the three head blocks and nothing else.
@@ -970,6 +970,23 @@ jobs:
                    CALC_VIEWPORT_ANCHOR, TIKTOK_PIXEL, False),
               ]
 
+              # Stale-constant self-check (2026-09-10). Where a guarded block is on
+              # the page, the text this job would restore it with must match it byte
+              # for byte. When it does not, a later repair silently puts back an old
+              # copy - F3 (research-supplies' conversion comment) and F4 (the mirrors)
+              # were both exactly that. Warning only; nothing is edited here.
+              for p, table in ([(x, MEASUREMENT) for x in STOREFRONT_PAGES] +
+                               [(x, SUPPLIES_MEASUREMENT) for x in SUPPLIES_PAGES] +
+                               [(x, CALC_MEASUREMENT) for x in CALC_PAGES]):
+                  if not os.path.exists(p):
+                      continue
+                  t0 = open(p, encoding='utf-8').read()
+                  for why, marker, anchor, insert, after in table:
+                      if marker in t0 and insert not in t0:
+                          print('::warning::keep-admin-entry: its %s text no longer matches '
+                                '%s. Update the constant in this workflow, or a later repair '
+                                'there puts back an old copy.' % (why, p))
+
               for p, table in ([(x, MEASUREMENT) for x in STOREFRONT_PAGES] +
                                [(x, SUPPLIES_MEASUREMENT) for x in SUPPLIES_PAGES] +
                                [(x, CALC_MEASUREMENT) for x in CALC_PAGES]):
@@ -989,11 +1006,11 @@ jobs:
               def add_popup(t, page):
                   if POPUP_MARK in t or t.count(BODY_CLOSE) != 1:
                       return None
-                  block, sha = popup_from_history(page)
+                  block, sha, src_page = popup_from_history(page)
                   if block is None:
                       print('no newsletter popup block found in history for %s' % page)
                       return None
-                  print('newsletter popup recovered from %s (%s)' % (sha[:8], page))
+                  print('newsletter popup for %s recovered from %s:%s' % (page, sha[:8], src_page))
                   return t.replace(BODY_CLOSE, block + BODY_CLOSE, 1), block
 
               for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
@@ -1023,11 +1040,11 @@ jobs:
               def add_attr(t, page):
                   if ATTR_MARK in t or t.count(HEAD_CLOSE) != 1:
                       return None
-                  block, sha = attr_from_history(page)
+                  block, sha, src_page = attr_from_history(page)
                   if block is None:
                       print('no ad attribution helper found in history for %s' % page)
                       return None
-                  print('ad attribution helper recovered from %s (%s)' % (sha[:8], page))
+                  print('ad attribution helper for %s recovered from %s:%s' % (page, sha[:8], src_page))
                   return t.replace(HEAD_CLOSE, '\n' + block + HEAD_CLOSE, 1), '\n' + block
 
               for p in STOREFRONT_PAGES + SUPPLIES_PAGES + CALC_PAGES:
@@ -1043,6 +1060,38 @@ jobs:
 
           run()
           PY
+
+          # The base contract gate for repairs (2026-09-10). A repair may only put
+          # back statements of Jimmy's base that ops/base-contract.json already
+          # approves for that page. A repaired file that would gain any other sheet,
+          # e-mail or order-number statement is put back as it was and left out of
+          # the commit, so this job can never push a change to his plumbing.
+          # Statements already on the page before the repair (his own edits) are not
+          # the repair's doing and do not block it.
+          cat > /tmp/gate.mjs <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          import { execFileSync } from 'node:child_process';
+          const { extract } = await import(pathToFileURL(path.resolve('ops/base-contract.mjs')).href);
+          const snap = JSON.parse(fs.readFileSync('ops/base-contract.json', 'utf8')).files;
+          const lf = (s) => s.replace(/\r\n/g, '\n');
+          const keep = [];
+          for (const f of process.argv.slice(2)) {
+            if (!f.endsWith('.html')) { keep.push(f); continue; }
+            let before = '';
+            try { before = execFileSync('git', ['show', 'HEAD:' + f], { maxBuffer: 1 << 28 }).toString('utf8'); } catch (e) {}
+            const had = new Set(extract(lf(before)).map((b) => b.text));
+            const approved = new Set((snap[f] || []).map((b) => b.text));
+            const added = extract(lf(fs.readFileSync(f, 'utf8'))).filter((b) => !had.has(b.text) && !approved.has(b.text));
+            if (!added.length) { keep.push(f); continue; }
+            execFileSync('git', ['checkout', '--', f]);
+            console.log('::warning::Repair of ' + f + ' thrown away: it would add ' + added.length +
+              " statement(s) to Jimmy's order/signup plumbing that ops/base-contract.json does not approve for this page.");
+            for (const b of added) console.log('  + (' + b.kind + ') ' + b.text.slice(0, 300));
+          }
+          fs.writeFileSync('/tmp/kept.txt', keep.join(' '));
+          JS
 
           git config user.name  "iron-cell-admin-guard"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -1061,6 +1110,14 @@ jobs:
 
             if [ -z "$HEALED" ]; then
               echo "Nothing to do - the admin entry and the measurement layer are intact."
+              exit 0
+            fi
+
+            rm -f /tmp/kept.txt
+            node /tmp/gate.mjs $HEALED || { echo "::warning::The base contract gate could not run, so nothing was committed. The next run retries."; exit 0; }
+            HEALED="$(cat /tmp/kept.txt)"
+            if [ -z "$HEALED" ]; then
+              echo "Every repair was thrown away by the base contract gate - nothing to commit."
               exit 0
             fi
 

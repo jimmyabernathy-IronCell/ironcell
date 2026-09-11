@@ -92,8 +92,12 @@ jobs:
           #    matches a comment on the page, so it would pass with the beacon gone.
           code=$(curl -sS -o /tmp/welcome.html -w '%{http_code}' "$BASE/welcome/?cb=$CB")
           [ "$code" = "200" ] || note "/welcome/ returned HTTP $code"
+          #    The pixel markers are the init/load CALLS, not the bare ids: each id
+          #    is also in an HTML comment (and Meta's in the noscript image), so a
+          #    bare id stays present when only the pixel <script> is deleted.
           for marker in 'ironcell-ingest?t=sub&email=' 'jCpBCKnUsOIcEKDj8sBE' "fbq('track', 'Lead')" \
-                        'gtag/js?id=AW-18389709216' '1628346322011957' 'DAG4D4RC77UES974PFB0' \
+                        'gtag/js?id=AW-18389709216' "gtag('config', 'AW-18389709216')" \
+                        "fbq('init', '1628346322011957')" "ttq.load('DAG4D4RC77UES974PFB0')" \
                         'exec?type=newsletter&email=' 'api.web3forms.com/submit'; do
             grep -qF "$marker" /tmp/welcome.html || note "/welcome/ is missing: $marker"
           done
@@ -117,7 +121,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "The live admin entry is not reachable. Repairing before raising it."
+          echo "A live check failed (see the FAIL lines above). Repairing before raising it."
           gh workflow run keep-admin-entry.yml --ref main || echo "could not dispatch the heal job"
           # Covers the other half: repo correct, published site stale because a
           # Pages build was cancelled by the next commit in a publish storm.
@@ -151,7 +155,7 @@ jobs:
         run: |
           bash /tmp/probe.sh || {
             echo
-            echo "The newsletter admin entry is STILL lost after two automatic repair attempts."
+            echo "A live check is STILL failing after two automatic repair attempts (see the FAIL lines above)."
             echo "Open the Actions tab, look at the last 'Keep admin entry' run, and at"
             echo "the last 'pages build and deployment' run, in that order."
             exit 1
