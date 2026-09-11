@@ -5307,9 +5307,12 @@ ttq.page();
   }
 
   /* ---------------------------------------------------------------- repair */
+  /* Only used to put back a missing "@". Short providers (me.com, mac.com,
+     aol.com, att.net, live.com, msn.com) are left out on purpose: many other
+     domains end in them, so acme.com would have become ac@me.com. */
   var PROVIDERS = ['gmail.com','yahoo.com','icloud.com','hotmail.com','outlook.com',
-    'aol.com','comcast.net','live.com','msn.com','me.com','protonmail.com',
-    'ymail.com','sbcglobal.net','verizon.net','att.net','bellsouth.net','mac.com'];
+    'comcast.net','protonmail.com','ymail.com','sbcglobal.net','verizon.net',
+    'bellsouth.net'];
 
   var DOMAIN_TYPOS = {
     'gmail.con':'gmail.com','gmail.co':'gmail.com','gmail.cm':'gmail.com',
@@ -5324,7 +5327,7 @@ ttq.page();
   };
 
   /* Returns { email, changed, note }. Pure - it decides nothing about the UI. */
-  function repair(raw) {
+  function repair(raw, guessAt) {
     var v = String(raw == null ? '' : raw).replace(/\s+/g, '').trim();
     if (!v) return { email: '', changed: false, note: '' };
     var before = v;
@@ -5337,12 +5340,18 @@ ttq.page();
        the string ends in a provider domain we recognise, so we never invent an
        address by guessing where the "@" belonged. */
     if (at < 0) {
+      /* Guessed only where the person sees the result and confirms it (the
+         popup and the supplies form). Checkout and the storefront footer
+         keep exactly what was typed, as Jimmy's pages always did. */
+      if (!guessAt) return { email: v, changed: false, note: '' };
       var lower = v.toLowerCase();
       for (var i = 0; i < PROVIDERS.length; i++) {
         var p = PROVIDERS[i];
         if (lower.length > p.length && lower.slice(-p.length) === p) {
           var local = v.slice(0, v.length - p.length);
-          if (local.length) {
+          /* name.gmail.com: that dot was meant to be the "@". */
+          if (local.slice(-1) === '.') local = local.slice(0, -1);
+          if (local.length && local.charAt(0) !== '.') {
             v = local + '@' + p;
             return { email: v, changed: true, note: 'Added the missing @ - we read this as ' + v };
           }
@@ -5416,7 +5425,7 @@ ttq.page();
       /email/i.test(el.id || '') || /email/i.test(el.name || '');
     if (!isEmail || !el.value) return;
 
-    var r = repair(el.value);
+    var r = repair(el.value, !!ownMessage(el));
     if (!r.changed) return;
     el.value = r.email;
     if (!r.note) return;
@@ -5474,7 +5483,7 @@ ttq.page();
     if (!el || (el.id !== 'newsletterEmail' && el.id !== 'nlEmail')) return;
     if (typeof window.subscribeNewsletter !== 'function') return;
     ev.preventDefault();
-    var r = repair(el.value);
+    var r = repair(el.value, el.id === 'nlEmail');
     if (r.changed) {
       el.value = r.email;
       if (r.note) el.setAttribute('data-ic-repaired', '1');
@@ -5588,7 +5597,7 @@ ttq.page();
          time we read it. data-ic-repaired carries that forward, so the
          confirmation step below still happens. */
       var pre = input.getAttribute('data-ic-repaired') === '1';
-      var r = repair(input.value);
+      var r = repair(input.value, true);
       input.value = r.email;
       if (!valid(r.email)) {
         msg.textContent = r.note ? (r.note + '. Check it and press Subscribe.') : 'Please enter a valid email address.';
