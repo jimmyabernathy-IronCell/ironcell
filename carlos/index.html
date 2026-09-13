@@ -2009,9 +2009,10 @@ ttq.page();
       </div>
       <div class="product-info">
         <div class="product-name">BPC-157</div>
-        <div class="product-subtitle">Synthetic Pentadecapeptide &bull; 10mg</div>
+        <div class="product-subtitle">Synthetic Pentadecapeptide &bull; 10mg / 20mg</div>
         <select class="strength-select" onchange="updatePrice(this)" onclick="event.stopPropagation()">
           <option value="49.99">10mg — $49.99</option>
+          <option value="69.99">20mg — $69.99</option>
         </select>
         <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
@@ -2218,7 +2219,7 @@ ttq.page();
         <div class="product-subtitle">Antioxidant · 1500mg</div>
         <select class="strength-select" onchange="updatePrice(this)" onclick="event.stopPropagation()">
           <option value="44.99">600mg — $44.99</option>
-          <option value="64.99">1500mg — $64.99</option>
+          <option value="69.99">1500mg — $69.99</option>
         </select>
         <select class="vial-qty-select" onchange="updateVialPrice(this)" onclick="event.stopPropagation()">
           <option value="1">1 Vial</option>
@@ -2928,23 +2929,39 @@ ttq.page();
       </div>
       <div class="product-info">
         <div class="product-name">Tesofensine</div>
-        <div class="product-subtitle">Triple Reuptake Inhibitor · 500mcg · 100 Pills</div>
+        <div class="product-subtitle">Triple Reuptake Inhibitor · 250mcg · 60 Capsules</div>
         <div class="no-coupon-tag">Excluded from Discounts</div>
         <div class="product-bottom">
-          <span class="product-price">$149.99</span>
+          <span class="product-price">$89.99</span>
           <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
         </div>
       </div>
     </div>
-    <!-- Dihexa -->
-    <div class="product-card" onclick="openModal(32)">
+    <!-- 5-Amino 1MQ -->
+    <div class="product-card" onclick="openModal(46)">
       <div class="product-img">
         <span class="product-badge">New</span>
-        <img src="../p-dihexa.jpg" alt="Dihexa" class="product-real-img">
+        <img src="../p-5amino1mq.jpg" alt="5-Amino 1MQ" class="product-real-img">
       </div>
       <div class="product-info">
-        <div class="product-name">Dihexa</div>
-        <div class="product-subtitle">Angiotensin IV Analog · 10mg · 60 Pills</div>
+        <div class="product-name">5-Amino 1MQ</div>
+        <div class="product-subtitle">NNMT Inhibitor · 50mg · 60 Capsules</div>
+        <div class="no-coupon-tag">Excluded from Discounts</div>
+        <div class="product-bottom">
+          <span class="product-price">$99.99</span>
+          <button class="btn-add-cart" onclick="event.stopPropagation()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    <!-- Wolverine Blend Pills (BPC-157 + TB-500) -->
+    <div class="product-card" onclick="openModal(47)">
+      <div class="product-img">
+        <span class="product-badge">New</span>
+        <img src="../p-wolverine-pills.jpg" alt="Wolverine Blend Pills" class="product-real-img">
+      </div>
+      <div class="product-info">
+        <div class="product-name">Wolverine Blend Pills</div>
+        <div class="product-subtitle">BPC-157 500mcg + TB-500 200mcg · 60 Capsules</div>
         <div class="no-coupon-tag">Excluded from Discounts</div>
         <div class="product-bottom">
           <span class="product-price">$99.99</span>
@@ -3626,7 +3643,7 @@ ttq.page();
       name: "Glutathione",
       subtitle: "Antioxidant · 1500mg",
       desc: "Glutathione is a powerful intracellular antioxidant essential for supporting cellular detoxification, immune function, and overall oxidative balance. As a key defender against free-radical stress, it plays a central role in maintaining mitochondrial health, recycling other antioxidants, and promoting optimal metabolic function. Because natural levels can decline with age, stress, or environmental exposure, glutathione is widely explored in wellness and research settings for its potential to enhance cellular resilience and support whole-body vitality.",
-      strengths: ["600mg — $44.99", "1500mg — $64.99"],
+      strengths: ["600mg — $44.99", "1500mg — $69.99"],
       price: "$44.99"
     },
     {
@@ -3800,10 +3817,10 @@ ttq.page();
     },
     {
       name: "Tesofensine",
-      subtitle: "Triple Reuptake Inhibitor · 500mcg · 100 Pills",
-      desc: "Tesofensine is a centrally-acting research compound that inhibits the reuptake of dopamine, norepinephrine, and serotonin (a triple monoamine reuptake inhibitor). Investigated for effects on appetite suppression, energy expenditure, and weight management in preclinical and clinical research settings. Supplied as 500mcg oral capsules, 100 pills per bottle. For research use only — not for human consumption.",
+      subtitle: "Triple Reuptake Inhibitor · 250mcg · 60 Capsules",
+      desc: "Tesofensine is a centrally-acting research compound that inhibits the reuptake of dopamine, norepinephrine, and serotonin (a triple monoamine reuptake inhibitor). Investigated for effects on appetite suppression, energy expenditure, and weight management in preclinical and clinical research settings. Supplied as 250mcg oral capsules, 60 capsules per bottle. For research use only — not for human consumption.",
       strengths: null,
-      price: "$149.99"
+      price: "$89.99"
     },
     {
       name: "Dihexa",
@@ -3902,6 +3919,20 @@ ttq.page();
       desc: "Gen10 is a naturally occurring peptide hormone that plays an important role in growth, metabolism, and cellular function. Due to its biological significance, Gen10 has been widely studied in scientific and laboratory settings to better understand its role in various physiological processes. For Research Use Only. Not for human or veterinary use. Not intended to diagnose, treat, cure, or prevent any disease.",
       strengths: null,
       price: "$149.99"
+    },
+    {
+      name: "5-Amino 1MQ",
+      subtitle: "NNMT Inhibitor · 50mg · 60 Capsules",
+      desc: "5-Amino-1MQ (5-Amino-1-methylquinolinium) is a small-molecule NNMT (nicotinamide N-methyltransferase) inhibitor studied for potential relevance to metabolic function, adipose tissue biology, and NAD+ preservation. Supplied as 50mg oral capsules, 60 capsules per bottle. For research use only — not for human consumption.",
+      strengths: null,
+      price: "$99.99"
+    },
+    {
+      name: "Wolverine Blend Pills",
+      subtitle: "BPC-157 500mcg + TB-500 200mcg · 60 Capsules",
+      desc: "Wolverine Blend combines two well-studied research peptides — BPC-157 (500mcg) and TB-500 (200mcg) — in a single oral capsule. Supplied as 700mcg blended oral capsules, 60 capsules per bottle. For research use only — not for human consumption.",
+      strengths: null,
+      price: "$99.99"
     }
   ];
 
@@ -4248,7 +4279,7 @@ ttq.page();
   }
 
   // Products excluded from coupon discounts (pills)
-  const NO_COUPON_PRODUCTS = ['SLU-PP332', 'BPC-157 Oral', 'MK677', 'Tesofensine', 'Dihexa', 'Gen10'];
+  const NO_COUPON_PRODUCTS = ['SLU-PP332', 'BPC-157 Oral', 'MK677', 'Tesofensine', 'Dihexa', 'Gen10', '5-Amino 1MQ', 'Wolverine Blend Pills'];
 
   // ─── SPEND & SAVE — Mon Aug 24 to Sun Aug 30, 2026 (auto-apply, no code) ───
   const SPEND_SAVE_START = new Date(2026, 7, 24, 0, 0, 0);
