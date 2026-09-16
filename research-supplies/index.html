@@ -622,9 +622,9 @@ function subscribeNewsletter() {
 (function(){
   'use strict';
 
-  /* ââ Operational facts. These MIRROR the storefront in index.html, which stays the
+  /* ── Operational facts. These MIRROR the storefront in index.html, which stays the
      single source of truth. The storefront was deliberately not modified to build
-     this page, so if shipping or a tax rate ever changes there, update it here too. ââ */
+     this page, so if shipping or a tax rate ever changes there, update it here too. ── */
   var SHIPPING_FEE = 10.99;
   var STATE_TAX_RATES = {
     'AL':0.04,'AK':0,'AZ':0.056,'AR':0.065,'CA':0.0725,'CO':0.029,'CT':0.0635,
@@ -647,16 +647,16 @@ function subscribeNewsletter() {
   /* Product copy, prices and images are taken verbatim from the storefront catalog. */
   var PRODUCTS = [
     { key:'bac-water-10ml', name:'Bacteriostatic Water',
-      sub:'Sterile Diluent Â· Research Supply', price:9.99, img:'../p-bacteriostatic.jpg',
+      sub:'Sterile Diluent · Research Supply', price:9.99, img:'../p-bacteriostatic.jpg',
       desc:'Sterile, non-pyrogenic water for injection containing 0.9% benzyl alcohol as a bacteriostatic preservative. Commonly used in research settings as a diluent.' },
     { key:'needles-31g', name:'Needles 31 Gauge 5/16"',
-      sub:'Insulin Syringes Â· Research Supply', price:5.99, img:'../p-needles.jpg',
+      sub:'Insulin Syringes · Research Supply', price:5.99, img:'../p-needles.jpg',
       desc:'31 gauge 5/16" (8mm) insulin syringes for research use. Film coated for comfort. Pack of 10 syringes.' },
     { key:'starter-kit', name:'Starter Kit',
       sub:'Needles + Bac Water 10ml + Alcohol Wipes', price:15.99, img:'../p-starter-kit.jpg',
       desc:'Includes 31 gauge 5/16" insulin syringes, 10ml bacteriostatic water, and alcohol prep pads. An all-in-one bundle for research use.' },
     { key:'hospira-bac-30ml', name:'Hospira Bacteriostatic Water',
-      sub:'Sterile Diluent Â· Research Supply Â· 30ml', price:27.99, img:'../p-hospira-bac-water-30ml.jpg',
+      sub:'Sterile Diluent · Research Supply · 30ml', price:27.99, img:'../p-hospira-bac-water-30ml.jpg',
       desc:'Hospira bacteriostatic water for injection, sterile and non-pyrogenic, preserved with 0.9% benzyl alcohol. 30ml vial.' },
     { key:'hospira-starter-kit', name:'Hospira Starter Kit',
       sub:'Needles + Hospira Bac Water 30ml + Alcohol Wipes', price:29.99, img:'../p-hospira-starter-kit.jpg',
@@ -669,7 +669,7 @@ function subscribeNewsletter() {
   var esc = function(s){ return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
 
-  /* ââ render catalog ââ */
+  /* ── render catalog ── */
   $('grid').innerHTML = PRODUCTS.map(function(p){
     return '<article class="card">' +
       '<div class="card-img"><img src="' + p.img + '" alt="' + esc(p.name) + '" loading="lazy"></div>' +
@@ -689,15 +689,15 @@ function subscribeNewsletter() {
     if (b) add(b.getAttribute('data-key'));
   });
 
-  /* ââ state dropdown. The storefront resolves tax from ZIP with the dropdown as its
+  /* ── state dropdown. The storefront resolves tax from ZIP with the dropdown as its
      fallback; here the dropdown is primary, which yields the same rates without
-     duplicating its ZIP-prefix table. ââ */
+     duplicating its ZIP-prefix table. ── */
   $('custState').innerHTML = '<option value="">Select</option>' +
     Object.keys(STATE_TAX_RATES).sort().map(function(s){
       return '<option value="' + s + '">' + s + '</option>';
     }).join('');
 
-  /* ââ cart ââ */
+  /* ── cart ── */
   function add(key){
     /* A new item after an order is a new order. Release placeOrder's submit
        lock, which otherwise swallowed a second order on the same page load
@@ -754,7 +754,7 @@ function subscribeNewsletter() {
     $('overlay').classList[on ? 'add' : 'remove']('active');
   };
 
-  /* ââ checkout ââ */
+  /* ── checkout ── */
   window.openCheckout = function(){
     if (!cart.length) return;
     toggleCart(false);
