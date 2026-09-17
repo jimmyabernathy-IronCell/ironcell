@@ -14,6 +14,7 @@
 
 - Store and full catalog: https://ironcellresearch.com/
 - Research supplies (bacteriostatic water, 31 gauge insulin syringes, alcohol prep pads, starter kits): https://ironcellresearch.com/research-supplies/
+- Certificates of analysis (report number, lot, date, purity and identity for each batch on file): https://ironcellresearch.com/coa/
 - Sitemap: https://ironcellresearch.com/sitemap.xml
 
 ## Contact
