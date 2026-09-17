@@ -61,7 +61,7 @@ ttq.page();
 <meta name="robots" content="index, follow">
 
 <title>Bacteriostatic Water &amp; Research Supplies | IronCell Research</title>
-<meta name="description" content="Research supplies USA: bacteriostatic water 30ml and 10ml vials, 31 gauge insulin syringes, alcohol prep pads and starter kits. Laboratory research use only.">
+<meta name="description" content="Hospira bacteriostatic water 30ml vials, 10ml bacteriostatic water, 31 gauge insulin syringes, alcohol prep pads and starter kits. Laboratory research use only.">
 <link rel="canonical" href="https://ironcellresearch.com/research-supplies/">
 <meta property="og:title" content="Research Supplies | IronCell Research">
 <meta property="og:description" content="Bacteriostatic water 30ml and 10ml vials, 31 gauge insulin syringes, alcohol prep pads and starter kits. US supplier, fast domestic shipping. Laboratory research use only.">
@@ -390,7 +390,51 @@ footer{border-top:1px solid var(--border-subtle);padding:36px 0;margin-top:24px}
       <h2>Supplies &amp; Kits</h2>
       <p>Sold individually or as a bundle. Prices are per unit as listed.</p>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="grid">
+      <!-- Crawlable copy of the five cards. The catalog script replaces this markup with the
+           priced add-to-cart cards on load, so prices and cart code live in ONE place (PRODUCTS).
+           Keep the wording here identical to PRODUCTS[].desc. -->
+      <article class="card"><div class="card-img"><img src="../p-bacteriostatic.jpg" alt="Bacteriostatic Water" loading="lazy"></div><div class="card-body"><h3>Bacteriostatic Water</h3><p class="card-sub">Sterile Diluent &middot; Research Supply</p><p class="card-desc">Bacteriostatic water, 10ml vial. Sterile and non-pyrogenic, with 0.9% benzyl alcohol as a bacteriostatic preservative. Used in the laboratory as a diluent.</p></div></article>
+      <article class="card"><div class="card-img"><img src="../p-needles.jpg" alt="Needles 31 Gauge 5/16&quot;" loading="lazy"></div><div class="card-body"><h3>Needles 31 Gauge 5/16&quot;</h3><p class="card-sub">Insulin Syringes &middot; Research Supply</p><p class="card-desc">31 gauge insulin syringes with a 5/16 inch (8mm) needle. Pack of 10 syringes.</p></div></article>
+      <article class="card"><div class="card-img"><img src="../p-starter-kit.jpg" alt="Starter Kit" loading="lazy"></div><div class="card-body"><h3>Starter Kit</h3><p class="card-sub">Needles + Bac Water 10ml + Alcohol Wipes</p><p class="card-desc">Bundle of 31 gauge 5/16 inch insulin syringes, a 10ml bacteriostatic water vial and alcohol prep pads.</p></div></article>
+      <article class="card"><div class="card-img"><img src="../p-hospira-bac-water-30ml.jpg" alt="Hospira Bacteriostatic Water" loading="lazy"></div><div class="card-body"><h3>Hospira Bacteriostatic Water</h3><p class="card-sub">Sterile Diluent &middot; Research Supply &middot; 30ml</p><p class="card-desc">Hospira bacteriostatic water 30ml vial, sterile and non-pyrogenic, preserved with 0.9% benzyl alcohol.</p></div></article>
+      <article class="card"><div class="card-img"><img src="../p-hospira-starter-kit.jpg" alt="Hospira Starter Kit" loading="lazy"></div><div class="card-body"><h3>Hospira Starter Kit</h3><p class="card-sub">Needles + Hospira Bac Water 30ml + Alcohol Wipes</p><p class="card-desc">Bundle of 10 EasyTouch 31 gauge insulin syringes, one Hospira bacteriostatic water 30ml vial and 10 isopropyl alcohol prep pads.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPLY DETAILS (SEO, 2026-09-17). Static text so a crawler can read what the page sells;
+     before this the only product facts were inside the catalog script. Every product fact is
+     already in PRODUCTS or the Product schema above. No prices, shipping terms or use guidance. -->
+<section class="section" id="details" style="border-top:1px solid var(--border-subtle)">
+  <div class="wrap" style="max-width:860px">
+    <div class="section-head">
+      <h2>About these supplies</h2>
+      <p>What each item is, and how the two kits differ.</p>
+    </div>
+    <div class="card-desc" style="font-size:.92rem;line-height:1.7">
+      <h3 style="margin:22px 0 8px;font-size:1.1rem">Bacteriostatic water: 10ml and Hospira 30ml</h3>
+      <p>Bacteriostatic water is sterile, non-pyrogenic water that contains 0.9% benzyl alcohol. The benzyl alcohol is a bacteriostatic preservative: it inhibits bacterial growth in the vial. Plain sterile water contains no preservative. In the laboratory it is used as a diluent, for example to reconstitute a lyophilized research compound before analysis.</p>
+      <p style="margin-top:10px">Two sizes are available. The standard vial holds 10ml. The Hospira bacteriostatic water vial holds 30ml, is made by Hospira, and uses the same 0.9% benzyl alcohol preservative.</p>
+      <p style="margin-top:10px">To work out how much diluent a given vial needs for a target concentration, use the <a href="/peptidecalculator/" style="color:var(--red-glow)">peptide reconstitution calculator</a>. It converts mg to mL and shows the result on a syringe scale.</p>
+
+      <h3 style="margin:26px 0 8px;font-size:1.1rem">31 gauge insulin syringes</h3>
+      <p>The syringes are 31 gauge with a 5/16 inch (8mm) needle, sold in packs of 10. The Hospira Starter Kit includes EasyTouch brand 31 gauge syringes.</p>
+
+      <h3 style="margin:26px 0 8px;font-size:1.1rem">Starter Kit and Hospira Starter Kit</h3>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin-top:6px">
+        <thead><tr style="text-align:left;color:var(--silver-light)"><th style="padding:8px;border-bottom:1px solid var(--border-subtle)">Kit</th><th style="padding:8px;border-bottom:1px solid var(--border-subtle)">Bacteriostatic water</th><th style="padding:8px;border-bottom:1px solid var(--border-subtle)">Syringes</th><th style="padding:8px;border-bottom:1px solid var(--border-subtle)">Prep pads</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--border-subtle)">Starter Kit</td><td style="padding:8px;border-bottom:1px solid var(--border-subtle)">One 10ml vial</td><td style="padding:8px;border-bottom:1px solid var(--border-subtle)">31 gauge, 5/16 inch</td><td style="padding:8px;border-bottom:1px solid var(--border-subtle)">Alcohol prep pads</td></tr>
+          <tr><td style="padding:8px">Hospira Starter Kit</td><td style="padding:8px">One Hospira 30ml vial</td><td style="padding:8px">10 EasyTouch, 31 gauge</td><td style="padding:8px">10 isopropyl alcohol prep pads</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3 style="margin:26px 0 8px;font-size:1.1rem">Related</h3>
+      <p>These are laboratory consumables only; this page lists no research compounds. The research compound catalog is on the <a href="/products/" style="color:var(--red-glow)">all products</a> page, and the lab reports we hold are on the <a href="/coa/" style="color:var(--red-glow)">certificates of analysis</a> page.</p>
+    </div>
   </div>
 </section>
 
@@ -651,19 +695,19 @@ function subscribeNewsletter() {
   var PRODUCTS = [
     { key:'bac-water-10ml', name:'Bacteriostatic Water',
       sub:'Sterile Diluent · Research Supply', price:9.99, img:'../p-bacteriostatic.jpg',
-      desc:'Sterile, non-pyrogenic water for injection containing 0.9% benzyl alcohol as a bacteriostatic preservative. Commonly used in research settings as a diluent.' },
+      desc:'Bacteriostatic water, 10ml vial. Sterile and non-pyrogenic, with 0.9% benzyl alcohol as a bacteriostatic preservative. Used in the laboratory as a diluent.' },
     { key:'needles-31g', name:'Needles 31 Gauge 5/16"',
       sub:'Insulin Syringes · Research Supply', price:5.99, img:'../p-needles.jpg',
-      desc:'31 gauge 5/16" (8mm) insulin syringes for research use. Film coated for comfort. Pack of 10 syringes.' },
+      desc:'31 gauge insulin syringes with a 5/16 inch (8mm) needle. Pack of 10 syringes.' },
     { key:'starter-kit', name:'Starter Kit',
       sub:'Needles + Bac Water 10ml + Alcohol Wipes', price:15.99, img:'../p-starter-kit.jpg',
-      desc:'Includes 31 gauge 5/16" insulin syringes, 10ml bacteriostatic water, and alcohol prep pads. An all-in-one bundle for research use.' },
+      desc:'Bundle of 31 gauge 5/16 inch insulin syringes, a 10ml bacteriostatic water vial and alcohol prep pads.' },
     { key:'hospira-bac-30ml', name:'Hospira Bacteriostatic Water',
       sub:'Sterile Diluent · Research Supply · 30ml', price:27.99, img:'../p-hospira-bac-water-30ml.jpg',
-      desc:'Hospira bacteriostatic water for injection, sterile and non-pyrogenic, preserved with 0.9% benzyl alcohol. 30ml vial.' },
+      desc:'Hospira bacteriostatic water 30ml vial, sterile and non-pyrogenic, preserved with 0.9% benzyl alcohol.' },
     { key:'hospira-starter-kit', name:'Hospira Starter Kit',
       sub:'Needles + Hospira Bac Water 30ml + Alcohol Wipes', price:29.99, img:'../p-hospira-starter-kit.jpg',
-      desc:'Includes 10 EasyTouch 31 gauge insulin syringes, one 30ml Hospira USP-grade bacteriostatic water vial, and 10 isopropyl alcohol prep pads.' }
+      desc:'Bundle of 10 EasyTouch 31 gauge insulin syringes, one Hospira bacteriostatic water 30ml vial and 10 isopropyl alcohol prep pads.' }
   ];
 
   var cart = [];
