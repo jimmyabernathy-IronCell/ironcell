@@ -16,6 +16,7 @@
 - Product catalog, one page per product with format, strengths, identifiers and the certificate of analysis where one is on file: https://ironcellresearch.com/products/
 - Research supplies (bacteriostatic water, 31 gauge insulin syringes, alcohol prep pads, starter kits): https://ironcellresearch.com/research-supplies/
 - Certificates of analysis (report number, lot, date, purity and identity for each batch on file): https://ironcellresearch.com/coa/
+- Peptide reconstitution calculator (concentration in mcg/mL, volume to measure and U-100 syringe units from vial content and bacteriostatic water volume): https://ironcellresearch.com/peptidecalculator/
 - Sitemap: https://ironcellresearch.com/sitemap.xml
 
 ## Contact
