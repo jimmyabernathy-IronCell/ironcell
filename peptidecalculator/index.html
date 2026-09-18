@@ -503,6 +503,13 @@ ttq.page();
   </div>
 
 
+  <!-- Guide Link: per-peptide research brief (restored 2026-09-18 at Julien's direction) -->
+  <div class="guide-link-card" id="guideLink" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <a id="guideLinkAnchor" href="#" target="_blank" rel="noopener"></a>
+    <span class="guide-sub">&mdash; Full research brief (DOCX)</span>
+  </div>
+
   <!-- Reconstitution guide: plain arithmetic, no compound-specific guidance -->
   <section class="guide">
     <h2>How the reconstitution math works</h2>
@@ -565,12 +572,14 @@ const peptides = [
     vials: [10, 20, 30],
     waterOptions: [0.5, 1, 1.5, 2, 3],
     defaultVial: 10, defaultWater: 1,
+    guide: "../Peptide Guides/GLP3-Reta_Peptide_Brief.docx",
   },
   {
     name: "GLP2-Tirz",
     vials: [10, 15, 20],
     waterOptions: [0.5, 1, 1.5, 2, 3],
     defaultVial: 10, defaultWater: 1,
+    guide: "../Peptide Guides/GLP2-Tirz_Peptide_Brief.docx",
   },
   {
     name: "BPC-157",
@@ -578,6 +587,7 @@ const peptides = [
     waterOptions: [1, 2, 3, 5],
     defaultVial: 5, defaultWater: 1,
     doseUnit: "mg",
+    guide: "../Peptide Guides/BPC157_TB500_Peptide_Brief.docx",
   },
   {
     name: "BPC-157 & TB-500 Blend",
@@ -585,6 +595,7 @@ const peptides = [
     waterOptions: [1, 2, 3, 5],
     defaultVial: 10, defaultWater: 2,
     doseUnit: "mg",
+    guide: "../Peptide Guides/BPC157_TB500_Peptide_Brief.docx",
   },
   {
     name: "MOTS-c",
@@ -592,24 +603,28 @@ const peptides = [
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 1,
     doseUnit: "mg",
+    guide: "../Peptide Guides/MOTS-c_Peptide_Brief.docx",
   },
   {
     name: "NAD+",
     vials: [500, 1000],
     waterOptions: [2, 5, 10],
     defaultVial: 1000, defaultWater: 10,
+    guide: "../Peptide Guides/NAD_Plus_Peptide_Brief.docx",
   },
   {
     name: "Glutathione",
     vials: [1500],
     waterOptions: [3, 5],
     defaultVial: 1500, defaultWater: 5,
+    guide: "../Peptide Guides/Glutathione_Peptide_Brief.docx",
   },
   {
     name: "Vitamin B12",
     vials: [1000],
     waterOptions: [10],
     defaultVial: 1000, defaultWater: 10,
+    guide: "../Peptide Guides/Vitamin_B12_Peptide_Brief.docx",
   },
   {
     name: "L-Carnitine",
@@ -622,12 +637,14 @@ const peptides = [
     vials: [50],
     waterOptions: [1, 2, 5],
     defaultVial: 50, defaultWater: 2,
+    guide: "../Peptide Guides/SS-31_Peptide_Brief.docx",
   },
   {
     name: "SLU-PP-332",
     vials: [5],
     waterOptions: [1, 2, 3, 5],
     defaultVial: 5, defaultWater: 2,
+    guide: "../Peptide Guides/SLU-PP-332_Peptide_Brief.docx",
   },
   {
     name: "Glow (BPC-157 + TB-500 + GHK-Cu)",
@@ -635,6 +652,7 @@ const peptides = [
     waterOptions: [2, 3, 5],
     defaultVial: 70, defaultWater: 2,
     doseUnit: "mg",
+    guide: "../Peptide Guides/Glow_Peptide_Brief.docx",
   },
   {
     name: "Melanotan 1",
@@ -642,6 +660,7 @@ const peptides = [
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 1,
     doseUnit: "mg",
+    guide: "../Peptide Guides/Melanotan_I_Peptide_Brief.docx",
   },
   {
     name: "Melanotan 2",
@@ -649,42 +668,49 @@ const peptides = [
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 1,
     doseUnit: "mg",
+    guide: "../Peptide Guides/Melanotan_II_Peptide_Brief.docx",
   },
   {
     name: "GHK-Cu",
     vials: [50, 100],
     waterOptions: [1, 2, 3, 5],
     defaultVial: 50, defaultWater: 2,
+    guide: "../Peptide Guides/GHK-Cu_Peptide_Brief.docx",
   },
   {
     name: "Ipamorelin",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Ipamorelin_Peptide_Brief.docx",
   },
   {
     name: "Gen10",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Gen10_Peptide_Brief.docx",
   },
   {
     name: "Tesamorelin",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Tesamorelin_Peptide_Brief.docx",
   },
   {
     name: "CJC-1295 w/o DAC",
     vials: [5],
     waterOptions: [1, 2, 2.5],
     defaultVial: 5, defaultWater: 2.5,
+    guide: "../Peptide Guides/CJC-1295_No_DAC_Peptide_Brief.docx",
   },
   {
     name: "CJC-1295 w/o DAC + Ipamorelin",
     vials: [10],
     waterOptions: [1, 2, 3, 5],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/CJC-1295_Ipamorelin_Peptide_Brief.docx",
   },
   {
     name: "Kisspeptin",
@@ -697,18 +723,21 @@ const peptides = [
     vials: [10],
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/KPV_Peptide_Brief.docx",
   },
   {
     name: "Thymosin Alpha-1",
     vials: [10],
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Thymosin_Alpha_1_Peptide_Brief.docx",
   },
   {
     name: "5-Amino 1MQ",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/5-Amino_1MQ_Peptide_Brief.docx",
   },
   {
     name: "KLOW",
@@ -716,42 +745,49 @@ const peptides = [
     waterOptions: [2, 3, 5],
     defaultVial: 80, defaultWater: 3,
     doseUnit: "mg",
+    guide: "../Peptide Guides/KLOW_Peptide_Brief.docx",
   },
   {
     name: "Selank",
     vials: [10],
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Selank_Peptide_Brief.docx",
   },
   {
     name: "Semax",
     vials: [10],
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Semax_Peptide_Brief.docx",
   },
   {
     name: "Epithalon",
     vials: [50],
     waterOptions: [1, 2, 2.5, 5],
     defaultVial: 50, defaultWater: 2.5,
+    guide: "../Peptide Guides/Epithalon_Peptide_Brief.docx",
   },
   {
     name: "DSIP",
     vials: [10],
     waterOptions: [1, 2],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/DISP_Peptide_Brief.docx",
   },
   {
     name: "Tesa + Ipa Mix",
     vials: [16],
     waterOptions: [1, 2, 3],
     defaultVial: 16, defaultWater: 2,
+    guide: "../Peptide Guides/Tesa_Ipa_Mix_Peptide_Brief.docx",
   },
   {
     name: "5-Amino 1MQ (50mg)",
     vials: [50],
     waterOptions: [1, 2, 2.5, 5],
     defaultVial: 50, defaultWater: 2.5,
+    guide: "../Peptide Guides/5-Amino_1MQ_50mg_Peptide_Brief.docx",
   },
   {
     name: "MIC + B12",
@@ -759,24 +795,28 @@ const peptides = [
     waterOptions: [1],
     defaultVial: 30, defaultWater: 1,
     doseUnit: "mg",
+    guide: "../Peptide Guides/MIC_B12_Peptide_Brief.docx",
   },
   {
     name: "Sermorelin",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/Sermorelin_Peptide_Brief.docx",
   },
   {
     name: "PT-141",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/PT-141_Peptide_Brief.docx",
   },
   {
     name: "ARA-290",
     vials: [10],
     waterOptions: [1, 2, 3],
     defaultVial: 10, defaultWater: 2,
+    guide: "../Peptide Guides/ARA-290_Peptide_Brief.docx",
   }
 ];
 
@@ -977,6 +1017,19 @@ function calculate() {
   }
 
   document.getElementById('resDoses').textContent = dosesPerVial;
+
+  // Guide link: show the brief for the selected peptide, hide it when there is none
+  // (L-Carnitine and Kisspeptin have no brief).
+  const guideCard = document.getElementById('guideLink');
+  const gp = peptides[state.peptideIdx];
+  if (gp && gp.guide) {
+    guideCard.style.display = 'flex';
+    const a = document.getElementById('guideLinkAnchor');
+    a.href = gp.guide;
+    a.textContent = 'Download ' + gp.name + ' Research Brief';
+  } else {
+    guideCard.style.display = 'none';
+  }
 
   // Syringe visual
   const visual = document.getElementById('syringeVisual');
